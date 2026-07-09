@@ -26,13 +26,13 @@ export default function HeroBanner() {
       <div className="absolute top-20 left-10 w-80 h-80 bg-accent/25 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-16 w-96 h-96 bg-highlight/20 rounded-full blur-3xl" />
 
-      <div className="relative z-10 max-w-7xl mx-auto px-6 py-24 grid md:grid-cols-2 gap-12 items-center">
-        <div>
+      <div className="relative z-10 max-w-7xl mx-auto px-6 py-20 grid md:grid-cols-12 gap-8 items-center">
+        <div className="md:col-span-7">
           <p className="inline-flex items-center gap-2 font-subheading font-semibold text-highlight mb-5 uppercase tracking-wide text-sm bg-white/20 px-4 py-2 rounded-full backdrop-blur-md border border-white/30 shadow-lg">
             <Sparkles size={15} /> Inspiring Minds. Building Futures.
           </p>
 
-          <h1 className="font-heading text-4xl md:text-6xl font-extrabold leading-tight mb-6 drop-shadow-2xl">
+          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 drop-shadow-2xl">
             Where Academic
             <span className="block text-highlight">Excellence Meets</span>
             Digital Innovation
@@ -61,22 +61,22 @@ export default function HeroBanner() {
           </div>
         </div>
 
-        <div className="hidden md:flex flex-col gap-5">
+        <div className="hidden md:flex md:col-span-5 flex-col gap-4">
           {[
             { Icon: GraduationCap, value: studentStat?.value || '6,500+', label: 'Students across all programs', color: 'text-highlight' },
-            { Icon: Users, value: teacherStat?.value || '350+', label: 'Experienced teachers', color: 'text-orange-200', offset: true },
+            { Icon: Users, value: teacherStat?.value || '350+', label: 'Experienced teachers', color: 'text-orange-200' },
             { Icon: Award, value: resultsStat?.value || '98%', label: 'Board exam results', color: 'text-highlight' },
-          ].map(({ Icon, value, label, color, offset }) => (
+          ].map(({ Icon, value, label, color }) => (
             <div
               key={label}
-              className={`bg-white/22 backdrop-blur-xl border border-white/35 rounded-3xl p-7 flex items-center gap-5 shadow-2xl hover:bg-white/30 transition-all duration-300 ${offset ? 'ml-8' : ''}`}
+              className="bg-white/18 backdrop-blur-xl border border-white/25 rounded-2xl p-5 flex items-center gap-4 shadow-xl hover:bg-white/25 transition-all duration-300"
             >
-              <div className="w-14 h-14 rounded-2xl bg-white/20 flex items-center justify-center">
-                <Icon size={32} className={`${color} shrink-0`} />
+              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                <Icon size={26} className={`${color}`} />
               </div>
               <div>
-                <p className="font-numbers text-3xl font-extrabold"><CountUp value={value} /></p>
-                <p className="text-sm text-white">{label}</p>
+                <p className="font-numbers text-2xl font-extrabold"><CountUp value={value} /></p>
+                <p className="text-xs text-white/90">{label}</p>
               </div>
             </div>
           ))}
