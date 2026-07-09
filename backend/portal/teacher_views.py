@@ -221,10 +221,10 @@ class HomeworkView(TeacherMixin, APIView):
         data = rows(
             """
             SELECT h.id, h.title, h.description, h.assigned_date, h.due_date,
-                   c.name || '-' || c.section AS class_name, s.name AS subject_name
+                   c.name || '-' || c.section AS class_name, COALESCE(s.name, 'General') AS subject_name
             FROM portal_homework h
             JOIN portal_class c ON c.id=h.class_id
-            JOIN portal_subject s ON s.id=h.subject_id
+            LEFT JOIN portal_subject s ON s.id=h.subject_id
             WHERE h.teacher_id=%s ORDER BY h.due_date DESC
             """, [request.user.id]
         )
@@ -236,6 +236,8 @@ class HomeworkView(TeacherMixin, APIView):
         data = request.data
         class_id = data.get("class_id")
         subject_id = data.get("subject_id")
+        if not subject_id or str(subject_id) == "0":
+            subject_id = None
         with connection.cursor() as cursor:
             cursor.execute(
                 """INSERT INTO portal_homework (class_id, subject_id, teacher_id, title, description, assigned_date, due_date)

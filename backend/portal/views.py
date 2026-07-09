@@ -186,8 +186,8 @@ class DashboardView(StudentOnlyMixin, APIView):
             homework_due = rows(
                 """
                 SELECT h.id, h.title, h.description, h.assigned_date, h.due_date,
-                       s.name AS subject_name, (h.due_date < current_date) AS is_overdue
-                FROM portal_homework h JOIN portal_subject s ON s.id=h.subject_id
+                       COALESCE(s.name, 'General') AS subject_name, (h.due_date < current_date) AS is_overdue
+                FROM portal_homework h LEFT JOIN portal_subject s ON s.id=h.subject_id
                 WHERE h.class_id=%s
                 ORDER BY h.due_date ASC LIMIT 5
                 """,
@@ -291,11 +291,11 @@ class HomeworkListView(StudentOnlyMixin, APIView):
         data = rows(
             """
             SELECT h.id, h.title, h.description, h.assigned_date, h.due_date,
-                   s.name AS subject_name,
+                   COALESCE(s.name, 'General') AS subject_name,
                    COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name,
                    (h.due_date < current_date) AS is_overdue
             FROM portal_homework h
-            JOIN portal_subject s ON s.id=h.subject_id
+            LEFT JOIN portal_subject s ON s.id=h.subject_id
             JOIN auth_user u ON u.id=h.teacher_id
             WHERE h.class_id=%s ORDER BY h.due_date DESC
             """, [cls["class_id"]]

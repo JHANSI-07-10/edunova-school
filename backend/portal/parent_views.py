@@ -150,12 +150,14 @@ class ChildHomeworkView(ParentMixin, APIView):
             return Response([])
         data = rows(
             """
-            SELECT h.id, h.title, h.description, h.assigned_date, h.due_date, s.name AS subject_name,
+            SELECT h.id, h.title, h.description, h.assigned_date, h.due_date,
+                   COALESCE(s.name, 'General') AS subject_name,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name,
                    (h.due_date < current_date) AS is_overdue
-            FROM portal_homework h JOIN portal_subject s ON s.id=h.subject_id
+            FROM portal_homework h LEFT JOIN portal_subject s ON s.id=h.subject_id
+            LEFT JOIN auth_user u ON u.id=h.teacher_id
             WHERE h.class_id=%s ORDER BY h.due_date DESC
-            """,
-            [cls["class_id"]],
+            """, [cls["class_id"]]
         )
         return Response(serialise(data))
 
