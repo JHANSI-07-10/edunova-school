@@ -13,6 +13,7 @@ urlpatterns = [
 
     # Student portal
     path("student/profile/", views.ProfileView.as_view()),
+    path("student/ai-chat/", views.StudentAIChatView.as_view(), name="student-ai-chat"),
     path("student/dashboard/", views.DashboardView.as_view()),
     path("student/attendance/", views.AttendanceListView.as_view()),
     path("student/leaves/", views.StudentLeaveView.as_view()),

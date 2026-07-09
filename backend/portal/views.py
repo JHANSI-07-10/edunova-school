@@ -662,3 +662,108 @@ class FileUploadView(APIView):
             return Response({"url": file_url})
         except Exception as e:
             return Response({"detail": f"Upload failed: {str(e)}"}, status=500)
+
+
+class StudentAIChatView(StudentOnlyMixin, APIView):
+    def post(self, request):
+        message = request.data.get("message", "").strip()
+        if not message:
+            return Response({"reply": "Hello! How can I help you today?"})
+
+        msg_lower = message.lower()
+        user_id = request.user.id
+        
+        cls = current_class_for_student(user_id)
+        class_id = cls["class_id"] if cls else None
+        
+        # 1. Homework / Assignment queries
+        if any(w in msg_lower for w in ["homework", "hw", "assignment", "assignments", "task"]):
+            if class_id:
+                # Query due assignments
+                assignments = rows(
+                    """
+                    SELECT a.title, a.due_date, a.max_marks, s.name AS subject_name 
+                    FROM portal_assignment a
+                    LEFT JOIN portal_subject s ON s.id=a.subject_id
+                    WHERE a.class_id=%s AND a.id NOT IN (
+                        SELECT assignment_id FROM portal_assignment_submission WHERE student_id=%s
+                    ) AND a.due_date > now()
+                    ORDER BY a.due_date LIMIT 3
+                    """,
+                    [class_id, user_id]
+                )
+                if assignments:
+                    reply = "Here are your upcoming pending assignments:\n" + "\n".join(
+                        f"• **{a['title']}** ({a['subject_name'] or 'General'}) — Due {a['due_date'].strftime('%b %d, %I:%M %p') if hasattr(a['due_date'], 'strftime') else a['due_date']}"
+                        for a in assignments
+                    )
+                else:
+                    reply = "🎉 Great news! You have no pending assignments due soon."
+            else:
+                reply = "I couldn't find any enrolled class for you, so I can't track assignments."
+            return Response({"reply": reply})
+
+        # 2. Timetable / Schedule queries
+        elif any(w in msg_lower for w in ["timetable", "schedule", "classes", "today", "timetable"]):
+            if class_id:
+                timetable = rows(
+                    """
+                    SELECT t.day_of_week, t.start_time, t.end_time, s.name AS subject_name,
+                           COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name
+                    FROM portal_timetable t
+                    JOIN portal_subject s ON s.id=t.subject_id
+                    JOIN auth_user u ON u.id=t.teacher_id
+                    WHERE t.class_id=%s
+                    ORDER BY t.day_of_week, t.start_time
+                    """,
+                    [class_id]
+                )
+                if timetable:
+                    days = {}
+                    for item in timetable:
+                        day = item["day_of_week"]
+                        if day not in days:
+                            days[day] = []
+                        days[day].append(f"{item['subject_name']} ({item['start_time']} - {item['end_time']}) by {item['teacher_name']}")
+                    
+                    reply = "Here is your class timetable:\n" + "\n".join(
+                        f"🗓️ **{d}**:\n" + "\n".join(f"  • {session}" for session in sessions)
+                        for d, sessions in days.items()
+                    )
+                else:
+                    reply = "No timetable sessions are scheduled for your class yet."
+            else:
+                reply = "You are not currently enrolled in any class."
+            return Response({"reply": reply})
+
+        # 3. Grades / Quiz results
+        elif any(w in msg_lower for w in ["grade", "marks", "result", "score", "grades", "quiz"]):
+            grades = rows(
+                """
+                SELECT a.title, s.marks_obtained, a.max_marks, s.grade
+                FROM portal_assignment_submission s
+                JOIN portal_assignment a ON a.id = s.assignment_id
+                WHERE s.student_id=%s AND s.marks_obtained IS NOT NULL
+                ORDER BY s.submitted_at DESC LIMIT 5
+                """,
+                [user_id]
+            )
+            if grades:
+                reply = "Here are your recent assignment grades:\n" + "\n".join(
+                    f"• **{g['title']}**: {g['marks_obtained']}/{g['max_marks']} (Grade: **{g['grade'] or 'N/A'}**)"
+                    for g in grades
+                )
+            else:
+                reply = "I couldn't find any graded submissions for your profile yet. Keep studying!"
+            return Response({"reply": reply})
+
+        # Default help menu response
+        name = request.user.first_name or request.user.username
+        reply = (
+            f"Hello {name}! I am your EduNova AI Assistant. 🎓\n\n"
+            f"I can help you navigate your student portal and view your records. Try asking me:\n"
+            f"• *'What assignments are due?'*\n"
+            f"• *'Show my class timetable'* \n"
+            f"• *'What are my recent grades?'*"
+        )
+        return Response({"reply": reply})
