@@ -618,3 +618,47 @@ class StudentLeaveView(StudentOnlyMixin, APIView):
             )
             lid = cursor.fetchone()[0]
         return Response({"id": lid, "detail": "Leave request submitted."})
+
+
+class FileUploadView(APIView):
+    from rest_framework.parsers import MultiPartParser, FormParser
+    parser_classes = (MultiPartParser, FormParser)
+
+    def post(self, request):
+        file_obj = request.FILES.get('file')
+        if not file_obj:
+            return Response({"detail": "No file uploaded."}, status=400)
+            
+        bucket_name = request.data.get('bucket', 'lms-resources')
+        
+        from django.conf import settings
+        from supabase import create_client
+        import uuid
+
+        url = getattr(settings, "SUPABASE_URL", "")
+        key = getattr(settings, "SUPABASE_SERVICE_ROLE_KEY", "")
+        if not url or not key:
+            from django.core.files.storage import default_storage
+            filename = default_storage.save(f"uploads/{uuid.uuid4()}_{file_obj.name}", file_obj)
+            file_url = request.build_absolute_uri(default_storage.url(filename))
+            return Response({"url": file_url})
+
+        try:
+            client = create_client(url, key)
+            file_extension = file_obj.name.split('.')[-1]
+            unique_filename = f"{uuid.uuid4()}.{file_extension}"
+            
+            # Read file bytes
+            file_bytes = file_obj.read()
+            
+            # Upload
+            client.storage.from_(bucket_name).upload(
+                path=unique_filename,
+                file=file_bytes,
+                file_options={"content-type": file_obj.content_type}
+            )
+            
+            file_url = client.storage.from_(bucket_name).get_public_url(unique_filename)
+            return Response({"url": file_url})
+        except Exception as e:
+            return Response({"detail": f"Upload failed: {str(e)}"}, status=500)

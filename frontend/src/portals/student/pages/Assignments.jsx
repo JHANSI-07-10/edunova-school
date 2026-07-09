@@ -106,6 +106,7 @@ function SubmitModal({ assignment, onClose, onSubmitted }) {
   const [url, setUrl] = useState("");
   const [answers, setAnswers] = useState({});
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   const isQuiz = assignment.assignment_type === "Quiz";
@@ -113,10 +114,34 @@ function SubmitModal({ assignment, onClose, onSubmitted }) {
     ? (typeof assignment.quiz_questions === "string" ? JSON.parse(assignment.quiz_questions) : assignment.quiz_questions || [])
     : [];
 
+  async function handleSubmissionUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("bucket", "assignmentsubmissions");
+    try {
+      const { data } = await api.post("/upload/", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setUrl(data.url);
+    } catch (err) {
+      setError("Failed to upload file. Please try again.");
+    } finally {
+      setUploading(false);
+    }
+  }
+
   async function submit(e) {
     e.preventDefault();
     if (isQuiz && Object.keys(answers).length < questions.length) {
       setError("Please answer all questions before submitting.");
+      return;
+    }
+    if (!isQuiz && !url) {
+      setError("Please select and upload your file first.");
       return;
     }
 
@@ -168,17 +193,29 @@ function SubmitModal({ assignment, onClose, onSubmitted }) {
             </div>
           ) : (
             <div className="space-y-3">
-              <p className="text-xs text-ink-secondary">
-                Upload your file to the school's <code>assignmentsubmissions</code> storage bucket first,
-                then paste the resulting URL here.
-              </p>
-              <input
-                required
-                value={url}
-                onChange={(e) => setUrl(e.target.value)}
-                placeholder="https://…/assignmentsubmissions/your-file.pdf"
-                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none"
-              />
+              <p className="text-xs text-ink-secondary">Select and upload your completed assignment document (PDF, TXT, DOCX):</p>
+              <div className="flex gap-2 items-center">
+                <input
+                  type="file"
+                  accept=".pdf,.txt,.docx"
+                  onChange={handleSubmissionUpload}
+                  className="hidden"
+                  id="student-submission-file"
+                />
+                <label
+                  htmlFor="student-submission-file"
+                  className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold cursor-pointer select-none transition-colors"
+                >
+                  {uploading ? "Uploading..." : "Choose File"}
+                </label>
+                {url ? (
+                  <span className="text-xs text-academic-green font-semibold truncate max-w-[250px]" title={url}>
+                    ✓ File Uploaded: {url.split("/").pop()}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">No file selected</span>
+                )}
+              </div>
             </div>
           )}
 

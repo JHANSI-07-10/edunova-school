@@ -141,6 +141,7 @@ function AssignmentForm({ classes, assignment, onClose, onSaved }) {
     quiz_questions: assignment?.quiz_questions ? (typeof assignment.quiz_questions === "string" ? JSON.parse(assignment.quiz_questions) : assignment.quiz_questions) : [],
   });
   const [busy, setBusy] = useState(false);
+  const [uploading, setUploading] = useState(false);
   const [error, setError] = useState("");
 
   useEffect(() => {
@@ -156,6 +157,26 @@ function AssignmentForm({ classes, assignment, onClose, onSaved }) {
   function pickClass(classId) {
     const match = classes.find((c) => String(c.class_id) === classId);
     setForm((f) => ({ ...f, class_id: classId, subject_id: match?.subject_id }));
+  }
+
+  async function handleFileUpload(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    setUploading(true);
+    setError("");
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("bucket", "lms-resources");
+    try {
+      const { data } = await api.post("/upload/", formData, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      setForm((f) => ({ ...f, file_url: data.url }));
+    } catch (err) {
+      setError("Failed to upload file. Please try again.");
+    } finally {
+      setUploading(false);
+    }
   }
 
   function addQuestion() {
@@ -284,13 +305,29 @@ function AssignmentForm({ classes, assignment, onClose, onSaved }) {
 
           {form.assignment_type === "File" && (
             <div>
-              <label className="text-xs font-semibold text-ink-secondary uppercase">Attachment Link (Optional)</label>
-              <input
-                placeholder="https://…/resource.pdf"
-                value={form.file_url}
-                onChange={(e) => setForm((f) => ({ ...f, file_url: e.target.value }))}
-                className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none"
-              />
+              <label className="text-xs font-semibold text-ink-secondary uppercase">Attachment Document (PDF, TXT, DOCX)</label>
+              <div className="flex gap-2 items-center mt-1">
+                <input
+                  type="file"
+                  accept=".pdf,.txt,.docx"
+                  onChange={handleFileUpload}
+                  className="hidden"
+                  id="teacher-assignment-file"
+                />
+                <label
+                  htmlFor="teacher-assignment-file"
+                  className="bg-slate-100 hover:bg-slate-200 border border-slate-300 text-slate-800 rounded-xl px-4 py-2.5 text-xs font-semibold cursor-pointer select-none transition-colors"
+                >
+                  {uploading ? "Uploading..." : "Choose File"}
+                </label>
+                {form.file_url ? (
+                  <span className="text-xs text-academic-green font-semibold truncate max-w-[200px]" title={form.file_url}>
+                    ✓ Uploaded: {form.file_url.split("/").pop()}
+                  </span>
+                ) : (
+                  <span className="text-xs text-slate-400">No file uploaded</span>
+                )}
+              </div>
             </div>
           )}
 
