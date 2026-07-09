@@ -18,17 +18,14 @@ export default function AuditLog() {
       ) : (
         <div className="divide-y divide-slate-100">
           {items.map((a) => (
-            <div key={a.id} className="py-3 text-sm">
-              <div className="flex items-center justify-between">
-                <span className="font-medium text-ink-primary">{a.action}</span>
-                <span className="text-xs text-ink-secondary">{new Date(a.created_at).toLocaleString()}</span>
+            <div key={a.id} className="py-3 text-sm flex items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-slate-800">{a.action}</p>
+                <p className="text-xs text-ink-secondary mt-0.5">
+                  by {a.actor_name} · {a.target_type} #{a.target_id}
+                </p>
               </div>
-              <p className="text-xs text-ink-secondary">
-                by {a.actor_name} · {a.target_type} #{a.target_id}
-              </p>
-              {a.details && Object.keys(a.details).length > 0 && (
-                <pre className="text-xs bg-gray-50 rounded-lg p-2 mt-1 overflow-x-auto">{JSON.stringify(a.details)}</pre>
-              )}
+              <span className="text-xs text-slate-400 font-medium whitespace-nowrap">{new Date(a.created_at).toLocaleString()}</span>
             </div>
           ))}
         </div>
