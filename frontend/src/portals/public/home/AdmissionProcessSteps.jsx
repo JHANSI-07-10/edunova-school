@@ -13,13 +13,15 @@ export default function AdmissionProcessSteps() {
       <FadeIn><h2 className="font-heading text-3xl font-bold text-center mb-10">Admission Process</h2></FadeIn>
       <div className="grid md:grid-cols-4 gap-6">
         {STEPS.map(([num, title, desc]) => (
-          <div key={num} className="text-center">
-            <div className="w-12 h-12 mx-auto rounded-full bg-accent text-white font-heading font-bold flex items-center justify-center mb-3">
-              {num}
+          <FadeIn key={num} delay={parseInt(num) * 50} className="h-full">
+            <div className="text-center h-full">
+              <div className="w-12 h-12 mx-auto rounded-full bg-accent text-white font-heading font-bold flex items-center justify-center mb-3">
+                {num}
+              </div>
+              <h3 className="font-subheading font-bold mb-1 text-primary">{title}</h3>
+              <p className="text-sm text-text-secondary">{desc}</p>
             </div>
-            <h3 className="font-subheading font-bold mb-1">{title}</h3>
-            <p className="text-sm text-text-secondary">{desc}</p>
-          </div>
+          </FadeIn>
         ))}
       </div>
     </section>

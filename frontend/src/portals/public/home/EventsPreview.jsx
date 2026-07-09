@@ -19,12 +19,14 @@ export default function EventsPreview() {
         <p className="text-text-secondary">No events scheduled right now — check back soon.</p>
       ) : (
         <div className="grid md:grid-cols-3 gap-4">
-          {upcoming.map((e) => (
-            <div key={e.id} className="card">
-              <p className="font-subheading text-sm text-secondary font-semibold">{e.event_date}</p>
-              <h3 className="font-heading font-bold mt-1">{e.title}</h3>
-              <p className="text-sm text-text-secondary mt-2 line-clamp-2">{e.description}</p>
-            </div>
+          {upcoming.map((e, i) => (
+            <FadeIn key={e.id} delay={i * 50} className="h-full">
+              <div className="card h-full hover:shadow-md transition-shadow">
+                <p className="font-subheading text-sm text-secondary font-semibold">{e.event_date}</p>
+                <h3 className="font-heading font-bold mt-1 text-primary">{e.title}</h3>
+                <p className="text-sm text-text-secondary mt-2 line-clamp-2">{e.description}</p>
+              </div>
+            </FadeIn>
           ))}
         </div>
       )}

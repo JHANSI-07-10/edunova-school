@@ -101,7 +101,7 @@ export default function AcademicPrograms() {
         ) : (
           <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-5">
             {(programs || []).map((p, i) => (
-              <FadeIn key={p.id} delay={i * 50}>
+              <FadeIn key={p.id} delay={i * 50} className="h-full">
                 <div className="group bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
                   <div className="w-12 h-12 shrink-0 rounded-xl bg-accent/10 flex items-center justify-center mb-4 group-hover:bg-accent transition-colors">
                     <GraduationCap

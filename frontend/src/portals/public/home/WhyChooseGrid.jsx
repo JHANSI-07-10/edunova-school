@@ -43,7 +43,7 @@ export default function WhyChooseGrid() {
             {(items || []).map((item, i) => {
               const Icon = ICON_MAP[item.title] || Building2
               return (
-                <FadeIn key={item.id} delay={i * 60}>
+                <FadeIn key={item.id} delay={i * 60} className="h-full">
                   <div className="card h-full hover:shadow-md hover:-translate-y-0.5 transition-all duration-200">
                     <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center mb-3">
                       <Icon size={22} className="text-primary" />

@@ -9,7 +9,7 @@ export default function FAQAccordion() {
   const [openId, setOpenId] = useState(null)
 
   return (
-    <section className="section max-w-3xl">
+    <section className="section max-w-3xl mx-auto">
       <FadeIn><h2 className="font-heading text-3xl font-bold text-center mb-10">Frequently Asked Questions</h2></FadeIn>
       {loading ? (
         <p className="text-center text-text-secondary">Loading FAQs…</p>

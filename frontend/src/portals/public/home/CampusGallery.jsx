@@ -91,35 +91,29 @@ export default function CampusGallery() {
           <p className="text-text-secondary">Loading gallery…</p>
         ) : (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {imagesToShow.map((img, index) => (
-              <FadeIn key={img.id || index} delay={index * 40}>
-                <div
-                  className={`group relative overflow-hidden rounded-2xl shadow-md border border-gray-100 ${
-                    index === 0 || index === 5
-                      ? 'md:col-span-2 md:row-span-2'
-                      : ''
-                  }`}
-                >
-                  <img
-                    src={img.image}
-                    alt={img.caption || 'EduNova Campus Gallery'}
-                    className={`w-full object-cover group-hover:scale-110 transition-transform duration-500 ${
-                      index === 0 || index === 5
-                        ? 'h-[260px] md:h-[420px]'
-                        : 'h-[180px] md:h-[200px]'
-                    }`}
-                  />
+            {imagesToShow.map((img, index) => {
+              const spanClass = index === 0 || index === 5 ? 'md:col-span-2 md:row-span-2 h-full' : 'h-full';
+              return (
+                <FadeIn key={img.id || index} delay={index * 40} className={spanClass}>
+                  <div className="group relative overflow-hidden rounded-2xl shadow-md border border-gray-100 h-full w-full">
+                    <img
+                      src={img.image}
+                      alt={img.caption || 'EduNova Campus Gallery'}
+                      className="w-full object-cover group-hover:scale-110 transition-transform duration-500 h-full"
+                      style={{ minHeight: index === 0 || index === 5 ? '260px' : '180px' }}
+                    />
 
-                  <div className="absolute inset-0 bg-gradient-to-t from-primary/75 via-primary/10 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/75 via-primary/10 to-transparent opacity-80 group-hover:opacity-95 transition-opacity" />
 
-                  <div className="absolute bottom-4 left-4 right-4">
-                    <p className="font-subheading font-bold text-white text-sm md:text-base drop-shadow">
-                      {img.caption || 'EduNova Campus'}
-                    </p>
+                    <div className="absolute bottom-4 left-4 right-4">
+                      <p className="font-subheading font-bold text-white text-sm md:text-base drop-shadow">
+                        {img.caption || 'EduNova Campus'}
+                      </p>
+                    </div>
                   </div>
-                </div>
-              </FadeIn>
-            ))}
+                </FadeIn>
+              );
+            })}
           </div>
         )}
       </div>

@@ -86,7 +86,7 @@ export default function FacilitiesGrid() {
         {/* Facility Cards */}
         <div className="grid sm:grid-cols-2 md:grid-cols-4 gap-5">
           {FACILITIES.map(({ name, icon: Icon, desc }, i) => (
-            <FadeIn key={name} delay={i * 50}>
+            <FadeIn key={name} delay={i * 50} className="h-full">
               <div className="group bg-white rounded-2xl p-6 border border-gray-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300 h-full">
                 <div className="w-13 h-13 rounded-2xl bg-secondary/10 flex items-center justify-center mb-4 group-hover:bg-secondary transition-colors">
                   <Icon

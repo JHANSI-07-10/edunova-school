@@ -20,11 +20,13 @@ export default function LatestNewsPreview() {
           <p className="text-text-secondary">No news posted yet.</p>
         ) : (
           <div className="grid md:grid-cols-3 gap-4">
-            {latest.map((n) => (
-              <div key={n.id} className="card">
-                <p className="font-subheading text-sm text-text-secondary">{n.published_date}</p>
-                <h3 className="font-heading font-bold mt-1">{n.title}</h3>
-              </div>
+            {latest.map((n, i) => (
+              <FadeIn key={n.id} delay={i * 50} className="h-full">
+                <div className="card h-full hover:shadow-md transition-shadow">
+                  <p className="font-subheading text-sm text-text-secondary">{n.published_date}</p>
+                  <h3 className="font-heading font-bold mt-1 text-primary">{n.title}</h3>
+                </div>
+              </FadeIn>
             ))}
           </div>
         )}

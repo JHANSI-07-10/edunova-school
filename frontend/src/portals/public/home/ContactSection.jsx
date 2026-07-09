@@ -20,7 +20,7 @@ export default function ContactSection() {
 
   return (
     <section className="bg-white">
-      <div className="section max-w-2xl">
+      <div className="section max-w-2xl mx-auto">
         <FadeIn>
         <h2 className="font-heading text-3xl font-bold text-center mb-8">Get in Touch</h2>
         <form onSubmit={handleSubmit} className="space-y-4">

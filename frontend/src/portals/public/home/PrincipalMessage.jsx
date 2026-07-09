@@ -42,8 +42,8 @@ export default function PrincipalMessage() {
           </FadeIn>
 
           {/* Message Content */}
-          <FadeIn delay={100}>
-            <div className="lg:col-span-2 bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-100 relative">
+          <FadeIn delay={100} className="lg:col-span-2">
+            <div className="bg-white rounded-3xl p-8 md:p-10 shadow-xl border border-gray-100 relative">
               <div className="absolute -top-6 left-8 w-14 h-14 rounded-2xl bg-accent flex items-center justify-center shadow-lg">
                 <Quote size={28} className="text-white" />
               </div>
