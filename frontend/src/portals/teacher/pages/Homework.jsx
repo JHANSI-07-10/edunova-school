@@ -22,7 +22,13 @@ export default function Homework() {
   return (
     <div className="space-y-4">
       <button
-        onClick={() => setShowForm(true)}
+        onClick={() => {
+          if (!classes || classes.length === 0) {
+            setToast("You have not been assigned to any classes or subjects yet. Please contact the administrator to assign classes.");
+          } else {
+            setShowForm(true);
+          }
+        }}
         className="flex items-center gap-2 bg-academic-blue text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-academic-blue/90"
       >
         <Plus size={16} /> Assign homework

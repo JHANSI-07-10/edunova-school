@@ -31,14 +31,14 @@ const fallbackImages = [
     caption: 'EduNova Global Academy',
   },
   {
-    id: 'campus-life',
-    image: '/Campus.jpeg',
-    caption: 'Campus Life',
+    id: 'classroom',
+    image: '/classroom.jpeg',
+    caption: 'Interactive Classroom',
   },
   {
     id: 'learning',
-    image: '/student.jpeg',
-    caption: 'Digital Learning',
+    image: '/classroom.jpeg',
+    caption: 'Digital Learning Lab',
   },
   {
     id: 'infrastructure',
