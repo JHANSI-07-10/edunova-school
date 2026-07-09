@@ -782,7 +782,13 @@ class ClassTeacherAssignView(AdminMixin, APIView):
         data = rows(
             """
             SELECT ct.class_id, c.name || '-' || c.section AS class_name,
-                   ct.teacher_id, COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name
+                   ct.teacher_id, COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name,
+                   (
+                       SELECT COALESCE(json_agg(json_build_object('id', s.id, 'name', s.name)), '[]'::json)
+                       FROM portal_academic_allocation aa
+                       JOIN portal_subject s ON s.id = aa.subject_id
+                       WHERE aa.class_id = ct.class_id AND aa.teacher_id = ct.teacher_id
+                   ) AS assigned_subjects
             FROM portal_class_teacher ct
             JOIN portal_class c ON c.id = ct.class_id
             JOIN auth_user u ON u.id = ct.teacher_id
@@ -795,6 +801,7 @@ class ClassTeacherAssignView(AdminMixin, APIView):
         d = request.data
         class_id = d.get("class_id")
         teacher_id = d.get("teacher_id")
+        subject_id = d.get("subject_id")
 
         if not class_id or not teacher_id:
             return Response({"detail": "class_id and teacher_id are required."}, status=400)
@@ -805,5 +812,11 @@ class ClassTeacherAssignView(AdminMixin, APIView):
                 "ON CONFLICT (class_id) DO UPDATE SET teacher_id = EXCLUDED.teacher_id",
                 [class_id, teacher_id]
             )
+            if subject_id:
+                cursor.execute(
+                    "INSERT INTO portal_academic_allocation (class_id, subject_id, teacher_id) VALUES (%s,%s,%s) "
+                    "ON CONFLICT (class_id, subject_id, teacher_id) DO NOTHING",
+                    [class_id, subject_id, teacher_id]
+                )
         log_action(request.user, "class_teacher.assign", "portal_class_teacher", class_id, d)
-        return Response({"detail": "Class teacher assigned successfully."})
+        return Response({"detail": "Class teacher and subject assigned successfully."})

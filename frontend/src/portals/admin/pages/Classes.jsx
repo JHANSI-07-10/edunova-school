@@ -15,7 +15,7 @@ export default function Classes() {
   const [classForm, setClassForm] = useState({ name: "", section: "", curriculum: "CBSE", room_number: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", subject_code: "", type: "Theory" });
   const [enrollForm, setEnrollForm] = useState({ student_id: "", class_id: "", roll_number: "", academic_year: "2025-26" });
-  const [teacherAssignForm, setTeacherAssignForm] = useState({ class_id: "", teacher_id: "" });
+  const [teacherAssignForm, setTeacherAssignForm] = useState({ class_id: "", teacher_id: "", subject_id: "" });
   
   const [toast, setToast] = useState("");
   const [busy, setBusy] = useState(false);
@@ -96,11 +96,11 @@ export default function Classes() {
     setBusy(true);
     try {
       await api.post("/admin-portal/class-teachers/", teacherAssignForm);
-      setTeacherAssignForm({ class_id: "", teacher_id: "" });
+      setTeacherAssignForm({ class_id: "", teacher_id: "", subject_id: "" });
       loadClassTeachers();
-      setToast("Class teacher assigned successfully.");
+      setToast("Class teacher and subject assigned successfully.");
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not assign teacher.");
+      setToast(err?.response?.data?.detail || "Could not assign class teacher.");
     } finally {
       setBusy(false);
     }
@@ -325,7 +325,6 @@ export default function Classes() {
                     ))}
                   </select>
                 </div>
-
                 <div className="flex flex-col gap-1">
                   <label className="text-xs font-semibold text-slate-500 uppercase">Select Class Teacher</label>
                   <select
@@ -341,11 +340,25 @@ export default function Classes() {
                   </select>
                 </div>
 
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Select Subject (Optional)</label>
+                  <select
+                    value={teacherAssignForm.subject_id}
+                    onChange={(e) => setTeacherAssignForm({ ...teacherAssignForm, subject_id: e.target.value })}
+                    className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring"
+                  >
+                    <option value="">-- Choose Subject (Dealing With) --</option>
+                    {subjects?.map((s) => (
+                      <option key={s.id} value={s.id}>{s.name} ({s.subject_code})</option>
+                    ))}
+                  </select>
+                </div>
+
                 <button
                   disabled={busy}
                   className="w-full bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90 disabled:opacity-60"
                 >
-                  {busy ? "Assigning..." : "Assign Class Teacher"}
+                  {busy ? "Assigning..." : "Assign Class Teacher & Subject"}
                 </button>
               </form>
             </Card>
@@ -360,7 +373,18 @@ export default function Classes() {
                 <div className="divide-y divide-slate-100">
                   {classTeachers.map((ct) => (
                     <div key={ct.class_id} className="py-2.5 text-sm flex items-center justify-between">
-                      <span className="font-semibold text-slate-700">{ct.class_name}</span>
+                      <div>
+                        <span className="font-semibold text-slate-700 block">{ct.class_name}</span>
+                        {ct.assigned_subjects && ct.assigned_subjects.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-1">
+                            {ct.assigned_subjects.map((sub) => (
+                              <span key={sub.id} className="bg-slate-100 text-slate-600 text-[10px] font-semibold px-2 py-0.5 rounded border border-slate-200">
+                                {sub.name}
+                              </span>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                       <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full text-xs font-semibold">
                         👤 {ct.teacher_name}
                       </span>
