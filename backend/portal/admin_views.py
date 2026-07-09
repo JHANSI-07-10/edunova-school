@@ -366,7 +366,7 @@ class UserListView(AdminMixin, APIView):
                     "ON CONFLICT (user_id) DO NOTHING",
                     [user.id, parent_code]
                 )
-        log_action(request.user, "user.create", "user", user.id, {"role": role})
+        log_action(request.user, f"Audit {role} Created", "user", user.id, {"role": role})
         return Response({"id": user.id, "username": user.username, "temp_password": temp_password, "role": role})
 
 
@@ -376,10 +376,15 @@ class UserDetailView(AdminMixin, APIView):
             target = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=404)
+        
+        role = "User"
+        if target.groups.exists():
+            role = target.groups.first().name
+
         if "is_active" in request.data:
             target.is_active = bool(request.data["is_active"])
             target.save(update_fields=["is_active"])
-            log_action(request.user, "user.set_active", "user", user_id, {"is_active": target.is_active})
+            log_action(request.user, f"Audit {role} Toggled", "user", user_id, {"is_active": target.is_active})
         if "role" in request.data:
             new_role = request.data["role"]
             if new_role not in ("Student", "Teacher", "Parent", "Admin", "Employee"):
@@ -393,7 +398,7 @@ class UserDetailView(AdminMixin, APIView):
                         "ON CONFLICT (user_id) DO UPDATE SET user_type=EXCLUDED.user_type",
                         [user_id, new_role],
                     )
-            log_action(request.user, "user.set_role", "user", user_id, {"role": new_role})
+            log_action(request.user, f"Audit {role} Role Changed", "user", user_id, {"role": new_role})
         return Response({"detail": "Updated."})
 
     def post(self, request, user_id):
@@ -402,10 +407,15 @@ class UserDetailView(AdminMixin, APIView):
             target = User.objects.get(id=user_id)
         except User.DoesNotExist:
             return Response({"detail": "User not found."}, status=404)
+        
+        role = "User"
+        if target.groups.exists():
+            role = target.groups.first().name
+
         temp_password = get_random_string(10)
         target.set_password(temp_password)
         target.save(update_fields=["password"])
-        log_action(request.user, "user.reset_password", "user", user_id, {})
+        log_action(request.user, f"Audit {role} Password Reset", "user", user_id, {})
 
         email_sent = True
         try:
