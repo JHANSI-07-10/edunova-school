@@ -296,6 +296,22 @@ class UserListView(AdminMixin, APIView):
                     "ON CONFLICT (user_id) DO UPDATE SET user_type=EXCLUDED.user_type",
                     [user.id, role, d.get("phone_number", "")],
                 )
+        if role == "Student":
+            admission_number = f"ADM-{user.id:04d}-{get_random_string(4).upper()}"
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "INSERT INTO portal_student_profile (user_id, admission_number, date_of_birth, gender, status) "
+                    "VALUES (%s,%s,current_date,'Male','Active') "
+                    "ON CONFLICT (user_id) DO NOTHING",
+                    [user.id, admission_number]
+                )
+                if d.get("class_id"):
+                    cursor.execute(
+                        "INSERT INTO portal_student_enrollment (student_id, class_id, academic_year, roll_number) "
+                        "VALUES (%s,%s,'2025-26',%s) "
+                        "ON CONFLICT DO NOTHING",
+                        [user.id, d.get("class_id"), d.get("roll_number") or 1]
+                    )
         log_action(request.user, "user.create", "user", user.id, {"role": role})
         return Response({"id": user.id, "username": user.username, "temp_password": temp_password, "role": role})
 

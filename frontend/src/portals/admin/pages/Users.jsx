@@ -8,7 +8,8 @@ const ROLE_TONE = { Student: "blue", Teacher: "green", Parent: "gold", Admin: "r
 export default function Users() {
   const [users, setUsers] = useState(null);
   const [roleFilter, setRoleFilter] = useState("");
-  const [form, setForm] = useState({ role: "Student", first_name: "", last_name: "", email: "" });
+  const [classes, setClasses] = useState([]);
+  const [form, setForm] = useState({ role: "Student", first_name: "", last_name: "", email: "", class_id: "", roll_number: "" });
   const [toast, setToast] = useState("");
   const [created, setCreated] = useState(null);
 
@@ -16,14 +17,17 @@ export default function Users() {
     api.get(`/admin-portal/users/${roleFilter ? `?role=${roleFilter}` : ""}`).then(({ data }) => setUsers(data)).catch(() => setUsers([]));
   }
 
-  useEffect(() => { load(); }, [roleFilter]);
+  useEffect(() => {
+    load();
+    api.get("/admin-portal/classes/").then(({ data }) => setClasses(data)).catch(() => {});
+  }, [roleFilter]);
 
   async function createUser(e) {
     e.preventDefault();
     try {
       const { data } = await api.post("/admin-portal/users/", form);
       setCreated(data);
-      setForm({ role: "Student", first_name: "", last_name: "", email: "" });
+      setForm({ role: "Student", first_name: "", last_name: "", email: "", class_id: "", roll_number: "" });
       load();
     } catch (err) {
       setToast(err?.response?.data?.detail || "Could not create user.");
@@ -52,14 +56,57 @@ export default function Users() {
 
       <Card>
         <SectionTitle>Create a user</SectionTitle>
-        <form onSubmit={createUser} className="grid sm:grid-cols-2 lg:grid-cols-5 gap-3">
-          <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm">
-            {ROLES.map((r) => <option key={r}>{r}</option>)}
-          </select>
-          <input required placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-          <input placeholder="Last name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-          <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
-          <button className="bg-academic-blue text-white rounded-xl py-2 font-medium">Create</button>
+        <form onSubmit={createUser} className="space-y-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Role</label>
+              <select value={form.role} onChange={(e) => setForm({ ...form, role: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring">
+                {ROLES.map((r) => <option key={r}>{r}</option>)}
+              </select>
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase">First Name</label>
+              <input required placeholder="First name" value={form.first_name} onChange={(e) => setForm({ ...form, first_name: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Last Name</label>
+              <input placeholder="Last name" value={form.last_name} onChange={(e) => setForm({ ...form, last_name: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring" />
+            </div>
+            <div className="flex flex-col gap-1">
+              <label className="text-xs font-semibold text-slate-500 uppercase">Email Address</label>
+              <input required type="email" placeholder="Email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring" />
+            </div>
+          </div>
+
+          {form.role === "Student" && (
+            <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500 uppercase">Enroll in Class (Optional)</label>
+                <select
+                  value={form.class_id}
+                  onChange={(e) => setForm({ ...form, class_id: e.target.value })}
+                  className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring"
+                >
+                  <option value="">-- No Class / Delay Enrollment --</option>
+                  {classes.map((c) => (
+                    <option key={c.id} value={c.id}>{c.name}-{c.section} ({c.curriculum})</option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex flex-col gap-1">
+                <label className="text-xs font-semibold text-slate-500 uppercase">Roll Number (Optional)</label>
+                <input
+                  type="number"
+                  placeholder="e.g. 15"
+                  value={form.roll_number}
+                  onChange={(e) => setForm({ ...form, roll_number: e.target.value })}
+                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                />
+              </div>
+            </div>
+          )}
+
+          <button className="w-full bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90 transition-colors">Create User</button>
         </form>
       </Card>
 
