@@ -180,6 +180,28 @@ class AdmissionListView(AdminMixin, APIView):
         ))
         return Response(serialise(data))
 
+    def post(self, request):
+        d = request.data
+        from django.utils.crypto import get_random_string
+        reg_num = f"REG-{get_random_string(8).upper()}"
+        
+        # Ensure model is imported locally
+        from apps.admissions.models import AdmissionEnquiry
+        enquiry = AdmissionEnquiry.objects.create(
+            registration_number=reg_num,
+            applicant_name=d.get("applicant_name"),
+            date_of_birth=d.get("date_of_birth"),
+            gender=d.get("gender", "Male"),
+            target_class=d.get("target_class"),
+            parent_name=d.get("parent_name"),
+            parent_phone=d.get("parent_phone"),
+            parent_email=d.get("parent_email"),
+            address=d.get("address", ""),
+            scholarship_applied=d.get("scholarship_applied", False),
+            status="Registered"
+        )
+        return Response({"detail": "Admission application manually registered.", "registration_number": reg_num})
+
 
 class AdmissionActionView(AdminMixin, APIView):
     """POST { action: 'advance' | 'reject' | 'confirm', reason? } to move an
@@ -633,3 +655,85 @@ class BackupExportView(AdminMixin, APIView):
                 snapshot[t] = rows(f"SELECT * FROM {t}")
         log_action(request.user, "backup.export", "database", "-", {"tables": list(snapshot.keys())})
         return Response(serialise({"generated_at": date.today().isoformat(), "tables": snapshot}))
+
+
+class ClassEnrollmentView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_student_enrollment"):
+            return Response([])
+        data = rows(
+            """
+            SELECT se.id, se.student_id, u.username AS student_username,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                   se.class_id, c.name || '-' || c.section AS class_name,
+                   se.academic_year, se.roll_number
+            FROM portal_student_enrollment se
+            JOIN auth_user u ON u.id = se.student_id
+            JOIN portal_class c ON c.id = se.class_id
+            ORDER BY class_name, se.roll_number
+            """
+        )
+        return Response(serialise(data))
+
+    def post(self, request):
+        d = request.data
+        student_id = d.get("student_id")
+        class_id = d.get("class_id")
+        roll_number = d.get("roll_number")
+        academic_year = d.get("academic_year", "2025-26")
+
+        if not student_id or not class_id:
+            return Response({"detail": "student_id and class_id are required."}, status=400)
+
+        with connection.cursor() as cursor:
+            # Check if student is already enrolled in this class for the academic year
+            cursor.execute(
+                "SELECT id FROM portal_student_enrollment WHERE student_id=%s AND class_id=%s AND academic_year=%s",
+                [student_id, class_id, academic_year]
+            )
+            if cursor.fetchone():
+                return Response({"detail": "Student already enrolled in this class for the selected academic year."}, status=400)
+
+            cursor.execute(
+                "INSERT INTO portal_student_enrollment (student_id, class_id, academic_year, roll_number) "
+                "VALUES (%s,%s,%s,%s) RETURNING id",
+                [student_id, class_id, academic_year, roll_number]
+            )
+            new_id = cursor.fetchone()[0]
+
+        log_action(request.user, "student_enrollment.create", "portal_student_enrollment", new_id, d)
+        return Response({"id": new_id, "detail": "Student enrolled successfully."})
+
+
+class ClassTeacherAssignView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_class_teacher"):
+            return Response([])
+        data = rows(
+            """
+            SELECT ct.class_id, c.name || '-' || c.section AS class_name,
+                   ct.teacher_id, COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name
+            FROM portal_class_teacher ct
+            JOIN portal_class c ON c.id = ct.class_id
+            JOIN auth_user u ON u.id = ct.teacher_id
+            ORDER BY class_name
+            """
+        )
+        return Response(serialise(data))
+
+    def post(self, request):
+        d = request.data
+        class_id = d.get("class_id")
+        teacher_id = d.get("teacher_id")
+
+        if not class_id or not teacher_id:
+            return Response({"detail": "class_id and teacher_id are required."}, status=400)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO portal_class_teacher (class_id, teacher_id) VALUES (%s,%s) "
+                "ON CONFLICT (class_id) DO UPDATE SET teacher_id = EXCLUDED.teacher_id",
+                [class_id, teacher_id]
+            )
+        log_action(request.user, "class_teacher.assign", "portal_class_teacher", class_id, d)
+        return Response({"detail": "Class teacher assigned successfully."})

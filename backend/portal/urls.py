@@ -93,6 +93,8 @@ urlpatterns = [
     path("admin-portal/users/<int:user_id>/reset-password/", admin_views.UserDetailView.as_view()),
     path("admin-portal/roles/", admin_views.RolesView.as_view()),
     path("admin-portal/classes/", admin_views.ClassView.as_view()),
+    path("admin-portal/enrollments/", admin_views.ClassEnrollmentView.as_view()),
+    path("admin-portal/class-teachers/", admin_views.ClassTeacherAssignView.as_view()),
     path("admin-portal/subjects/", admin_views.SubjectView.as_view()),
     path("admin-portal/vehicles/", admin_views.VehicleView.as_view()),
     path("admin-portal/routes/", admin_views.RouteView.as_view()),

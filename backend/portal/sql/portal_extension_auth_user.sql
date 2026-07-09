@@ -300,3 +300,8 @@ CREATE INDEX IF NOT EXISTS idx_portal_enrollment_student ON public.portal_studen
 CREATE INDEX IF NOT EXISTS idx_portal_allocation_teacher ON public.portal_academic_allocation(teacher_id);
 CREATE INDEX IF NOT EXISTS idx_portal_attendance_student_date ON public.portal_attendance(student_id, date);
 CREATE INDEX IF NOT EXISTS idx_portal_message_users ON public.portal_message(sender_id, receiver_id);
+
+CREATE TABLE IF NOT EXISTS public.portal_class_teacher (
+  class_id integer PRIMARY KEY REFERENCES public.portal_class(id) ON DELETE CASCADE,
+  teacher_id integer REFERENCES public.auth_user(id) ON DELETE SET NULL
+);

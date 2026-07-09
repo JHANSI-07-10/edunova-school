@@ -15,18 +15,48 @@ class TeacherMixin:
 def teacher_classes(user_id):
     if not table_exists("portal_academic_allocation"):
         return []
-    return rows(
-        """
-        SELECT aa.id, aa.class_id, c.name || '-' || c.section AS class_name,
-               aa.subject_id, s.name AS subject_name,
-               (SELECT COUNT(*) FROM portal_student_enrollment se WHERE se.class_id=aa.class_id)::int AS student_count
-        FROM portal_academic_allocation aa
-        JOIN portal_class c ON c.id=aa.class_id
-        JOIN portal_subject s ON s.id=aa.subject_id
-        WHERE aa.teacher_id=%s
-        ORDER BY c.name, c.section, s.name
-        """, [user_id]
-    )
+    # Union class allocations with class teacher mappings
+    sql = """
+        SELECT DISTINCT c.id AS class_id, c.name || '-' || c.section AS class_name,
+               (SELECT COUNT(*) FROM portal_student_enrollment se WHERE se.class_id=c.id)::int AS student_count
+        FROM portal_class c
+        LEFT JOIN portal_academic_allocation aa ON aa.class_id=c.id
+        LEFT JOIN portal_class_teacher ct ON ct.class_id=c.id
+        WHERE aa.teacher_id=%s OR ct.teacher_id=%s
+        ORDER BY class_name
+    """
+    data = rows(sql, [user_id, user_id])
+    
+    result = []
+    for r in data:
+        allocations = rows(
+            """
+            SELECT aa.id, aa.subject_id, s.name AS subject_name
+            FROM portal_academic_allocation aa
+            JOIN portal_subject s ON s.id=aa.subject_id
+            WHERE aa.teacher_id=%s AND aa.class_id=%s
+            """, [user_id, r["class_id"]]
+        )
+        if allocations:
+            for a in allocations:
+                result.append({
+                    "id": a["id"],
+                    "class_id": r["class_id"],
+                    "class_name": r["class_name"],
+                    "subject_id": a["subject_id"],
+                    "subject_name": a["subject_name"],
+                    "student_count": r["student_count"]
+                })
+        else:
+            result.append({
+                "id": f"ct-{r['class_id']}",
+                "class_id": r["class_id"],
+                "class_name": r["class_name"],
+                "subject_id": 0,
+                "subject_name": "Class Administration",
+                "student_count": r["student_count"]
+            })
+    return result
 
 
 class TeacherProfileView(TeacherMixin, APIView):
