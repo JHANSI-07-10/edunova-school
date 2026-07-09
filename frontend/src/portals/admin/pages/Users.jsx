@@ -9,7 +9,17 @@ export default function Users() {
   const [users, setUsers] = useState(null);
   const [roleFilter, setRoleFilter] = useState("");
   const [classes, setClasses] = useState([]);
-  const [form, setForm] = useState({ role: "Student", first_name: "", last_name: "", email: "", class_id: "", roll_number: "" });
+  const [form, setForm] = useState({
+    role: "Student",
+    first_name: "",
+    last_name: "",
+    email: "",
+    class_id: "",
+    roll_number: "",
+    parent_name: "",
+    parent_email: "",
+    parent_phone: "",
+  });
   const [toast, setToast] = useState("");
   const [created, setCreated] = useState(null);
 
@@ -27,7 +37,17 @@ export default function Users() {
     try {
       const { data } = await api.post("/admin-portal/users/", form);
       setCreated(data);
-      setForm({ role: "Student", first_name: "", last_name: "", email: "", class_id: "", roll_number: "" });
+      setForm({
+        role: "Student",
+        first_name: "",
+        last_name: "",
+        email: "",
+        class_id: "",
+        roll_number: "",
+        parent_name: "",
+        parent_email: "",
+        parent_phone: "",
+      });
       load();
     } catch (err) {
       setToast(err?.response?.data?.detail || "Could not create user.");
@@ -79,31 +99,67 @@ export default function Users() {
           </div>
 
           {form.role === "Student" && (
-            <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Enroll in Class (Optional)</label>
-                <select
-                  value={form.class_id}
-                  onChange={(e) => setForm({ ...form, class_id: e.target.value })}
-                  className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring"
-                >
-                  <option value="">-- No Class / Delay Enrollment --</option>
-                  {classes.map((c) => (
-                    <option key={c.id} value={c.id}>{c.name}-{c.section} ({c.curriculum})</option>
-                  ))}
-                </select>
+            <>
+              <div className="grid sm:grid-cols-2 gap-3 pt-3 border-t border-slate-100">
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Enroll in Class (Optional)</label>
+                  <select
+                    value={form.class_id}
+                    onChange={(e) => setForm({ ...form, class_id: e.target.value })}
+                    className="rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring"
+                  >
+                    <option value="">-- No Class / Delay Enrollment --</option>
+                    {classes.map((c) => (
+                      <option key={c.id} value={c.id}>{c.name}-{c.section} ({c.curriculum})</option>
+                    ))}
+                  </select>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <label className="text-xs font-semibold text-slate-500 uppercase">Roll Number (Optional)</label>
+                  <input
+                    type="number"
+                    placeholder="e.g. 15"
+                    value={form.roll_number}
+                    onChange={(e) => setForm({ ...form, roll_number: e.target.value })}
+                    className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                  />
+                </div>
               </div>
-              <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Roll Number (Optional)</label>
-                <input
-                  type="number"
-                  placeholder="e.g. 15"
-                  value={form.roll_number}
-                  onChange={(e) => setForm({ ...form, roll_number: e.target.value })}
-                  className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
-                />
+
+              <div className="space-y-2 pt-3 border-t border-slate-100">
+                <h4 className="text-xs font-bold text-slate-700 uppercase">Parent / Guardian Details</h4>
+                <div className="grid sm:grid-cols-3 gap-3">
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Parent Name</label>
+                    <input
+                      placeholder="Parent Name"
+                      value={form.parent_name}
+                      onChange={(e) => setForm({ ...form, parent_name: e.target.value })}
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Parent Email (Links Accounts)</label>
+                    <input
+                      type="email"
+                      placeholder="parent@email.com"
+                      value={form.parent_email}
+                      onChange={(e) => setForm({ ...form, parent_email: e.target.value })}
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                    />
+                  </div>
+                  <div className="flex flex-col gap-1">
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Parent Phone</label>
+                    <input
+                      placeholder="Parent Phone"
+                      value={form.parent_phone}
+                      onChange={(e) => setForm({ ...form, parent_phone: e.target.value })}
+                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                    />
+                  </div>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           <button className="w-full bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90 transition-colors">Create User</button>

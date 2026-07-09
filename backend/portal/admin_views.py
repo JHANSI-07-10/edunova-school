@@ -298,13 +298,48 @@ class UserListView(AdminMixin, APIView):
                     [user.id, role, d.get("phone_number", "")],
                 )
         if role == "Student":
+            parent_id = None
+            parent_email = d.get("parent_email")
+            if parent_email:
+                parent_user = User.objects.filter(email__iexact=parent_email).first()
+                if not parent_user:
+                    parent_temp_password = get_random_string(10)
+                    parent_name = d.get("parent_name") or "Parent"
+                    p_first = parent_name.split(" ")[0]
+                    p_last = " ".join(parent_name.split(" ")[1:]) if " " in parent_name else ""
+                    parent_user = User.objects.create_user(
+                        username=_unique_username(parent_email.split("@")[0]),
+                        email=parent_email,
+                        password=parent_temp_password,
+                        first_name=p_first,
+                        last_name=p_last,
+                    )
+                    _ensure_group("Parent")
+                    parent_user.groups.add(Group.objects.get(name="Parent"))
+                    
+                    with connection.cursor() as cursor:
+                        if table_exists("portal_user_profile"):
+                            cursor.execute(
+                                "INSERT INTO portal_user_profile (user_id, user_type, phone_number) VALUES (%s,'Parent',%s) "
+                                "ON CONFLICT (user_id) DO NOTHING",
+                                [parent_user.id, d.get("parent_phone", "")],
+                            )
+                        if table_exists("portal_parent_profile"):
+                            parent_code = f"PRN-{parent_user.id:04d}-{get_random_string(4).upper()}"
+                            cursor.execute(
+                                "INSERT INTO portal_parent_profile (user_id, parent_code, father_name, emergency_contact) VALUES (%s,%s,%s,%s) "
+                                "ON CONFLICT (user_id) DO NOTHING",
+                                [parent_user.id, parent_code, parent_name, d.get("parent_phone", "")],
+                            )
+                parent_id = parent_user.id
+
             admission_number = f"ADM-{user.id:04d}-{get_random_string(4).upper()}"
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "INSERT INTO portal_student_profile (user_id, admission_number, date_of_birth, gender, status) "
-                    "VALUES (%s,%s,current_date,'Male','Active') "
-                    "ON CONFLICT (user_id) DO NOTHING",
-                    [user.id, admission_number]
+                    "INSERT INTO portal_student_profile (user_id, parent_id, admission_number, date_of_birth, gender, status) "
+                    "VALUES (%s,%s,%s,current_date,'Male','Active') "
+                    "ON CONFLICT (user_id) DO UPDATE SET parent_id=EXCLUDED.parent_id",
+                    [user.id, parent_id, admission_number]
                 )
                 if d.get("class_id"):
                     cursor.execute(
