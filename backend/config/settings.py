@@ -197,3 +197,5 @@ DEFAULT_FROM_EMAIL = config("DEFAULT_FROM_EMAIL", default="no-reply@edunovaacade
 
 OTP_EXPIRY_SECONDS = 300
 OTP_LENGTH = 6
+DEV_STATIC_OTP = True
+

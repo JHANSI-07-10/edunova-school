@@ -55,6 +55,7 @@ export default function Lms() {
   });
 
   const [uploading, setUploading] = useState(false);
+  const [scanningFile, setScanningFile] = useState(false);
 
   useEffect(() => {
     loadCourses();
@@ -229,6 +230,37 @@ export default function Lms() {
       qs[qIdx].options[optIdx] = val;
       return { ...f, questions: qs };
     });
+  };
+
+  const handlePdfQuizScan = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    setScanningFile(true);
+    setToast("Extracting questions from quiz document...");
+    const fd = new FormData();
+    fd.append("file", file);
+    try {
+      const { data } = await api.post("/teacher/assignments/scan-pdf/", fd, {
+        headers: { "Content-Type": "multipart/form-data" }
+      });
+      if (data.questions && data.questions.length > 0) {
+        setResourceForm(f => ({
+          ...f,
+          questions: data.questions.map(q => ({
+            question_text: q.question_text || "",
+            options: q.options?.length === 4 ? q.options : ["Option A", "Option B", "Option C", "Option D"],
+            correct_answer: q.correct_answer || ""
+          }))
+        }));
+        setToast(`Successfully extracted ${data.questions.length} questions! You can edit them below.`);
+      } else {
+        setToast("Could not extract questions. Please check the PDF content.");
+      }
+    } catch (err) {
+      setToast("Failed to parse the PDF. Ensure it is a valid quiz document.");
+    } finally {
+      setScanningFile(false);
+    }
   };
 
   async function handleAddResource(e) {
@@ -488,13 +520,13 @@ export default function Lms() {
                 <label className="text-xs font-semibold text-ink-secondary block mb-1">Target Class & Subject</label>
                 <select
                   required
-                  value={chapterForm.course_id}
+                  value={chapterForm.course_id ? String(chapterForm.course_id) : ""}
                   onChange={e => setChapterForm(f => ({ ...f, course_id: e.target.value }))}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none"
                 >
                   <option value="">-- Choose Class --</option>
                   {courses?.map(c => (
-                    <option key={c.id} value={c.id}>{c.class_name} — {c.subject_name}</option>
+                    <option key={c.id} value={String(c.id)}>{c.class_name} — {c.subject_name}</option>
                   ))}
                 </select>
               </div>
@@ -650,6 +682,26 @@ export default function Lms() {
                     >
                       <PlusCircle size={14} /> Add Question
                     </button>
+                  </div>
+
+                  {/* AI PDF Quiz Scanner */}
+                  <div className="p-3.5 bg-academic-blue/5 border border-dashed border-academic-blue/20 rounded-xl space-y-2">
+                    <label className="text-xs font-bold text-academic-blue block">AI-Powered Quiz Scanner (PDF)</label>
+                    <p className="text-[10px] text-slate-500 leading-relaxed">
+                      Upload a multiple-choice quiz/test PDF to automatically extract questions and answer options. You can review, edit, or adjust correct answers below.
+                    </p>
+                    <input 
+                      type="file"
+                      accept=".pdf"
+                      disabled={scanningFile}
+                      onChange={handlePdfQuizScan}
+                      className="text-[11px] block w-full file:mr-2 file:py-1.5 file:px-3 file:rounded-lg file:border-0 file:text-[10px] file:font-semibold file:bg-academic-blue/15 file:text-academic-blue hover:file:bg-academic-blue/25 file:cursor-pointer disabled:opacity-50"
+                    />
+                    {scanningFile && (
+                      <div className="text-[10px] text-academic-orange font-semibold animate-pulse flex items-center gap-1">
+                        ⚡ Scanning PDF and extracting questions, please wait...
+                      </div>
+                    )}
                   </div>
                   {resourceForm.questions.map((q, qIdx) => (
                     <div key={qIdx} className="bg-slate-50 border border-slate-100 rounded-xl p-4 space-y-3 relative">

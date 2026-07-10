@@ -5,6 +5,12 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api
 const api = axios.create({ baseURL: BASE_URL });
 
 api.interceptors.request.use((config) => {
+  if (config.url && config.url.startsWith('/') && !config.url.startsWith('/api/')) {
+    const base = config.baseURL || "";
+    if (base.endsWith('/api') || base.endsWith('/api/')) {
+      config.url = '/api' + config.url;
+    }
+  }
   const token = localStorage.getItem("edunova_student_access");
   if (token) config.headers.Authorization = `Bearer ${token}`;
   return config;

@@ -33,6 +33,11 @@ export default function Lms() {
   const [completed, setCompleted] = useState({});
   const [toast, setToast] = useState("");
   
+  // Selection Flow States
+  const [enrollments, setEnrollments] = useState([]);
+  const [selectedAcademicYear, setSelectedAcademicYear] = useState("");
+  const [selectedClassId, setSelectedClassId] = useState("");
+
   // Interaction States
   const [activeQuizId, setActiveQuizId] = useState(null);
   const [forumCourseId, setForumCourseId] = useState(null);
@@ -51,15 +56,37 @@ export default function Lms() {
     loadCourses();
   }, []);
 
-  function loadCourses() {
-    api.get("/student/courses/")
+  function loadCourses(targetClassId = null) {
+    const url = targetClassId ? `/student/courses/?class_id=${targetClassId}` : "/student/courses/";
+    api.get(url)
       .then(({ data }) => {
-        setCourses(data);
+        setEnrollments(data.enrollments || []);
+        setCourses(data.courses || []);
+        
+        if (data.enrollments?.length > 0) {
+          const first = data.enrollments[0];
+          const activeClassId = targetClassId || selectedClassId || first.class_id;
+          const match = data.enrollments.find(e => String(e.class_id) === String(activeClassId));
+          if (match) {
+            setSelectedAcademicYear(match.academic_year);
+            setSelectedClassId(match.class_id);
+          } else {
+            setSelectedAcademicYear(first.academic_year);
+            setSelectedClassId(first.class_id);
+          }
+        }
+        
         // Track completed resources
         const compMap = {};
-        data.forEach(c => {
+        const courseList = data.courses || [];
+        courseList.forEach(c => {
           if (c.chapters) {
             c.chapters.forEach(ch => {
+              if (ch.resources) {
+                ch.resources.forEach(r => {
+                  if (r.is_completed) compMap[r.id] = true;
+                });
+              }
               if (ch.lessons) {
                 ch.lessons.forEach(l => {
                   if (l.resources) {
@@ -79,8 +106,26 @@ export default function Lms() {
         });
         setCompleted(compMap);
       })
-      .catch(() => setCourses([]));
+      .catch(() => {
+        setCourses([]);
+        setEnrollments([]);
+      });
   }
+
+  const handleYearChange = (year) => {
+    setSelectedAcademicYear(year);
+    const classesForYear = enrollments.filter(e => e.academic_year === year);
+    if (classesForYear.length > 0) {
+      const targetClass = classesForYear[0].class_id;
+      setSelectedClassId(targetClass);
+      loadCourses(targetClass);
+    }
+  };
+
+  const handleClassChange = (classId) => {
+    setSelectedClassId(classId);
+    loadCourses(classId);
+  };
 
   async function toggleComplete(contentId) {
     const isCurrentlyDone = completed[contentId];
@@ -166,53 +211,90 @@ export default function Lms() {
     }
   }
 
-  if (!courses) return <Loader rows={4} />;
-  if (!courses.length) return <EmptyState label="No courses published for your class yet." />;
-
   if (!selectedCourse) {
+    const uniqueAcademicYears = [...new Set(enrollments.map(e => e.academic_year))];
+    const classesForYear = enrollments.filter(e => e.academic_year === selectedAcademicYear);
+
     return (
       <div className="space-y-6">
-        <div>
-          <h2 className="font-heading text-2xl font-bold text-ink-primary">My LMS Courses</h2>
-          <p className="text-sm text-ink-secondary">Select a course to view chapters, stream classes, and submit homework.</p>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div>
+            <h2 className="font-heading text-2xl font-bold text-ink-primary">My LMS Courses</h2>
+            <p className="text-sm text-ink-secondary">Select a course to view chapters, stream classes, and submit homework.</p>
+          </div>
+
+          {/* Academic Year and Class Selectors */}
+          <div className="flex flex-col sm:flex-row gap-3 bg-white p-3 rounded-xl border border-slate-100 shadow-sm self-start md:self-auto">
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Academic Year:</label>
+              <select
+                value={selectedAcademicYear}
+                onChange={e => handleYearChange(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold focus-ring outline-none bg-slate-50 cursor-pointer text-ink-primary"
+              >
+                {uniqueAcademicYears.map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <label className="text-xs font-bold text-slate-500 whitespace-nowrap">Class:</label>
+              <select
+                value={selectedClassId}
+                onChange={e => handleClassChange(e.target.value)}
+                className="rounded-lg border border-slate-200 px-2.5 py-1.5 text-xs font-semibold focus-ring outline-none bg-slate-50 cursor-pointer text-ink-primary"
+              >
+                {classesForYear.map(c => (
+                  <option key={c.class_id} value={c.class_id}>{c.class_name}</option>
+                ))}
+              </select>
+            </div>
+          </div>
         </div>
 
-        <div className="grid sm:grid-cols-2 gap-5">
-          {courses.map(c => {
-            const progress = getCourseProgress(c);
-            return (
-              <Card 
-                key={c.id} 
-                className="hover:border-academic-blue border border-slate-100 hover:shadow-raised transition-all cursor-pointer p-6"
-                onClick={() => {
-                  setSelectedCourse(c);
-                  // Expand the first chapter by default
-                  if (c.chapters?.length > 0) {
-                    setExpandedChapters({ [c.chapters[0].id]: true });
-                  }
-                }}
-              >
-                <div className="flex items-center justify-between mb-4">
-                  <div>
-                    <h3 className="font-heading font-bold text-lg text-ink-primary">{c.subject_name}</h3>
-                    <p className="text-xs text-ink-secondary mt-0.5">{c.title}</p>
+        {!courses ? (
+          <Loader rows={4} />
+        ) : !courses.length ? (
+          <EmptyState label="No courses published for the selected class yet." />
+        ) : (
+          <div className="grid sm:grid-cols-2 gap-5 animate-[fadeIn_.2s_ease]">
+            {courses.map(c => {
+              const progress = getCourseProgress(c);
+              return (
+                <Card 
+                  key={c.id} 
+                  className="hover:border-academic-blue border border-slate-100 hover:shadow-raised transition-all cursor-pointer p-6"
+                  onClick={() => {
+                    setSelectedCourse(c);
+                    // Expand the first chapter by default
+                    if (c.chapters?.length > 0) {
+                      setExpandedChapters({ [c.chapters[0].id]: true });
+                    }
+                  }}
+                >
+                  <div className="flex items-center justify-between mb-4">
+                    <div>
+                      <h3 className="font-heading font-bold text-lg text-ink-primary">{c.subject_name}</h3>
+                      <p className="text-xs text-ink-secondary mt-0.5">{c.title}</p>
+                    </div>
+                    <span className="text-xs font-semibold px-2.5 py-1 bg-academic-blue/10 text-academic-blue rounded-full">
+                      {progress}% Done
+                    </span>
                   </div>
-                  <span className="text-xs font-semibold px-2.5 py-1 bg-academic-blue/10 text-academic-blue rounded-full">
-                    {progress}% Done
-                  </span>
-                </div>
-                {/* Progress bar */}
-                <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
-                  <div className="bg-academic-blue h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
-                </div>
-                <p className="text-sm text-ink-secondary line-clamp-2 mb-4">{c.description || "Course description."}</p>
-                <div className="flex justify-end text-xs font-bold text-academic-blue">
-                  Explore Syllabus &rarr;
-                </div>
-              </Card>
-            );
-          })}
-        </div>
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-100 h-2 rounded-full overflow-hidden mb-4">
+                    <div className="bg-academic-blue h-full transition-all duration-300" style={{ width: `${progress}%` }}></div>
+                  </div>
+                  <p className="text-sm text-ink-secondary line-clamp-2 mb-4">{c.description || "Course description."}</p>
+                  <div className="flex justify-end text-xs font-bold text-academic-blue">
+                    Explore Syllabus &rarr;
+                  </div>
+                </Card>
+              );
+            })}
+          </div>
+        )}
       </div>
     );
   }
@@ -349,78 +431,119 @@ export default function Lms() {
                               Lesson {idx + 1}.{lesIdx + 1}: {les.title}
                             </h5>
                             {les.description && <p className="text-xs text-ink-secondary">{les.description}</p>}
+                            {/* Lesson Resources categorized */}
+                            <div className="space-y-3 pt-2">
+                              {(() => {
+                                const resList = les.resources || [];
+                                const types = [
+                                  { key: "Video", label: "🎥 Videos", icon: Video },
+                                  { key: "PDF", label: "📄 PDFs", icon: FileText },
+                                  { key: "PPT", label: "📊 PPT Presentations", icon: FileSpreadsheet },
+                                  { key: "Audio", label: "🎧 Audio Lectures", icon: Volume2 },
+                                  { key: "Image", label: "🖼 Images & Diagrams", icon: ImageIcon },
+                                  { key: "Notes", label: "📝 Lesson Notes", icon: FileText },
+                                  { key: "Assignment", label: "📚 Assignments", icon: FileSpreadsheet },
+                                  { key: "Quiz", label: "🧠 Quizzes / Tests", icon: HelpCircle }
+                                ];
+                                
+                                const filteredTypes = types.map(t => ({
+                                  ...t,
+                                  items: resList.filter(r => r.content_type === t.key)
+                                })).filter(t => t.items.length > 0);
 
-                            {/* Lesson Resources */}
-                            <div className="space-y-2">
-                              {les.resources?.map(r => {
-                                const Icon = ICONS[r.content_type] || FileText;
-                                const isDone = completed[r.id];
+                                if (filteredTypes.length === 0) {
+                                  return <p className="text-[11px] text-slate-400 italic">No resources uploaded for this lesson yet.</p>;
+                                }
+
                                 return (
-                                  <div 
-                                    key={r.id} 
-                                    className={`flex items-center gap-3 p-3 rounded-xl border bg-white hover:border-slate-300 transition-colors hover:shadow-sm ${isDone ? 'border-emerald-100 bg-emerald-50/10' : 'border-slate-100'}`}
-                                  >
-                                    {/* Completion Checkbox */}
-                                    <button 
-                                      onClick={() => toggleComplete(r.id)}
-                                      title={isDone ? "Mark incomplete" : "Mark as complete"}
-                                      className="text-academic-green focus:outline-none shrink-0"
-                                    >
-                                      {isDone ? <CheckCircle size={18} /> : <Circle size={18} className="text-slate-300 hover:text-slate-400" />}
-                                    </button>
+                                  <div className="space-y-3">
+                                    {filteredTypes.map(t => {
+                                      const TIcon = t.icon;
+                                      return (
+                                        <div key={t.key} className="space-y-1.5 border-l-2 border-academic-blue/20 pl-3">
+                                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                            <TIcon size={12} className="text-academic-blue/70 shrink-0" />
+                                            {t.label}
+                                          </p>
+                                          <div className="space-y-1.5">
+                                            {t.items.map(r => {
+                                              const isDone = completed[r.id];
+                                              return (
+                                                <div 
+                                                  key={r.id} 
+                                                  className={`flex items-center gap-3 p-2.5 rounded-lg border bg-white hover:border-slate-300 transition-colors hover:shadow-sm ${isDone ? 'border-emerald-100 bg-emerald-50/10' : 'border-slate-100'}`}
+                                                >
+                                                  {/* Completion Checkbox */}
+                                                  <button 
+                                                    onClick={() => toggleComplete(r.id)}
+                                                    title={isDone ? "Mark incomplete" : "Mark as complete"}
+                                                    className="text-academic-green focus:outline-none shrink-0"
+                                                  >
+                                                    {isDone ? <CheckCircle size={16} /> : <Circle size={16} className="text-slate-300 hover:text-slate-400" />}
+                                                  </button>
 
-                                    {/* Resource Details */}
-                                    <div 
-                                      onClick={() => {
-                                        if (r.content_type === "Video") {
-                                          setActiveMedia({
-                                            type: "Video",
-                                            url: r.resource_url,
-                                            title: r.title,
-                                            description: r.description,
-                                            contentId: r.id
-                                          });
-                                        } else if (r.content_type === "Quiz") {
-                                          setActiveQuizId(r.quiz_id);
-                                        } else {
-                                          // Open direct PDF/PPT link
-                                          window.open(r.resource_url, "_blank");
-                                          if (!isDone) toggleComplete(r.id);
-                                        }
-                                      }}
-                                      className="flex-1 min-w-0 cursor-pointer"
-                                    >
-                                      <div className="flex items-center gap-1.5 font-medium text-sm text-ink-primary hover:text-academic-blue">
-                                        <Icon size={14} className="text-academic-blue shrink-0" />
-                                        <span className="truncate">{r.title}</span>
-                                      </div>
-                                      {r.description && <p className="text-xs text-ink-secondary mt-0.5 truncate">{r.description}</p>}
-                                    </div>
+                                                  {/* Resource Details */}
+                                                  <div 
+                                                    onClick={() => {
+                                                      if (r.content_type === "Video") {
+                                                        setActiveMedia({
+                                                          type: "Video",
+                                                          url: r.resource_url,
+                                                          title: r.title,
+                                                          description: r.description,
+                                                          contentId: r.id
+                                                        });
+                                                      } else if (r.content_type === "Quiz") {
+                                                        setActiveQuizId(r.quiz_id);
+                                                      } else {
+                                                        window.open(r.resource_url, "_blank");
+                                                        if (!isDone) toggleComplete(r.id);
+                                                      }
+                                                    }}
+                                                    className="flex-1 min-w-0 cursor-pointer"
+                                                  >
+                                                    <div className="flex items-center gap-1.5 font-semibold text-xs text-ink-primary hover:text-academic-blue">
+                                                      <span className="truncate">{r.title}</span>
+                                                    </div>
+                                                    {r.description && <p className="text-[10px] text-slate-500 mt-0.5 truncate">{r.description}</p>}
+                                                  </div>
 
-                                    {/* Additional Resource Actions / Status Info */}
-                                    <div className="shrink-0 text-xs text-ink-secondary font-medium">
-                                      {r.content_type === "Assignment" ? (
-                                        r.submission ? (
-                                          r.submission.marks_obtained !== null ? (
-                                            <Badge tone="green">{r.submission.marks_obtained}/{r.max_marks} marks</Badge>
-                                          ) : (
-                                            <Badge tone="orange">Awaiting Grade</Badge>
-                                          )
-                                        ) : (
-                                          <button 
-                                            onClick={() => setSubmittingAssignmentId(r.assignment_id)}
-                                            className="px-3 py-1 bg-academic-blue text-white rounded-lg hover:bg-academic-blue/90"
-                                          >
-                                            Submit
-                                          </button>
-                                        )
-                                      ) : r.content_type === "Quiz" ? (
-                                        <Badge tone="orange">Quiz</Badge>
-                                      ) : null}
-                                    </div>
+                                                  {/* Additional Actions */}
+                                                  <div className="shrink-0 text-xs text-ink-secondary font-medium">
+                                                    {r.content_type === "Assignment" ? (
+                                                      r.submission ? (
+                                                        r.submission.marks_obtained !== null ? (
+                                                          <Badge tone="green">{r.submission.marks_obtained}/{r.max_marks} marks</Badge>
+                                                        ) : (
+                                                          <Badge tone="orange">Awaiting Grade</Badge>
+                                                        )
+                                                      ) : (
+                                                        <button 
+                                                          onClick={() => setSubmittingAssignmentId(r.assignment_id)}
+                                                          className="px-3 py-1 bg-academic-blue text-white text-[10px] rounded-lg hover:bg-academic-blue/90"
+                                                        >
+                                                          Write Test
+                                                        </button>
+                                                      )
+                                                    ) : r.content_type === "Quiz" ? (
+                                                      <button
+                                                        onClick={() => setActiveQuizId(r.quiz_id)}
+                                                        className="px-3 py-1 bg-academic-orange text-white text-[10px] rounded-lg hover:bg-academic-orange/90"
+                                                      >
+                                                        Write Test
+                                                      </button>
+                                                    ) : null}
+                                                  </div>
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
                                   </div>
                                 );
-                              })}
+                              })()}
                             </div>
                           </div>
                         ))

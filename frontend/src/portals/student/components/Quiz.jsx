@@ -83,23 +83,28 @@ export default function Quiz({ courseId, onClose }) {
                 <div key={q.id}>
                   <p className="text-sm font-medium mb-2">{idx + 1}. {q.question_text}</p>
                   <div className="space-y-1.5">
-                    {Object.entries(q.options || {}).map(([key, label]) => (
-                      <label
-                        key={key}
-                        className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${
-                          answers[q.id] === key ? "border-academic-blue bg-academic-blue/5" : "border-slate-200"
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name={`q-${q.id}`}
-                          className="accent-academic-blue"
-                          checked={answers[q.id] === key}
-                          onChange={() => setAnswers((a) => ({ ...a, [q.id]: key }))}
-                        />
-                        {label}
-                      </label>
-                    ))}
+                    {(() => {
+                      const optionsList = Array.isArray(q.options) 
+                        ? q.options 
+                        : (typeof q.options === "string" ? JSON.parse(q.options) : Object.values(q.options || {}));
+                      return optionsList.map((label, optIdx) => (
+                        <label
+                          key={optIdx}
+                          className={`flex items-center gap-2 rounded-xl border px-3 py-2 text-sm cursor-pointer transition-colors ${
+                            answers[q.id] === label ? "border-academic-blue bg-academic-blue/5" : "border-slate-200"
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name={`q-${q.id}`}
+                            className="accent-academic-blue"
+                            checked={answers[q.id] === label}
+                            onChange={() => setAnswers((a) => ({ ...a, [q.id]: label }))}
+                          />
+                          {label}
+                        </label>
+                      ));
+                    })()}
                   </div>
                 </div>
               ))}

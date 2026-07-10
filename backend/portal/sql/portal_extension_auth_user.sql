@@ -80,7 +80,9 @@ CREATE TABLE IF NOT EXISTS public.portal_timetable (
   teacher_id integer NOT NULL REFERENCES public.auth_user(id) ON DELETE CASCADE,
   day_of_week varchar(15) NOT NULL,
   start_time time NOT NULL,
-  end_time time NOT NULL
+  end_time time NOT NULL,
+  room_number varchar(50),
+  meeting_link text
 );
 
 CREATE TABLE IF NOT EXISTS public.portal_attendance (

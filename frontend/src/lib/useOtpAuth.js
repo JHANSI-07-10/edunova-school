@@ -18,6 +18,16 @@ const BASE_URL = import.meta.env.VITE_API_BASE_URL || "http://localhost:8000/api
 // Bare axios instance — no auth header needed for these public endpoints.
 const authClient = axios.create({ baseURL: BASE_URL });
 
+authClient.interceptors.request.use((config) => {
+  if (config.url && config.url.startsWith('/') && !config.url.startsWith('/api/')) {
+    const base = config.baseURL || "";
+    if (base.endsWith('/api') || base.endsWith('/api/')) {
+      config.url = '/api' + config.url;
+    }
+  }
+  return config;
+});
+
 /**
  * Step 1 — validate credentials, trigger OTP email.
  * Returns { user_id, user_type, detail }.

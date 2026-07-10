@@ -28,16 +28,44 @@ export default function Timetable() {
         <Card key={day}>
           <p className="font-heading font-semibold mb-3">{day}</p>
           {periods.length ? (
-            <ul className="space-y-2">
-              {periods.map((p) => (
-                <li key={p.id} className="flex items-center justify-between rounded-xl bg-surface-light px-3 py-2">
-                  <div>
-                    <p className="text-sm font-medium">{p.subject_name}</p>
-                    <p className="text-xs text-ink-secondary">{p.teacher_name}</p>
+            <ul className="space-y-3">
+              {periods.map((p, idx) => (
+                <li key={p.id} className="rounded-xl border border-slate-100/80 bg-slate-50/50 p-4 space-y-2.5 transition-all hover:shadow-sm">
+                  {/* Period badge and time */}
+                  <div className="flex items-center justify-between border-b border-slate-100/60 pb-2">
+                    <span className="text-[10px] font-bold text-academic-orange uppercase tracking-wider">
+                      Period {idx + 1}
+                    </span>
+                    <span className="text-[11px] font-numeric font-semibold text-academic-blue bg-academic-blue/5 px-2 py-0.5 rounded-md">
+                      {p.start_time.slice(0, 5)} – {p.end_time.slice(0, 5)}
+                    </span>
                   </div>
-                  <span className="text-xs font-numeric text-academic-blue whitespace-nowrap">
-                    {p.start_time.slice(0, 5)}–{p.end_time.slice(0, 5)}
-                  </span>
+
+                  {/* Teacher & Subject */}
+                  <div className="space-y-1">
+                    <p className="text-sm font-semibold text-ink-primary">{p.subject_name}</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1.5">
+                      <span className="w-1.5 h-1.5 rounded-full bg-academic-gold shrink-0"></span>
+                      <span className="truncate">{p.teacher_name}</span>
+                    </p>
+                  </div>
+
+                  {/* Room & Link */}
+                  <div className="flex items-center justify-between pt-1 text-xs">
+                    <div className="text-slate-500 font-medium">
+                      🏢 Classroom: <span className="text-ink-primary font-semibold">{p.room_number}</span>
+                    </div>
+                    {p.meeting_link && (
+                      <a
+                        href={p.meeting_link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="flex items-center gap-1 text-[10px] font-bold bg-academic-green/10 text-academic-green hover:bg-academic-green/20 px-2.5 py-1 rounded-lg transition-colors uppercase tracking-wider"
+                      >
+                        🎥 Join Online
+                      </a>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>

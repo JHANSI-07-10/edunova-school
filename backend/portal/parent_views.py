@@ -474,6 +474,60 @@ class ParentLmsProgressView(ParentMixin, APIView):
             return Response({"courses": [], "detail": "Child is not enrolled in any class."})
             
         class_id = enroll["class_id"]
+
+        course_id = request.query_params.get("course_id")
+        if course_id:
+            course = row("SELECT id, title, subject_id, class_id FROM portal_course WHERE id=%s", [course_id])
+            if not course or course["class_id"] != class_id:
+                return Response({"detail": "Course not found or unauthorized."}, status=404)
+                
+            chapters = rows(
+                "SELECT id, title, description FROM portal_chapter WHERE course_id=%s ORDER BY sort_order, id",
+                [course_id]
+            ) if table_exists("portal_chapter") else []
+            for ch in chapters:
+                # Direct chapter resources
+                ch["resources"] = rows(
+                    """
+                    SELECT r.id, r.content_type, r.title, r.resource_url, r.description,
+                           EXISTS(SELECT 1 FROM portal_course_progress cp WHERE cp.student_id=%s AND cp.content_id=r.id) AS is_completed
+                    FROM portal_course_content r
+                    WHERE r.chapter_id=%s AND r.lesson_id IS NULL AND (r.visible_from IS NULL OR r.visible_from <= now())
+                    ORDER BY r.sort_order, r.id
+                    """, [child_id, ch["id"]]
+                ) if table_exists("portal_course_content") else []
+
+                lessons = rows(
+                    "SELECT id, title, description FROM portal_lesson WHERE chapter_id=%s ORDER BY sort_order, id",
+                    [ch["id"]]
+                ) if table_exists("portal_lesson") else []
+                for les in lessons:
+                    resources = rows(
+                        """
+                        SELECT r.id, r.content_type, r.title, r.resource_url, r.description,
+                               r.due_date, r.max_marks, r.quiz_id, r.assignment_id,
+                               EXISTS(SELECT 1 FROM portal_course_progress cp WHERE cp.student_id=%s AND cp.content_id=r.id) AS is_completed
+                        FROM portal_course_content r
+                        WHERE r.lesson_id=%s AND (r.visible_from IS NULL OR r.visible_from <= now())
+                        ORDER BY r.sort_order, r.id
+                        """, [child_id, les["id"]]
+                    ) if table_exists("portal_course_content") else []
+                    
+                    for res in resources:
+                        if res.get("assignment_id"):
+                            sub = row(
+                                "SELECT submitted_at, marks_obtained, teacher_feedback, grade FROM portal_assignment_submission WHERE assignment_id=%s AND student_id=%s",
+                                [res["assignment_id"], child_id]
+                            )
+                            res["submission"] = sub if sub else None
+                    les["resources"] = resources
+                ch["lessons"] = lessons
+                
+            return Response(serialise({
+                "id": course["id"],
+                "title": course["title"],
+                "chapters": chapters
+            }))
         
         # Get courses
         courses = rows(

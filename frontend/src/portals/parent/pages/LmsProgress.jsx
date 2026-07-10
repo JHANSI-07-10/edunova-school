@@ -1,9 +1,11 @@
 import { 
   CheckCircle2, AlertTriangle, BookOpen, CalendarDays, Award, Clock, 
-  ChevronRight, Smile, Bookmark, BookOpenCheck, Frown
+  ChevronRight, Smile, Bookmark, BookOpenCheck, Frown, ArrowLeft,
+  CheckCircle, Circle, PlayCircle, FileText, FileSpreadsheet, Volume2,
+  Image as ImageIcon, HelpCircle, ChevronDown
 } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Card, EmptyState, Loader, SectionTitle } from "../components/Common";
+import { Card, EmptyState, Loader, SectionTitle, Badge } from "../components/Common";
 import { useAuth } from "../context/AuthContext";
 import api from "../lib/api";
 
@@ -12,14 +14,36 @@ export default function LmsProgress() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(false);
 
+  // Drill down syllabus states
+  const [activeCourseId, setActiveCourseId] = useState(null);
+  const [courseDetails, setCourseDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [expandedChapters, setExpandedChapters] = useState({});
+
   useEffect(() => {
     if (!activeChildId) return;
     setLoading(true);
+    setActiveCourseId(null);
+    setCourseDetails(null);
     api.get(`/parent/lms/progress/?child_id=${activeChildId}`)
       .then(({ data }) => setData(data))
       .catch(() => setData({ courses: [] }))
       .finally(() => setLoading(false));
   }, [activeChildId]);
+
+  const handleCourseClick = (courseId) => {
+    setActiveCourseId(courseId);
+    setDetailsLoading(true);
+    api.get(`/parent/lms/progress/?child_id=${activeChildId}&course_id=${courseId}`)
+      .then(({ data }) => {
+        setCourseDetails(data);
+        if (data.chapters?.length > 0) {
+          setExpandedChapters({ [data.chapters[0].id]: true });
+        }
+      })
+      .catch(() => setCourseDetails(null))
+      .finally(() => setDetailsLoading(false));
+  };
 
   if (!activeChildId) {
     return <EmptyState label="Please select a child from the top bar to view their learning progress." />;
@@ -32,6 +56,162 @@ export default function LmsProgress() {
   const avgProgress = courses.length 
     ? Math.round(courses.reduce((s, c) => s + c.progress_percent, 0) / courses.length) 
     : 0;
+
+  if (activeCourseId) {
+    if (detailsLoading || !courseDetails) return <Loader rows={5} />;
+
+    return (
+      <div className="space-y-6 animate-[fadeIn_.2s_ease]">
+        {/* Header */}
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={() => {
+              setActiveCourseId(null);
+              setCourseDetails(null);
+            }}
+            className="w-9 h-9 bg-white border border-slate-200 rounded-xl flex items-center justify-center hover:bg-slate-50 transition-colors"
+          >
+            <ArrowLeft size={16} className="text-ink-secondary" />
+          </button>
+          <div>
+            <h2 className="font-heading text-xl font-bold text-ink-primary">{courseDetails.title}</h2>
+            <p className="text-xs text-ink-secondary">Detailed child completion stats for chapters and lessons.</p>
+          </div>
+        </div>
+
+        {/* Chapters Outline */}
+        <div className="space-y-4">
+          {!courseDetails.chapters?.length ? (
+            <EmptyState label="No chapters published for this subject yet." />
+          ) : (
+            courseDetails.chapters.map((ch, idx) => {
+              const isExpanded = expandedChapters[ch.id];
+              return (
+                <div key={ch.id} className="bg-white rounded-card border border-slate-100/85 overflow-hidden shadow-sm">
+                  {/* Chapter Header Accordion */}
+                  <button 
+                    onClick={() => setExpandedChapters(p => ({ ...p, [ch.id]: !p[ch.id] }))}
+                    className="w-full flex items-center justify-between p-4 hover:bg-slate-50/50 transition-colors text-left outline-none"
+                  >
+                    <div className="min-w-0 pr-4">
+                      <span className="text-[10px] font-bold text-academic-orange tracking-wider uppercase block mb-0.5">Chapter {idx + 1}</span>
+                      <h4 className="font-heading font-bold text-ink-primary text-base truncate">{ch.title}</h4>
+                      {ch.description && <p className="text-xs text-ink-secondary line-clamp-1 mt-0.5">{ch.description}</p>}
+                    </div>
+                    {isExpanded ? <ChevronDown size={18} className="text-slate-400 shrink-0" /> : <ChevronRight size={18} className="text-slate-400 shrink-0" />}
+                  </button>
+
+                  {/* Chapter Lessons */}
+                  {isExpanded && (
+                    <div className="p-4 space-y-4 border-t border-slate-50 bg-slate-50/10 animate-[fadeIn_.2s_ease]">
+                      {ch.resources?.length > 0 && (
+                        <div className="space-y-2 border-b border-slate-100 pb-3 mb-2">
+                          <p className="text-xs font-bold text-academic-blue uppercase tracking-wider">Chapter Syllabus & Notes</p>
+                          {ch.resources.map(r => (
+                            <div key={r.id} className="flex items-center gap-3 p-2.5 rounded-lg border border-slate-100 bg-white">
+                              <span className="text-academic-green">
+                                {r.is_completed ? <CheckCircle size={16} /> : <Circle size={16} className="text-slate-300" />}
+                              </span>
+                              <div className="flex-1 min-w-0">
+                                <span className="text-xs font-semibold text-ink-primary block truncate">{r.title}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+
+                      {!ch.lessons?.length ? (
+                        <p className="text-xs text-ink-secondary italic">No lessons published in this chapter yet.</p>
+                      ) : (
+                        ch.lessons.map((les, lesIdx) => (
+                          <div key={les.id} className="bg-slate-50/30 rounded-xl p-3 border border-slate-100/50 space-y-3">
+                            <h5 className="font-heading font-bold text-xs text-ink-primary uppercase tracking-wide">
+                              Lesson {idx + 1}.{lesIdx + 1}: {les.title}
+                            </h5>
+                            {les.description && <p className="text-xs text-ink-secondary">{les.description}</p>}
+
+                            {/* Lesson Resources categorized */}
+                            <div className="space-y-3 pt-1">
+                              {(() => {
+                                const resList = les.resources || [];
+                                const types = [
+                                  { key: "Video", label: "🎥 Videos", icon: PlayCircle },
+                                  { key: "PDF", label: "📄 PDFs", icon: FileText },
+                                  { key: "PPT", label: "📊 PPT Presentations", icon: FileSpreadsheet },
+                                  { key: "Audio", label: "🎧 Audio Lectures", icon: Volume2 },
+                                  { key: "Image", label: "🖼 Images & Diagrams", icon: ImageIcon },
+                                  { key: "Notes", label: "📝 Lesson Notes", icon: FileText },
+                                  { key: "Assignment", label: "📚 Assignments", icon: FileSpreadsheet },
+                                  { key: "Quiz", label: "🧠 Quizzes / Tests", icon: HelpCircle }
+                                ];
+                                
+                                const filteredTypes = types.map(t => ({
+                                  ...t,
+                                  items: resList.filter(r => r.content_type === t.key)
+                                })).filter(t => t.items.length > 0);
+
+                                if (filteredTypes.length === 0) {
+                                  return <p className="text-[11px] text-slate-400 italic">No study resources uploaded for this lesson yet.</p>;
+                                }
+
+                                return (
+                                  <div className="space-y-3">
+                                    {filteredTypes.map(t => {
+                                      const TIcon = t.icon;
+                                      return (
+                                        <div key={t.key} className="space-y-1.5 border-l-2 border-academic-blue/20 pl-3">
+                                          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider flex items-center gap-1.5">
+                                            <TIcon size={12} className="text-academic-blue/70 shrink-0" />
+                                            {t.label}
+                                          </p>
+                                          <div className="space-y-1.5">
+                                            {t.items.map(r => {
+                                              const isDone = r.is_completed;
+                                              return (
+                                                <div 
+                                                  key={r.id} 
+                                                  className={`flex items-center justify-between p-2.5 rounded-lg border bg-white ${isDone ? 'border-emerald-100 bg-emerald-50/5' : 'border-slate-100'}`}
+                                                >
+                                                  <div className="flex items-center gap-2 min-w-0">
+                                                    <span className="text-academic-green shrink-0">
+                                                      {isDone ? <CheckCircle size={15} /> : <Circle size={15} className="text-slate-300" />}
+                                                    </span>
+                                                    <span className="text-xs font-semibold text-ink-primary truncate">{r.title}</span>
+                                                  </div>
+                                                  
+                                                  {/* Marks or submissions */}
+                                                  {r.content_type === "Assignment" && r.submission && (
+                                                    <div className="text-[10px] font-bold text-academic-blue bg-academic-blue/5 px-2 py-0.5 rounded-md">
+                                                      {r.submission.marks_obtained !== null ? `Score: ${r.submission.marks_obtained}/${r.max_marks}` : 'Submitted'}
+                                                    </div>
+                                                  )}
+                                                  {r.content_type === "Quiz" && isDone && (
+                                                    <Badge tone="green">Completed</Badge>
+                                                  )}
+                                                </div>
+                                              );
+                                            })}
+                                          </div>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                );
+                              })()}
+                            </div>
+                          </div>
+                        ))
+                      )}
+                    </div>
+                  )}
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6 animate-[fadeIn_.2s_ease]">
@@ -98,7 +278,8 @@ export default function LmsProgress() {
             {courses.map(c => (
               <Card 
                 key={c.id} 
-                className={`border transition-all flex flex-col justify-between hover:shadow-raised ${c.is_weak ? 'border-amber-200 shadow-sm shadow-amber-50' : 'border-slate-100'}`}
+                className={`border transition-all flex flex-col justify-between hover:shadow-raised cursor-pointer hover:border-academic-blue/80 ${c.is_weak ? 'border-amber-200 shadow-sm shadow-amber-50' : 'border-slate-100'}`}
+                onClick={() => handleCourseClick(c.id)}
               >
                 <div>
                   {/* Course Header */}

@@ -379,10 +379,14 @@ class QuestionBankView(TeacherMixin, APIView):
     def post(self, request, question_id=None):
         if not table_exists("portal_question_bank"):
             return Response({"detail": "Portal schema has not been applied."}, status=400)
+        import json
+        answer_schema = request.data.get("answer_schema", "{}")
+        if isinstance(answer_schema, dict):
+            answer_schema = json.dumps(answer_schema)
         with connection.cursor() as cursor:
             cursor.execute(
                 "INSERT INTO portal_question_bank (subject_id, teacher_id, difficulty_level, question_text, answer_schema) VALUES (%s,%s,%s,%s,%s::jsonb) RETURNING id",
-                [request.data.get("subject_id"), request.user.id, request.data.get("difficulty_level", "Medium"), request.data.get("question_text"), request.data.get("answer_schema", "{}")],
+                [request.data.get("subject_id"), request.user.id, request.data.get("difficulty_level", "Medium"), request.data.get("question_text"), answer_schema],
             )
             qid = cursor.fetchone()[0]
         return Response({"id": qid, "detail": "Question added."})

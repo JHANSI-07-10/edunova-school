@@ -272,10 +272,13 @@ class TimetableView(StudentOnlyMixin, APIView):
             """
             SELECT t.id, t.day_of_week, t.start_time, t.end_time,
                    s.name AS subject_name,
-                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS teacher_name,
+                   COALESCE(t.room_number, cl.room_number, 'Online / Remote') AS room_number,
+                   t.meeting_link
             FROM portal_timetable t
             JOIN portal_subject s ON s.id=t.subject_id
             JOIN auth_user u ON u.id=t.teacher_id
+            JOIN portal_class cl ON cl.id=t.class_id
             WHERE t.class_id=%s
             ORDER BY t.day_of_week, t.start_time
             """, [cls["class_id"]]
@@ -405,16 +408,39 @@ class AssignmentSubmitView(StudentOnlyMixin, APIView):
 
 class CourseListView(StudentOnlyMixin, APIView):
     def get(self, request):
-        cls = current_class_for_student(request.user.id)
-        if not cls or not table_exists("portal_course"):
-            return Response([])
+        if not table_exists("portal_course"):
+            return Response({"enrollments": [], "courses": []})
+
+        # Fetch student enrollments
+        enrollments = rows(
+            """
+            SELECT DISTINCT e.academic_year, e.class_id, c.name, c.section, c.name || '-' || c.section AS class_name
+            FROM portal_student_enrollment e
+            JOIN portal_class c ON c.id=e.class_id
+            WHERE e.student_id=%s
+            ORDER BY e.academic_year DESC, c.name, c.section
+            """, [request.user.id]
+        ) if table_exists("portal_student_enrollment") else []
+
+        class_id = request.query_params.get("class_id")
+        if not class_id:
+            if enrollments:
+                class_id = enrollments[0]["class_id"]
+            else:
+                cls = current_class_for_student(request.user.id)
+                class_id = cls["class_id"] if cls else None
+
+        if not class_id:
+            return Response({"enrollments": enrollments, "courses": []})
+
         courses = rows(
             """
             SELECT c.id, c.title, c.description, s.name AS subject_name
             FROM portal_course c JOIN portal_subject s ON s.id=c.subject_id
             WHERE c.class_id=%s ORDER BY c.id
-            """, [cls["class_id"]]
+            """, [class_id]
         )
+
         for c in courses:
             # 1. Fetch Chapters for this Course
             chapters = rows(
@@ -476,7 +502,8 @@ class CourseListView(StudentOnlyMixin, APIView):
                 """, [request.user.id, c["id"]]
             ) if table_exists("portal_course_content") else []
             c["quizzes"] = rows("SELECT id, title, duration_minutes, passing_score FROM portal_quiz WHERE course_id=%s ORDER BY id", [c["id"]]) if table_exists("portal_quiz") else []
-        return Response(serialise(courses))
+            
+        return Response(serialise({"enrollments": enrollments, "courses": courses}))
 
 
 class QuizDetailView(StudentOnlyMixin, APIView):
@@ -488,7 +515,51 @@ class QuizDetailView(StudentOnlyMixin, APIView):
         return Response(serialise(quiz))
 
     def post(self, request, quiz_id):
-        return Response({"score": 0, "detail": "Quiz submitted. Scoring workflow can be extended."})
+        if not table_exists("portal_quiz"):
+            return Response({"score": 0, "percentage": 0, "total": 0, "passed": False})
+        
+        quiz = row("SELECT id, title, duration_minutes, passing_score FROM portal_quiz WHERE id=%s", [quiz_id])
+        if not quiz:
+            return Response({"detail": "Quiz not found."}, status=404)
+            
+        questions = rows("SELECT id, question_text, options, correct_answer FROM portal_quiz_question WHERE quiz_id=%s", [quiz_id])
+        if not questions:
+            return Response({"score": 0, "percentage": 0, "total": 0, "passed": True})
+            
+        student_answers = request.data.get("answers", {})
+        correct_count = 0
+        total_questions = len(questions)
+        
+        for q in questions:
+            correct_ans = q.get("correct_answer")
+            ans_key = str(q["id"])
+            student_ans = student_answers.get(ans_key) or student_answers.get(q["id"])
+            if student_ans and str(student_ans).strip().lower() == str(correct_ans).strip().lower():
+                correct_count += 1
+                
+        percentage = round((correct_count / total_questions) * 100, 2) if total_questions > 0 else 0
+        passing_score = quiz.get("passing_score") or 40
+        passed = percentage >= passing_score
+        
+        # Mark completion dynamically in course progress
+        content = row("SELECT id FROM portal_course_content WHERE quiz_id=%s", [quiz_id])
+        if content and table_exists("portal_course_progress"):
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    INSERT INTO portal_course_progress (student_id, content_id, completed_at)
+                    VALUES (%s,%s,now())
+                    ON CONFLICT (student_id, content_id) DO UPDATE SET completed_at=now()
+                    """,
+                    [request.user.id, content["id"]]
+                )
+                
+        return Response({
+            "percentage": percentage,
+            "score": correct_count,
+            "total": total_questions,
+            "passed": passed
+        })
 
 
 class ExamListView(StudentOnlyMixin, APIView):
