@@ -35,7 +35,8 @@ api.interceptors.response.use(
       }
       isRefreshing = true;
       try {
-        const { data } = await axios.post(`${BASE_URL}/auth/refresh/`, { refresh });
+        const targetUrl = `${BASE_URL.replace(/\/api\/?$/, "")}/api/auth/refresh/`;
+        const { data } = await axios.post(targetUrl, { refresh });
         localStorage.setItem("edunova_parent_access", data.access);
         queue.forEach(({ resolve, original: o }) => {
           o.headers.Authorization = `Bearer ${data.access}`;
