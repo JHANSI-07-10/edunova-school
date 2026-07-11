@@ -23,6 +23,7 @@ const TITLES = {
   "/leaves": "Leave Approvals",
   "/reports": "Reports & Analytics",
   "/audit-log": "Audit Log",
+  "/campuses": "Campus Locations",
   "/settings": "Settings & Backup",
 };
 

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, UserPlus, Users, School, BookOpen, Wallet, Bus,
   LibraryBig, Megaphone, CalendarClock, BarChart3, ShieldCheck, LogOut, X, Database,
-  BedDouble, Boxes, ScanFace, GraduationCap, Stethoscope, Trophy, Banknote, KeyRound,
+  BedDouble, Boxes, ScanFace, GraduationCap, Stethoscope, Trophy, Banknote, KeyRound, MapPin,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -27,6 +27,7 @@ const NAV = [
   { to: "/admin/leaves", label: "Leave Approvals", icon: CalendarClock },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/audit-log", label: "Audit Log", icon: ShieldCheck },
+  { to: "/admin/campuses", label: "Campus Locations", icon: MapPin },
   { to: "/admin/settings", label: "Settings & Backup", icon: Database },
 ];
 

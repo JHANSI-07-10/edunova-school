@@ -26,6 +26,7 @@ import ExamResults from "./pages/ExamResults";
 import Payroll from "./pages/Payroll";
 import RolesPermissions from "./pages/RolesPermissions";
 import LmsMonitor from "./pages/LmsMonitor";
+import Campuses from "./pages/Campuses";
 
 export default function AdminRoutes() {
   return (
@@ -60,6 +61,7 @@ export default function AdminRoutes() {
           <Route path="payroll" element={<Payroll />} />
           <Route path="roles-permissions" element={<RolesPermissions />} />
           <Route path="lms" element={<LmsMonitor />} />
+          <Route path="campuses" element={<Campuses />} />
           <Route path="*" element={<PortalNotFound homePath="/admin" />} />
         </Route>
       </Routes>

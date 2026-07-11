@@ -145,4 +145,13 @@ urlpatterns = [
     path("admin-portal/rank-list/", exam_extras_views.RankListView.as_view()),
     path("admin-portal/rank-list/overall/", exam_extras_views.OverallRankListView.as_view()),
     path("admin-portal/report-card/", exam_extras_views.ReportCardView.as_view()),
+
+    # Campus & Visit Locations Module
+    path("campuses/", views.PublicCampusView.as_view()),
+    path("campuses/visit/", views.PublicCampusVisitView.as_view()),
+    path("campuses/nearest/", views.NearestCampusView.as_view()),
+    path("admin-portal/campuses/", admin_views.AdminCampusView.as_view()),
+    path("admin-portal/campuses/<int:campus_id>/", admin_views.AdminCampusDetailView.as_view()),
+    path("admin-portal/campuses/visits/", admin_views.AdminCampusVisitsView.as_view()),
+    path("admin-portal/campuses/visits/<int:visit_id>/status/", admin_views.AdminCampusVisitsView.as_view()),
 ]

@@ -25,7 +25,7 @@ class Command(BaseCommand):
             "portal_hostel", "portal_inventory", "portal_visitor_log", "portal_alumni",
             "portal_medical_log", "portal_forum_post", "portal_forum_topic", "portal_digital_note",
             "portal_course_progress", "portal_audit_log", "portal_payroll_record", "portal_employee",
-            "portal_subject", "portal_class", "portal_notification"
+            "portal_subject", "portal_class", "portal_notification", "portal_campus_visit", "portal_campus_location"
         ]
 
         with connection.cursor() as cursor:
@@ -244,6 +244,19 @@ class Command(BaseCommand):
             c.execute("""
                 INSERT INTO portal_book (title, author, isbn, barcode_id, quantity, available_quantity)
                 VALUES ('Mathematics Grade 8 Reference','EduNova Academic Team','DEMO-ISBN-001','DEMO-BOOK-001',10,8)
+            """)
+
+            # Seed Campus Locations
+            c.execute("""
+                INSERT INTO portal_campus_location 
+                    (name, address, city, state, country, postal_code, latitude, longitude, phone, email, website, office_hours, facilities, programs, student_count, faculty_count, status)
+                VALUES 
+                    ('Head Office (Dwarka)', 'EduNova Education Campus, Sector 21, Dwarka', 'New Delhi', 'Delhi', 'India', '110075', 28.5921, 77.0460, '+91-11-4567890', 'info@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in', '9:00 AM - 5:00 PM', ARRAY['Administrative Offices', 'Conference Halls', 'Visitor Center'], ARRAY['Administration', 'Parent Support'], 0, 45, 'Active'),
+                    ('Noida Campus', 'Plot No. 12, Sector 62', 'Noida', 'Uttar Pradesh', 'India', '201301', 28.5355, 77.3910, '+91-120-6543210', 'noida@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in/noida', '8:00 AM - 4:00 PM', ARRAY['Science Labs', 'Smart Classrooms', 'Library', 'Sports Ground'], ARRAY['Pre Primary', 'Middle School', 'High School', 'CBSE'], 1200, 80, 'Active'),
+                    ('Gurugram Campus', 'Sector 45, Near Huda City Centre', 'Gurugram', 'Haryana', 'India', '122003', 28.4595, 77.0266, '+91-124-7890123', 'gurugram@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in/gurugram', '8:00 AM - 4:00 PM', ARRAY['STEM Lab', 'Computer Lab', 'Indoor Auditorium', 'Cafeteria'], ARRAY['Middle School', 'High School', 'Cambridge Curriculum'], 950, 65, 'Active'),
+                    ('Faridabad Campus', 'Mathura Road, Sector 31', 'Faridabad', 'Haryana', 'India', '121003', 28.4089, 77.3178, '+91-129-4561230', 'faridabad@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in/faridabad', '8:00 AM - 4:00 PM', ARRAY['Sports Complex', 'Medical Center', 'Library', 'Smart Classrooms'], ARRAY['Pre Primary', 'Middle School', 'High School', 'CBSE'], 800, 55, 'Active'),
+                    ('Jaipur Campus', 'Mansarovar, Shipra Path', 'Jaipur', 'Rajasthan', 'India', '302020', 26.9124, 75.7873, '+91-141-8904561', 'jaipur@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in/jaipur', '8:00 AM - 4:00 PM', ARRAY['Digital Library', 'Science Labs', 'Hostel Facilities', 'Innovation Hub'], ARRAY['Middle School', 'High School', 'Senior Secondary', 'Skill Development'], 650, 45, 'Active'),
+                    ('Lucknow Campus', 'Gomti Nagar, Bypass Road', 'Lucknow', 'Uttar Pradesh', 'India', '226010', 26.8467, 80.9462, '+91-522-7890124', 'lucknow@edunovaacademy.edu.in', 'www.edunovaacademy.edu.in/lucknow', '8:00 AM - 4:00 PM', ARRAY['Science Labs', 'Hostel Facilities', 'Sports Ground', 'Cafeteria'], ARRAY['Pre Primary', 'Middle School', 'High School', 'Senior Secondary', 'CBSE'], 700, 50, 'Active')
             """)
 
         self.stdout.write(self.style.SUCCESS("Database fully cleared and re-seeded successfully!"))

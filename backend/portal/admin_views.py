@@ -900,3 +900,149 @@ class AdminLmsAnalyticsView(AdminMixin, APIView):
         log_action(request.user, "lms_resource.delete", "portal_course_content", resource_id, {"id": resource_id})
         return Response({"detail": "Resource deleted."})
 
+
+from .roles import IsAdmin
+
+class AdminCampusView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        if not table_exists("portal_campus_location"):
+            return Response([])
+        campuses = rows(
+            """
+            SELECT id, name, address, city, state, country, postal_code, latitude, longitude,
+                   phone, email, website, office_hours, facilities, programs, image_url,
+                   student_count, faculty_count, status, created_at, updated_at
+            FROM portal_campus_location
+            ORDER BY id ASC
+            """
+        )
+        return Response(serialise(campuses))
+
+    def post(self, request):
+        name = (request.data.get("name") or "").strip()
+        address = (request.data.get("address") or "").strip()
+        city = (request.data.get("city") or "").strip()
+        state = (request.data.get("state") or "").strip()
+        country = (request.data.get("country") or "India").strip()
+        postal_code = (request.data.get("postal_code") or "").strip()
+        latitude = request.data.get("latitude")
+        longitude = request.data.get("longitude")
+        phone = (request.data.get("phone") or "").strip()
+        email = (request.data.get("email") or "").strip()
+        website = (request.data.get("website") or "").strip()
+        office_hours = (request.data.get("office_hours") or "").strip()
+        facilities = request.data.get("facilities") or []
+        programs = request.data.get("programs") or []
+        image_url = (request.data.get("image_url") or "").strip()
+        status_val = (request.data.get("status") or "Active").strip()
+        student_count = request.data.get("student_count") or 0
+        faculty_count = request.data.get("faculty_count") or 0
+
+        if not (name and address and city and state and postal_code and latitude is not None and longitude is not None and phone and email and office_hours):
+            return Response({"detail": "All required fields must be provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO portal_campus_location 
+                    (name, address, city, state, country, postal_code, latitude, longitude,
+                     phone, email, website, office_hours, facilities, programs, image_url,
+                     student_count, faculty_count, status)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                RETURNING id
+                """,
+                [name, address, city, state, country, postal_code, latitude, longitude,
+                 phone, email, website, office_hours, facilities, programs, image_url,
+                 student_count, faculty_count, status_val]
+            )
+            campus_id = cursor.fetchone()[0]
+
+        log_action(request.user, "campus.create", "portal_campus_location", campus_id, {"name": name})
+        return Response({"id": campus_id, "detail": "Campus location created successfully."}, status=status.HTTP_201_CREATED)
+
+
+class AdminCampusDetailView(APIView):
+    permission_classes = [IsAdmin]
+
+    def put(self, request, campus_id):
+        name = (request.data.get("name") or "").strip()
+        address = (request.data.get("address") or "").strip()
+        city = (request.data.get("city") or "").strip()
+        state = (request.data.get("state") or "").strip()
+        country = (request.data.get("country") or "India").strip()
+        postal_code = (request.data.get("postal_code") or "").strip()
+        latitude = request.data.get("latitude")
+        longitude = request.data.get("longitude")
+        phone = (request.data.get("phone") or "").strip()
+        email = (request.data.get("email") or "").strip()
+        website = (request.data.get("website") or "").strip()
+        office_hours = (request.data.get("office_hours") or "").strip()
+        facilities = request.data.get("facilities") or []
+        programs = request.data.get("programs") or []
+        image_url = (request.data.get("image_url") or "").strip()
+        status_val = (request.data.get("status") or "Active").strip()
+        student_count = request.data.get("student_count") or 0
+        faculty_count = request.data.get("faculty_count") or 0
+
+        if not (name and address and city and state and postal_code and latitude is not None and longitude is not None and phone and email and office_hours):
+            return Response({"detail": "All required fields must be provided."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                UPDATE portal_campus_location 
+                SET name=%s, address=%s, city=%s, state=%s, country=%s, postal_code=%s,
+                    latitude=%s, longitude=%s, phone=%s, email=%s, website=%s, office_hours=%s,
+                    facilities=%s, programs=%s, image_url=%s, student_count=%s, faculty_count=%s,
+                    status=%s, updated_at=now()
+                WHERE id=%s
+                """,
+                [name, address, city, state, country, postal_code, latitude, longitude,
+                 phone, email, website, office_hours, facilities, programs, image_url,
+                 student_count, faculty_count, status_val, campus_id]
+            )
+
+        log_action(request.user, "campus.update", "portal_campus_location", campus_id, {"name": name})
+        return Response({"detail": "Campus location updated successfully."})
+
+    def delete(self, request, campus_id):
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_campus_location WHERE id=%s", [campus_id])
+        log_action(request.user, "campus.delete", "portal_campus_location", campus_id, {"id": campus_id})
+        return Response({"detail": "Campus location deleted successfully."})
+
+
+class AdminCampusVisitsView(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        if not table_exists("portal_campus_visit"):
+            return Response([])
+        visits = rows(
+            """
+            SELECT v.id, v.campus_id, c.name as campus_name, v.visitor_name, v.visitor_email,
+                   v.visitor_phone, v.visit_date, v.visit_time, v.purpose, v.status, v.created_at
+            FROM portal_campus_visit v
+            LEFT JOIN portal_campus_location c ON c.id = v.campus_id
+            ORDER BY v.visit_date DESC, v.id DESC
+            """
+        )
+        return Response(serialise(visits))
+
+    def put(self, request, visit_id):
+        status_val = request.data.get("status")
+        if status_val not in ["Pending", "Confirmed", "Completed", "Cancelled"]:
+            return Response({"detail": "Invalid status value."}, status=status.HTTP_400_BAD_REQUEST)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE portal_campus_visit SET status=%s, updated_at=now() WHERE id=%s",
+                [status_val, visit_id]
+            )
+
+        log_action(request.user, "campus_visit.status_update", "portal_campus_visit", visit_id, {"status": status_val})
+        return Response({"detail": "Campus visit status updated successfully."})
+
+
