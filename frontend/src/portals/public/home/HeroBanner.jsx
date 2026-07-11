@@ -15,11 +15,10 @@ export default function HeroBanner() {
       <img
         src="/campus-building-1.jpeg"
         alt="EduNova Global Academy campus"
-        className="absolute inset-0 w-full h-full object-cover brightness-110 contrast-110 saturate-125"
+        className="absolute inset-0 w-full h-full object-cover brightness-75"
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-primary/82 via-primary/45 to-transparent" />
-      <div className="absolute inset-0 bg-gradient-to-t from-bg-dark/60 via-transparent to-white/5" />
-      <div className="absolute inset-0 bg-highlight/10" />
+      <div className="absolute inset-0 bg-gradient-to-r from-primary/92 via-primary/70 to-primary/35" />
+      <div className="absolute inset-0 bg-gradient-to-t from-bg-dark/70 via-transparent to-black/10" />
       <div className="absolute top-20 left-10 w-80 h-80 bg-accent/25 rounded-full blur-3xl" />
       <div className="absolute bottom-20 right-16 w-96 h-96 bg-highlight/20 rounded-full blur-3xl" />
 
@@ -29,7 +28,10 @@ export default function HeroBanner() {
             <Sparkles size={15} /> Inspiring Minds. Building Futures.
           </p>
 
-          <h1 className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6 drop-shadow-2xl">
+          <h1
+            className="font-heading text-4xl md:text-5xl lg:text-6xl font-extrabold leading-tight mb-6"
+            style={{ textShadow: '0 2px 4px rgba(0,0,0,0.45), 0 6px 20px rgba(0,0,0,0.55)' }}
+          >
             Where Academic
             <span className="block text-highlight">Excellence Meets</span>
             Digital Innovation
@@ -66,13 +68,13 @@ export default function HeroBanner() {
           ].map(({ Icon, value, label, color }) => (
             <div
               key={label}
-              className="bg-white/18 backdrop-blur-xl border border-white/25 rounded-2xl p-5 flex items-center gap-4 shadow-xl hover:bg-white/25 transition-all duration-300"
+              className="bg-bg-dark/55 backdrop-blur-xl border border-white/20 rounded-2xl p-5 flex items-center gap-4 shadow-xl hover:bg-bg-dark/65 transition-all duration-300"
             >
-              <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+              <div className="w-12 h-12 rounded-xl bg-white/15 flex items-center justify-center shrink-0">
                 <Icon size={26} className={`${color}`} />
               </div>
               <div>
-                <p className="font-numbers text-2xl font-extrabold"><CountUp value={value} /></p>
+                <p className="font-numbers text-2xl font-extrabold text-white"><CountUp value={value} /></p>
                 <p className="text-xs text-white/90">{label}</p>
               </div>
             </div>
