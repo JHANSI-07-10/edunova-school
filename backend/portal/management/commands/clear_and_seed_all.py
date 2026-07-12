@@ -41,6 +41,14 @@ class Command(BaseCommand):
 
         # Clear Django model tables
         self.stdout.write("Clearing Django-managed tables...")
+        with connection.cursor() as cursor:
+            try:
+                cursor.execute("TRUNCATE TABLE token_blacklist_blacklistedtoken CASCADE;")
+                cursor.execute("TRUNCATE TABLE token_blacklist_outstandingtoken CASCADE;")
+                self.stdout.write("  Cleared JWT token blacklist tables")
+            except Exception as e:
+                self.stdout.write(f"  Skipped JWT blacklist tables: {e}")
+
         User.objects.all().delete()
         
         # Trigger the CMS seeding command to rebuild public site CMS pages and stats
@@ -69,6 +77,22 @@ class Command(BaseCommand):
         admin.set_password("Edunova@123")
         admin.save()
         admin.groups.add(admin_group)
+
+        # 1b. Default superuser Admin
+        admin2, _ = User.objects.get_or_create(
+            username="Admin",
+            defaults={
+                "email": "admin@edunovaacademy.edu.in",
+                "first_name": "Portal",
+                "last_name": "Admin",
+                "is_active": True,
+                "is_staff": True,
+                "is_superuser": True,
+            },
+        )
+        admin2.set_password("Edunova@123")
+        admin2.save()
+        admin2.groups.add(admin_group)
 
         # 2. PARENT
         parent, _ = User.objects.get_or_create(
@@ -185,12 +209,11 @@ class Command(BaseCommand):
                 ON CONFLICT (class_id, subject_id, teacher_id) DO NOTHING
             """, [class_id, subject_id, teacher.id])
 
-            # LMS Courses & Contents
             c.execute("""
                 INSERT INTO portal_course (subject_id, class_id, title, description)
                 VALUES (%s,%s,'Mathematics Grade 8','Demo course for Grade 8 Mathematics')
                 RETURNING id
-            """)
+            """, [subject_id, class_id])
             course_id = c.fetchone()[0]
 
             c.execute("""
