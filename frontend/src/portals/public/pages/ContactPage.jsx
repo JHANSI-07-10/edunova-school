@@ -143,6 +143,19 @@ export default function ContactPage() {
     return true
   })
 
+  // Synchronize selection with filters
+  useEffect(() => {
+    if (campuses.length > 0) {
+      if (filteredCampuses.length > 0) {
+        if (!selectedCampus || !filteredCampuses.some(c => c.id === selectedCampus.id)) {
+          setSelectedCampus(filteredCampuses[0])
+        }
+      } else {
+        setSelectedCampus(null)
+      }
+    }
+  }, [selectedState, selectedCity, searchQuery, campuses])
+
   // Unique States & Cities in loaded campuses
   const statesList = [...new Set(campuses.map(c => c.state))]
   const citiesList = selectedState ? [...new Set(campuses.filter(c => c.state === selectedState).map(c => c.city))] : [...new Set(campuses.map(c => c.city))]
@@ -298,7 +311,7 @@ export default function ContactPage() {
               Let us identify your closest EduNova global academy. Grant geolocation permission or filter manually.
             </p>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">State</label>
                 <select 
@@ -324,15 +337,30 @@ export default function ContactPage() {
               </div>
 
               <div>
+                <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">Select Branch</label>
+                <select 
+                  value={selectedCampus ? selectedCampus.id : ''} 
+                  onChange={(e) => {
+                    const match = campuses.find(c => String(c.id) === String(e.target.value))
+                    if (match) setSelectedCampus(match)
+                  }}
+                  className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white"
+                >
+                  <option value="" className="text-slate-900">Choose a Branch...</option>
+                  {filteredCampuses.map(c => <option key={c.id} value={c.id} className="text-slate-900">{c.name}</option>)}
+                </select>
+              </div>
+
+              <div>
                 <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">Search</label>
                 <div className="relative">
                   <input 
                     placeholder="Search campus..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full bg-white/10 border border-white/10 rounded-xl pl-8 pr-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white placeholder-slate-400"
+                    className="w-full bg-white/10 border border-white/10 rounded-xl pl-8 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white placeholder-slate-400"
                   />
-                  <Search size={14} className="absolute left-2.5 top-3 text-slate-400" />
+                  <Search size={14} className="absolute left-2.5 top-3.5 text-slate-400" />
                 </div>
               </div>
             </div>
@@ -424,7 +452,7 @@ export default function ContactPage() {
               </button>
 
               {/* Branch Campus Markers */}
-              {campuses.map(c => {
+              {filteredCampuses.map(c => {
                 // Map lat/long coordinates onto our custom vector grid relative position
                 // Noida is slightly east of Dwarka (400px, 300px)
                 // Gurugram is slightly southwest
@@ -516,6 +544,9 @@ export default function ContactPage() {
                   let fallbackImage = '/noida_campus.png'
                   if (c.name.includes("Gurugram")) fallbackImage = '/gurugram_campus.png'
                   if (c.name.includes("Jaipur")) fallbackImage = '/jaipur_campus.png'
+                  if (c.name.includes("Lucknow")) fallbackImage = '/exterior.jpeg'
+                  if (c.name.includes("Faridabad")) fallbackImage = '/building.jpeg'
+                  if (c.name.includes("Head Office") || c.name.includes("Dwarka")) fallbackImage = '/Campus.jpeg'
 
                   return (
                     <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
