@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react'
-import {
-  MapPin, Phone, Mail, Globe, Clock, AlertTriangle, PhoneCall, Calendar, Navigation,
+import { 
+  MapPin, Phone, Mail, Globe, Clock, AlertTriangle, PhoneCall, Calendar, Navigation, 
   Map, Search, Compass, ChevronDown, ChevronUp, Check, Layers, ZoomIn, ZoomOut, Maximize2, Sparkles, Building
 } from 'lucide-react'
 import CampusVisitModal from './CampusVisitModal'
@@ -9,7 +9,7 @@ export default function ContactPage() {
   const [campuses, setCampuses] = useState([])
   const [loading, setLoading] = useState(true)
   const [selectedCampus, setSelectedCampus] = useState(null)
-
+  
   // Location Finder states
   const [selectedState, setSelectedState] = useState('')
   const [selectedCity, setSelectedCity] = useState('')
@@ -17,7 +17,7 @@ export default function ContactPage() {
   const [detectedLocation, setDetectedLocation] = useState(null) // { lat, lng }
   const [nearestCampusInfo, setNearestCampusInfo] = useState(null)
   const [geolocating, setGeolocating] = useState(false)
-
+  
   // Map View settings
   const [zoomLevel, setZoomLevel] = useState(10)
   const [mapMode, setMapMode] = useState('Standard') // Standard | Satellite | Terrain
@@ -162,7 +162,7 @@ export default function ContactPage() {
 
   return (
     <div className="bg-slate-50 min-h-screen text-slate-900 pb-20">
-
+      
       {/* 1. Header & Hero */}
       <section className="bg-gradient-to-r from-academic-blue to-slate-900 py-20 px-4 text-center text-white relative overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_30%_30%,rgba(212,175,55,0.1),transparent_70%)] pointer-events-none" />
@@ -178,10 +178,10 @@ export default function ContactPage() {
       </section>
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-12 grid grid-cols-1 lg:grid-cols-3 gap-8">
-
+        
         {/* LEFT COLUMN: Head Office & Contact Form */}
         <div className="lg:col-span-1 space-y-8">
-
+          
           {/* Head Office Details */}
           <div className="bg-white rounded-3xl p-6 shadow-sm border border-slate-100 hover:shadow-md transition-shadow relative overflow-hidden">
             <div className="absolute top-0 right-0 bg-academic-gold/10 px-4 py-1.5 rounded-bl-2xl text-xs font-semibold text-academic-gold border-l border-b border-slate-100 font-sub">
@@ -190,7 +190,7 @@ export default function ContactPage() {
             <h2 className="font-heading text-xl font-bold text-slate-900 mb-5 flex items-center gap-2">
               <Building className="text-academic-blue" size={22} /> {headOffice.brand}
             </h2>
-
+            
             <div className="space-y-4 text-sm font-body text-slate-600">
               <div className="flex items-start gap-3">
                 <MapPin className="text-slate-400 mt-1 flex-shrink-0" size={18} />
@@ -237,7 +237,7 @@ export default function ContactPage() {
               <a href={`mailto:${headOffice.email}`} className="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold py-3 px-2 rounded-xl transition-all">
                 <Mail size={14} /> Email Us
               </a>
-              <button
+              <button 
                 onClick={() => openBooking('')}
                 className="col-span-2 flex items-center justify-center gap-2 bg-academic-blue hover:bg-slate-800 text-white text-xs font-bold py-3 px-4 rounded-xl shadow-sm transition-all"
               >
@@ -251,43 +251,43 @@ export default function ContactPage() {
             <h3 className="font-heading text-lg font-bold text-slate-900 mb-4">Send a Message</h3>
             <form onSubmit={handleContactSubmit} className="space-y-4">
               <div>
-                <input
-                  required
-                  placeholder="Full Name"
-                  value={contactForm.name}
+                <input 
+                  required 
+                  placeholder="Full Name" 
+                  value={contactForm.name} 
                   onChange={(e) => setContactForm({ ...contactForm, name: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15" 
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <input
-                  required
-                  type="email"
-                  placeholder="Email"
-                  value={contactForm.email}
+                <input 
+                  required 
+                  type="email" 
+                  placeholder="Email" 
+                  value={contactForm.email} 
                   onChange={(e) => setContactForm({ ...contactForm, email: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15" 
                 />
-                <input
-                  placeholder="Phone"
-                  value={contactForm.phone}
+                <input 
+                  placeholder="Phone" 
+                  value={contactForm.phone} 
                   onChange={(e) => setContactForm({ ...contactForm, phone: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15" 
                 />
               </div>
               <div>
-                <textarea
-                  required
-                  placeholder="Your message details..."
-                  rows={4}
-                  value={contactForm.message}
+                <textarea 
+                  required 
+                  placeholder="Your message details..." 
+                  rows={4} 
+                  value={contactForm.message} 
                   onChange={(e) => setContactForm({ ...contactForm, message: e.target.value })}
-                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15"
+                  className="w-full bg-slate-50 border border-slate-100 rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-academic-blue/15" 
                 />
               </div>
-              <button
-                type="submit"
-                disabled={formStatus === 'sending'}
+              <button 
+                type="submit" 
+                disabled={formStatus === 'sending'} 
                 className="btn-primary w-full py-3 rounded-xl font-semibold transition-all shadow-sm"
               >
                 {formStatus === 'sending' ? 'Sending...' : 'Send Message'}
@@ -365,7 +365,7 @@ export default function ContactPage() {
 
         {/* MIDDLE & RIGHT COLUMNS: Map & Location Finder & Branch Lists */}
         <div className="lg:col-span-2 space-y-8">
-
+          
           {/* Location Finder Module */}
           <div className="bg-gradient-to-br from-academic-blue to-slate-900 rounded-3xl p-6 text-white shadow-xl">
             <h3 className="font-heading text-lg font-bold flex items-center gap-2 mb-2">
@@ -378,8 +378,8 @@ export default function ContactPage() {
             <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
               <div>
                 <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">State</label>
-                <select
-                  value={selectedState}
+                <select 
+                  value={selectedState} 
                   onChange={(e) => { setSelectedState(e.target.value); setSelectedCity(''); }}
                   className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white"
                 >
@@ -390,8 +390,8 @@ export default function ContactPage() {
 
               <div>
                 <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">City</label>
-                <select
-                  value={selectedCity}
+                <select 
+                  value={selectedCity} 
                   onChange={(e) => setSelectedCity(e.target.value)}
                   className="w-full bg-white/10 border border-white/10 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white"
                 >
@@ -424,8 +424,8 @@ export default function ContactPage() {
               <div>
                 <label className="block text-[10px] uppercase font-semibold tracking-wider text-slate-300 mb-1">Search</label>
                 <div className="relative">
-                  <input
-                    placeholder="Search campus..."
+                  <input 
+                    placeholder="Search campus..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-full bg-white/10 border border-white/10 rounded-xl pl-8 pr-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-white/20 text-white placeholder-slate-400"
@@ -436,7 +436,7 @@ export default function ContactPage() {
             </div>
 
             <div className="mt-5 flex flex-wrap items-center justify-between gap-4 pt-4 border-t border-white/10">
-              <button
+              <button 
                 onClick={handleDetectLocation}
                 disabled={geolocating}
                 className="flex items-center gap-2 bg-academic-gold hover:bg-yellow-500 text-bg-dark font-bold text-xs px-4 py-3 rounded-xl shadow-sm transition-all"
@@ -466,13 +466,13 @@ export default function ContactPage() {
                 <p className="text-xs text-slate-500 font-sub">Explore campus markers and layouts visually</p>
               </div>
               <div className="flex gap-2">
-                <button
+                <button 
                   onClick={() => setMapMode(m => m === 'Standard' ? 'Satellite' : m === 'Satellite' ? 'Terrain' : 'Standard')}
                   className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 hover:bg-slate-100 text-slate-600 text-xs px-3 py-2 rounded-xl transition-all"
                 >
                   <Layers size={12} /> {mapMode} View
                 </button>
-                <button
+                <button 
                   onClick={() => setFullScreen(!fullScreen)}
                   className="bg-slate-50 border border-slate-100 hover:bg-slate-100 text-slate-600 p-2 rounded-xl transition-all"
                 >
@@ -499,7 +499,7 @@ export default function ContactPage() {
                 <path d="M 400,300 L 530,340" stroke="#ffffff" strokeWidth="1.5" opacity="0.3" />
                 <path d="M 400,300 L 250,420" stroke="#ffffff" strokeWidth="1.5" opacity="0.3" />
                 <path d="M 400,300 L 520,180" stroke="#ffffff" strokeWidth="1.5" opacity="0.3" />
-
+                
                 {/* River Yamuna simulation */}
                 <path d="M 380,50 Q 420,200 400,300 T 480,450 T 600,550" stroke="#1e293b" strokeWidth="6" strokeLinecap="round" opacity="0.5" />
                 <path d="M 380,50 Q 420,200 400,300 T 480,450 T 600,550" stroke="#38bdf8" strokeWidth="2" strokeLinecap="round" opacity="0.4" />
@@ -510,20 +510,6 @@ export default function ContactPage() {
                 <span className="text-[10px] text-slate-500 uppercase tracking-widest">Delhi NCR</span>
               </div>
 
-<<<<<<< HEAD
-              {/* Head Office Marker */}
-              <button
-                onClick={() => setSelectedCampus({ id: 'HO', ...headOffice })}
-                className="absolute top-[300px] left-[400px] -translate-x-1/2 -translate-y-1/2 group z-20 flex flex-col items-center"
-              >
-                <div className="w-4 h-4 bg-academic-gold rounded-full border-2 border-white flex items-center justify-center shadow-lg group-hover:scale-125 transition-transform duration-200 animate-pulse" />
-                <span className="text-[10px] bg-slate-900 border border-slate-800 text-academic-gold px-2 py-0.5 rounded-full mt-1.5 shadow-md font-semibold tracking-wider whitespace-nowrap">
-                  ⭐ Head Office (Dwarka)
-                </span>
-              </button>
-
-=======
->>>>>>> ece75d6a4cd00aff7d9ff6c1d657d5f0b10ece46
               {/* Branch Campus Markers */}
               {filteredCampuses.map(c => {
                 // Map lat/long coordinates onto our custom vector grid relative position
@@ -545,19 +531,14 @@ export default function ContactPage() {
                 const isHQ = c.name.includes("Head Office") || c.name.includes("Dwarka")
 
                 return (
-                  <button
-                    key={c.id}
+                  <button 
+                    key={c.id} 
                     onClick={() => setSelectedCampus(c)}
                     className="absolute -translate-x-1/2 -translate-y-1/2 group z-10 flex flex-col items-center"
                     style={{ top: `${top}px`, left: `${left}px` }}
                   >
-<<<<<<< HEAD
-                    <div className={`w-3.5 h-3.5 rounded-full border-2 border-white shadow-lg transition-all duration-200 group-hover:scale-125
-                      ${isCurrentlySelected ? 'bg-red-500 w-4 h-4 ring-4 ring-red-500/20' : 'bg-academic-blue'}`}
-=======
                     <div className={`rounded-full border-2 border-white shadow-lg transition-all duration-200 group-hover:scale-125
                       ${isCurrentlySelected ? 'bg-red-500 w-4 h-4 ring-4 ring-red-500/20' : isHQ ? 'bg-academic-gold w-4 h-4 animate-pulse' : 'bg-academic-blue w-3.5 h-3.5'}`} 
->>>>>>> ece75d6a4cd00aff7d9ff6c1d657d5f0b10ece46
                     />
                     <span className={`text-[9px] px-2 py-0.5 rounded-md mt-1 shadow-md font-medium whitespace-nowrap transition-colors
                       ${isCurrentlySelected ? 'bg-red-500 text-white' : isHQ ? 'bg-slate-900 border border-slate-800 text-academic-gold font-semibold' : 'bg-slate-800 border border-slate-700 text-slate-200 group-hover:bg-slate-700'}`}>
@@ -574,7 +555,7 @@ export default function ContactPage() {
                     📍 {selectedCampus.name}
                   </h4>
                   <p className="text-[11px] text-slate-300 font-body mt-1 leading-relaxed">{selectedCampus.address}</p>
-
+                  
                   <div className="mt-3 text-[10px] space-y-1.5 text-slate-400 font-sub border-t border-white/5 pt-2.5">
                     <p>Phone: <span className="text-white">{selectedCampus.phone}</span></p>
                     <p>Hours: <span className="text-white">{selectedCampus.office_hours}</span></p>
@@ -584,16 +565,16 @@ export default function ContactPage() {
                   </div>
 
                   <div className="mt-4 flex gap-2">
-                    <button
-                      onClick={() => openBooking(selectedCampus.id === 'HO' ? '' : selectedCampus.id)}
+                    <button 
+                      onClick={() => openBooking(selectedCampus.id === 'HO' ? '' : selectedCampus.id)} 
                       className="flex-1 bg-academic-blue hover:bg-slate-800 text-[10px] font-bold py-2 rounded-lg text-center transition-colors"
                     >
                       Visit Campus
                     </button>
-                    <a
-                      href={`https://maps.google.com/?q=${selectedCampus.latitude},${selectedCampus.longitude}`}
-                      target="_blank"
-                      rel="noreferrer"
+                    <a 
+                      href={`https://maps.google.com/?q=${selectedCampus.latitude},${selectedCampus.longitude}`} 
+                      target="_blank" 
+                      rel="noreferrer" 
                       className="flex items-center justify-center bg-white/10 hover:bg-white/20 text-white p-2 rounded-lg text-xs transition-colors"
                       title="Google Maps Directions"
                     >
@@ -630,13 +611,13 @@ export default function ContactPage() {
 
                   return (
                     <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
-
+                      
                       {/* Image Header */}
                       <div className="relative h-44 bg-slate-100 overflow-hidden">
-                        <img
-                          src={c.image_url || fallbackImage}
-                          alt={c.name}
-                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500"
+                        <img 
+                          src={c.image_url || fallbackImage} 
+                          alt={c.name} 
+                          className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
                         />
                         <div className="absolute top-3 right-3 bg-academic-blue/80 backdrop-blur-sm text-white px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider">
                           {c.city}
@@ -648,7 +629,7 @@ export default function ContactPage() {
                         <div>
                           <h4 className="font-heading text-lg font-bold text-slate-900">{c.name}</h4>
                           <p className="text-xs text-slate-500 mt-1 font-body">{c.address}, {c.city}, {c.state} - {c.postal_code}</p>
-
+                          
                           {/* Student / Faculty quick counters */}
                           <div className="flex gap-4 mt-3 text-[10px] text-slate-500 font-medium">
                             <span>Students: <strong className="text-slate-800">{c.student_count}</strong></span>
@@ -679,22 +660,22 @@ export default function ContactPage() {
 
                         {/* Action Buttons */}
                         <div className="pt-4 border-t border-slate-50 flex gap-2">
-                          <button
+                          <button 
                             onClick={() => openBooking(c.id)}
                             className="flex-1 bg-academic-blue hover:bg-slate-800 text-white text-xs font-bold py-2.5 rounded-xl transition-all"
                           >
                             Book Visit
                           </button>
-                          <a
-                            href={`https://maps.google.com/?q=${c.latitude},${c.longitude}`}
-                            target="_blank"
-                            rel="noreferrer"
+                          <a 
+                            href={`https://maps.google.com/?q=${c.latitude},${c.longitude}`} 
+                            target="_blank" 
+                            rel="noreferrer" 
                             className="bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold px-3 py-2.5 rounded-xl flex items-center justify-center transition-all"
                             title="View directions on Google Maps"
                           >
                             <Navigation size={14} />
                           </a>
-                          <button
+                          <button 
                             onClick={() => {
                               setExpandedCampusId(isExpanded ? null : c.id)
                               setExpandedSection('Overview')
@@ -784,8 +765,8 @@ export default function ContactPage() {
       </div>
 
       {/* Booking Dialog Modal Portal */}
-      <CampusVisitModal
-        isOpen={isVisitModalOpen}
+      <CampusVisitModal 
+        isOpen={isVisitModalOpen} 
         onClose={() => setIsVisitModalOpen(false)}
         campuses={campuses}
         initialCampusId={bookingCampusId}
