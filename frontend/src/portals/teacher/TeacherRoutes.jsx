@@ -9,6 +9,7 @@ import Assignments from "./pages/Assignments";
 import Attendance from "./pages/Attendance";
 import Classes from "./pages/Classes";
 import Dashboard from "./pages/Dashboard";
+import Documents from "./pages/Documents";
 import Lms from "./pages/Lms";
 import Exams from "./pages/Exams";
 import Homework from "./pages/Homework";
@@ -45,6 +46,7 @@ export default function TeacherRoutes() {
           <Route path="performance" element={<Performance />} />
           <Route path="messages" element={<Messages />} />
           <Route path="lms" element={<Lms />} />
+          <Route path="documents" element={<Documents />} />
           <Route path="timetable" element={<Timetable />} />
           <Route path="notices" element={<Notices />} />
           <Route path="leave" element={<Leave />} />

@@ -1,7 +1,7 @@
 import {
   BookOpenCheck, CalendarCheck2, ClipboardList, FileStack, GraduationCap,
   Home, LayoutGrid, LibraryBig, LogOut, Mail, Megaphone, NotebookPen,
-  ScrollText, Users, X, ShieldCheck,
+  ScrollText, Users, X, ShieldCheck, FileText,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -19,6 +19,7 @@ const NAV = [
   { to: "/teacher/performance", label: "Student Performance", icon: GraduationCap },
   { to: "/teacher/messages", label: "Messages", icon: Mail },
   { to: "/teacher/lms", label: "LMS Content", icon: FileStack },
+  { to: "/teacher/documents", label: "Documents", icon: FileText },
   { to: "/teacher/timetable", label: "Timetable", icon: ClipboardList },
   { to: "/teacher/notices", label: "Notice Board", icon: Megaphone },
   { to: "/teacher/leave", label: "Leave Management", icon: Users },

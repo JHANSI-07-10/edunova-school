@@ -8,6 +8,7 @@ import Assignments from "./pages/Assignments";
 import Attendance from "./pages/Attendance";
 import Certificates from "./pages/Certificates";
 import Dashboard from "./pages/Dashboard";
+import Downloads from "./pages/Downloads";
 import Events from "./pages/Events";
 import Exams from "./pages/Exams";
 import Fees from "./pages/Fees";
@@ -50,6 +51,7 @@ export default function StudentRoutes() {
           <Route path="transport" element={<Transport />} />
           <Route path="medical-records" element={<MedicalRecords />} />
           <Route path="certificates" element={<Certificates />} />
+          <Route path="downloads" element={<Downloads />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="events" element={<Events />} />
           <Route path="profile" element={<Profile />} />

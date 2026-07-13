@@ -1,7 +1,7 @@
 import {
   BookOpenCheck, CalendarDays, ClipboardList, GraduationCap, Home,
   LibraryBig, LogOut, Megaphone, NotebookPen, PartyPopper, ScrollText,
-  User, Wallet, LifeBuoy, X, BedDouble, Stethoscope, Bus,
+  User, Wallet, LifeBuoy, X, BedDouble, Stethoscope, Bus, Download,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -21,6 +21,7 @@ const NAV = [
   { to: "/student/transport", label: "Transport", icon: Bus },
   { to: "/student/medical-records", label: "Medical Records", icon: Stethoscope },
   { to: "/student/certificates", label: "Certificates", icon: ScrollText },
+  { to: "/student/downloads", label: "Downloads", icon: Download },
   { to: "/student/announcements", label: "Announcements", icon: Megaphone },
   { to: "/student/events", label: "Events", icon: PartyPopper },
   { to: "/student/profile", label: "Profile", icon: User },
