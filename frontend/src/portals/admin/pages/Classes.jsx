@@ -7,10 +7,10 @@ import { BookOpen, UserCheck, GraduationCap, Pencil, Trash2, X, Check } from "lu
 function Btn({ children, onClick, variant = "primary", disabled = false, className = "" }) {
   const base = "px-3 py-1.5 rounded-lg text-xs font-semibold transition-all disabled:opacity-50 flex items-center gap-1.5";
   const variants = {
-    primary:  "bg-academic-blue text-white hover:bg-academic-blue/90",
-    danger:   "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100",
-    ghost:    "bg-slate-100 text-slate-600 hover:bg-slate-200",
-    success:  "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100",
+    primary: "bg-academic-blue text-white hover:bg-academic-blue/90",
+    danger: "bg-red-50 text-red-600 border border-red-200 hover:bg-red-100",
+    ghost: "bg-slate-100 text-slate-600 hover:bg-slate-200",
+    success: "bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100",
   };
   return (
     <button onClick={onClick} disabled={disabled} className={`${base} ${variants[variant]} ${className}`}>
@@ -27,7 +27,7 @@ function ConfirmDeleteModal({ label, onConfirm, onCancel }) {
         <p className="text-sm text-slate-500 mb-5">{label}</p>
         <div className="flex gap-3 justify-end">
           <Btn variant="ghost" onClick={onCancel}>Cancel</Btn>
-          <Btn variant="danger" onClick={onConfirm}><Trash2 size={12}/> Delete</Btn>
+          <Btn variant="danger" onClick={onConfirm}><Trash2 size={12} /> Delete</Btn>
         </div>
       </div>
     </div>
@@ -38,9 +38,9 @@ function ConfirmDeleteModal({ label, onConfirm, onCancel }) {
 function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
   const [classForm, setClassForm] = useState({ name: "", section: "", curriculum: "CBSE", room_number: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", subject_code: "", type: "Theory" });
-  const [editingClass, setEditingClass]     = useState(null); // { id, name, section, curriculum, room_number }
+  const [editingClass, setEditingClass] = useState(null); // { id, name, section, curriculum, room_number }
   const [editingSubject, setEditingSubject] = useState(null);
-  const [deleteTarget, setDeleteTarget]     = useState(null); // { kind, id, label }
+  const [deleteTarget, setDeleteTarget] = useState(null); // { kind, id, label }
 
   async function addClass(e) {
     e.preventDefault();
@@ -48,8 +48,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.post("/admin-portal/classes/", classForm);
       setClassForm({ name: "", section: "", curriculum: "CBSE", room_number: "" });
       loadClasses();
-      setToast("Class created successfully.");
-    } catch (err) { setToast(err?.response?.data?.detail || "Could not create class. Check server logs."); }
+      setToast({ message: "Class created successfully.", tone: "success" });
+    } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not create class.", tone: "error" }); }
   }
 
   async function saveEditClass() {
@@ -57,17 +57,17 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.patch(`/admin-portal/classes/${editingClass.id}/`, editingClass);
       setEditingClass(null);
       loadClasses();
-      setToast("Class updated.");
-    } catch (err) { setToast(err?.response?.data?.detail || "Could not update class."); }
+      setToast({ message: "Class updated.", tone: "success" });
+    } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not update class.", tone: "error" }); }
   }
 
   async function deleteClass(id) {
     try {
       await api.delete(`/admin-portal/classes/${id}/`);
       loadClasses();
-      setToast("Class deleted.");
+      setToast({ message: "Class deleted.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not delete class. It may have enrollments.");
+      setToast({ message: err?.response?.data?.detail || "Could not delete class. It may have enrollments.", tone: "error" });
     } finally { setDeleteTarget(null); }
   }
 
@@ -77,8 +77,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.post("/admin-portal/subjects/", subjectForm);
       setSubjectForm({ name: "", subject_code: "", type: "Theory" });
       loadSubjects();
-      setToast("Subject created successfully.");
-    } catch (err) { setToast(err?.response?.data?.detail || "Could not create subject."); }
+      setToast({ message: "Subject created successfully.", tone: "success" });
+    } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not create subject.", tone: "error" }); }
   }
 
   async function saveEditSubject() {
@@ -86,17 +86,17 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.patch(`/admin-portal/subjects/${editingSubject.id}/`, editingSubject);
       setEditingSubject(null);
       loadSubjects();
-      setToast("Subject updated.");
-    } catch (err) { setToast(err?.response?.data?.detail || "Could not update subject."); }
+      setToast({ message: "Subject updated.", tone: "success" });
+    } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not update subject.", tone: "error" }); }
   }
 
   async function deleteSubject(id) {
     try {
       await api.delete(`/admin-portal/subjects/${id}/`);
       loadSubjects();
-      setToast("Subject deleted.");
+      setToast({ message: "Subject deleted.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not delete subject.");
+      setToast({ message: err?.response?.data?.detail || "Could not delete subject.", tone: "error" });
     } finally { setDeleteTarget(null); }
   }
 
@@ -162,8 +162,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
                             className="rounded-lg border border-slate-200 px-2 py-1.5 text-sm outline-none focus-ring" />
                         </div>
                         <div className="flex gap-2">
-                          <Btn variant="success" onClick={saveEditClass}><Check size={12}/> Save</Btn>
-                          <Btn variant="ghost" onClick={() => setEditingClass(null)}><X size={12}/> Cancel</Btn>
+                          <Btn variant="success" onClick={saveEditClass}><Check size={12} /> Save</Btn>
+                          <Btn variant="ghost" onClick={() => setEditingClass(null)}><X size={12} /> Cancel</Btn>
                         </div>
                       </div>
                     ) : (
@@ -173,8 +173,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
                           <span className="text-ink-secondary ml-2">{c.curriculum} · Room {c.room_number || "—"}</span>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <Btn variant="ghost" onClick={() => setEditingClass({ ...c })}><Pencil size={12}/> Edit</Btn>
-                          <Btn variant="danger" onClick={() => setDeleteTarget({ kind: "class", id: c.id, label: `${c.name}-${c.section}` })}><Trash2 size={12}/></Btn>
+                          <Btn variant="ghost" onClick={() => setEditingClass({ ...c })}><Pencil size={12} /> Edit</Btn>
+                          <Btn variant="danger" onClick={() => setDeleteTarget({ kind: "class", id: c.id, label: `${c.name}-${c.section}` })}><Trash2 size={12} /></Btn>
                         </div>
                       </div>
                     )}
@@ -229,8 +229,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
                           </select>
                         </div>
                         <div className="flex gap-2">
-                          <Btn variant="success" onClick={saveEditSubject}><Check size={12}/> Save</Btn>
-                          <Btn variant="ghost" onClick={() => setEditingSubject(null)}><X size={12}/> Cancel</Btn>
+                          <Btn variant="success" onClick={saveEditSubject}><Check size={12} /> Save</Btn>
+                          <Btn variant="ghost" onClick={() => setEditingSubject(null)}><X size={12} /> Cancel</Btn>
                         </div>
                       </div>
                     ) : (
@@ -240,8 +240,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
                           <span className="text-ink-secondary ml-2">{s.subject_code} · {s.type}</span>
                         </div>
                         <div className="flex gap-1.5 shrink-0">
-                          <Btn variant="ghost" onClick={() => setEditingSubject({ ...s })}><Pencil size={12}/> Edit</Btn>
-                          <Btn variant="danger" onClick={() => setDeleteTarget({ kind: "subject", id: s.id, label: s.name })}><Trash2 size={12}/></Btn>
+                          <Btn variant="ghost" onClick={() => setEditingSubject({ ...s })}><Pencil size={12} /> Edit</Btn>
+                          <Btn variant="danger" onClick={() => setDeleteTarget({ kind: "subject", id: s.id, label: s.name })}><Trash2 size={12} /></Btn>
                         </div>
                       </div>
                     )}
@@ -261,7 +261,7 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
   const [enrollForm, setEnrollForm] = useState({
     student_id: "", class_id: "", roll_number: "", academic_year: "2025-26",
   });
-  const [editingRow, setEditingRow]   = useState(null); // { id, class_id, roll_number, academic_year }
+  const [editingRow, setEditingRow] = useState(null); // { id, class_id, roll_number, academic_year }
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [busy, setBusy] = useState(false);
   const [classFilter, setClassFilter] = useState("");
@@ -269,7 +269,7 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
   async function handleEnroll(e) {
     e.preventDefault();
     if (!enrollForm.student_id || !enrollForm.class_id) {
-      setToast("Please select both a student and a class.");
+      setToast({ message: "Please select both a student and a class.", tone: "error" });
       return;
     }
     setBusy(true);
@@ -277,9 +277,9 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
       await api.post("/admin-portal/enrollments/", enrollForm);
       setEnrollForm({ student_id: "", class_id: "", roll_number: "", academic_year: "2025-26" });
       loadEnrollments();
-      setToast("Student enrolled successfully.");
+      setToast({ message: "Student enrolled successfully.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not enroll student.");
+      setToast({ message: err?.response?.data?.detail || "Could not enroll student.", tone: "error" });
     } finally { setBusy(false); }
   }
 
@@ -292,9 +292,9 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
       });
       setEditingRow(null);
       loadEnrollments();
-      setToast("Enrollment updated.");
+      setToast({ message: "Enrollment updated.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not update enrollment.");
+      setToast({ message: err?.response?.data?.detail || "Could not update enrollment.", tone: "error" });
     }
   }
 
@@ -302,9 +302,9 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
     try {
       await api.delete(`/admin-portal/enrollments/${id}/`);
       loadEnrollments();
-      setToast("Enrollment removed.");
+      setToast({ message: "Enrollment removed.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not remove enrollment.");
+      setToast({ message: err?.response?.data?.detail || "Could not remove enrollment.", tone: "error" });
     } finally { setDeleteTarget(null); }
   }
 
@@ -406,8 +406,8 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
                         onChange={(ev) => setEditingRow({ ...editingRow, academic_year: ev.target.value })}
                         className="w-full rounded-lg border border-slate-200 px-2 py-1.5 text-xs outline-none focus-ring" />
                       <div className="flex gap-2">
-                        <Btn variant="success" onClick={saveEdit}><Check size={12}/> Save</Btn>
-                        <Btn variant="ghost" onClick={() => setEditingRow(null)}><X size={12}/> Cancel</Btn>
+                        <Btn variant="success" onClick={saveEdit}><Check size={12} /> Save</Btn>
+                        <Btn variant="ghost" onClick={() => setEditingRow(null)}><X size={12} /> Cancel</Btn>
                       </div>
                     </div>
                   ) : (
@@ -423,8 +423,8 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
                         <span className="bg-academic-blue/10 text-academic-blue px-2.5 py-1 rounded-full text-xs font-semibold">
                           {e.class_name}
                         </span>
-                        <Btn variant="ghost" onClick={() => setEditingRow({ ...e })}><Pencil size={12}/></Btn>
-                        <Btn variant="danger" onClick={() => setDeleteTarget({ id: e.id, name: e.student_name, class: e.class_name })}><Trash2 size={12}/></Btn>
+                        <Btn variant="ghost" onClick={() => setEditingRow({ ...e })}><Pencil size={12} /></Btn>
+                        <Btn variant="danger" onClick={() => setDeleteTarget({ id: e.id, name: e.student_name, class: e.class_name })}><Trash2 size={12} /></Btn>
                       </div>
                     </div>
                   )}
@@ -448,7 +448,7 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
   async function handleTeacherAssign(e) {
     e.preventDefault();
     if (!teacherAssignForm.class_id || !teacherAssignForm.teacher_id) {
-      setToast("Please select both a class and a teacher.");
+      setToast({ message: "Please select both a class and a teacher.", tone: "error" });
       return;
     }
     setBusy(true);
@@ -456,9 +456,9 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
       await api.post("/admin-portal/class-teachers/", teacherAssignForm);
       setTeacherAssignForm({ class_id: "", teacher_id: "", subject_id: "" });
       loadClassTeachers();
-      setToast("Class teacher assigned successfully.");
+      setToast({ message: "Class teacher assigned successfully.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not assign class teacher.");
+      setToast({ message: err?.response?.data?.detail || "Could not assign class teacher.", tone: "error" });
     } finally { setBusy(false); }
   }
 
@@ -467,9 +467,9 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
       await api.patch(`/admin-portal/class-teachers/${editingCT.class_id}/`, { teacher_id: editingCT.teacher_id });
       setEditingCT(null);
       loadClassTeachers();
-      setToast("Class teacher updated.");
+      setToast({ message: "Class teacher updated.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not update class teacher.");
+      setToast({ message: err?.response?.data?.detail || "Could not update class teacher.", tone: "error" });
     }
   }
 
@@ -477,9 +477,9 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
     try {
       await api.delete(`/admin-portal/class-teachers/${class_id}/`);
       loadClassTeachers();
-      setToast("Class teacher assignment removed.");
+      setToast({ message: "Class teacher assignment removed.", tone: "success" });
     } catch (err) {
-      setToast(err?.response?.data?.detail || "Could not remove assignment.");
+      setToast({ message: err?.response?.data?.detail || "Could not remove assignment.", tone: "error" });
     } finally { setDeleteTarget(null); }
   }
 
@@ -556,8 +556,8 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
                         </select>
                       </div>
                       <div className="flex gap-2">
-                        <Btn variant="success" onClick={saveEditCT}><Check size={12}/> Save</Btn>
-                        <Btn variant="ghost" onClick={() => setEditingCT(null)}><X size={12}/> Cancel</Btn>
+                        <Btn variant="success" onClick={saveEditCT}><Check size={12} /> Save</Btn>
+                        <Btn variant="ghost" onClick={() => setEditingCT(null)}><X size={12} /> Cancel</Btn>
                       </div>
                     </div>
                   ) : (
@@ -578,8 +578,8 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
                         <span className="bg-emerald-50 text-emerald-700 border border-emerald-100 px-2.5 py-1 rounded-full text-xs font-semibold">
                           👤 {ct.teacher_name}
                         </span>
-                        <Btn variant="ghost" onClick={() => setEditingCT({ class_id: ct.class_id, teacher_id: String(ct.teacher_id) })}><Pencil size={12}/></Btn>
-                        <Btn variant="danger" onClick={() => setDeleteTarget({ class_id: ct.class_id, className: ct.class_name })}><Trash2 size={12}/></Btn>
+                        <Btn variant="ghost" onClick={() => setEditingCT({ class_id: ct.class_id, teacher_id: String(ct.teacher_id) })}><Pencil size={12} /></Btn>
+                        <Btn variant="danger" onClick={() => setDeleteTarget({ class_id: ct.class_id, className: ct.class_name })}><Trash2 size={12} /></Btn>
                       </div>
                     </div>
                   )}
@@ -596,20 +596,20 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
 // ── Root Page ────────────────────────────────────────────────────────────────
 export default function Classes() {
   const [activeTab, setActiveTab] = useState("config");
-  const [classes, setClasses]         = useState(null);
-  const [subjects, setSubjects]       = useState(null);
-  const [students, setStudents]       = useState([]);
-  const [teachers, setTeachers]       = useState([]);
+  const [classes, setClasses] = useState(null);
+  const [subjects, setSubjects] = useState(null);
+  const [students, setStudents] = useState([]);
+  const [teachers, setTeachers] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
   const [classTeachers, setClassTeachers] = useState([]);
-  const [toast, setToast] = useState("");
+  const [toast, setToast] = useState(null);
 
-  function loadClasses()      { api.get("/admin-portal/classes/").then(({ data }) => setClasses(data)).catch(() => setClasses([])); }
-  function loadSubjects()     { api.get("/admin-portal/subjects/").then(({ data }) => setSubjects(data)).catch(() => setSubjects([])); }
-  function loadStudents()     { api.get("/admin-portal/users/?role=Student").then(({ data }) => setStudents(data)).catch(() => setStudents([])); }
-  function loadTeachers()     { api.get("/admin-portal/users/?role=Teacher").then(({ data }) => setTeachers(data)).catch(() => setTeachers([])); }
-  function loadEnrollments()  { api.get("/admin-portal/enrollments/").then(({ data }) => setEnrollments(data)).catch(() => setEnrollments([])); }
-  function loadClassTeachers(){ api.get("/admin-portal/class-teachers/").then(({ data }) => setClassTeachers(data)).catch(() => setClassTeachers([])); }
+  function loadClasses() { api.get("/admin-portal/classes/").then(({ data }) => setClasses(data)).catch(() => setClasses([])); }
+  function loadSubjects() { api.get("/admin-portal/subjects/").then(({ data }) => setSubjects(data)).catch(() => setSubjects([])); }
+  function loadStudents() { api.get("/admin-portal/users/?role=Student").then(({ data }) => setStudents(data)).catch(() => setStudents([])); }
+  function loadTeachers() { api.get("/admin-portal/users/?role=Teacher").then(({ data }) => setTeachers(data)).catch(() => setTeachers([])); }
+  function loadEnrollments() { api.get("/admin-portal/enrollments/").then(({ data }) => setEnrollments(data)).catch(() => setEnrollments([])); }
+  function loadClassTeachers() { api.get("/admin-portal/class-teachers/").then(({ data }) => setClassTeachers(data)).catch(() => setClassTeachers([])); }
 
   useEffect(() => {
     loadClasses(); loadSubjects(); loadStudents();
@@ -617,9 +617,9 @@ export default function Classes() {
   }, []);
 
   const TABS = [
-    { key: "config",   icon: BookOpen,      label: "Classes & Subjects" },
-    { key: "enroll",   icon: GraduationCap, label: "Student Enrollments" },
-    { key: "teachers", icon: UserCheck,     label: "Class Teachers" },
+    { key: "config", icon: BookOpen, label: "Classes & Subjects" },
+    { key: "enroll", icon: GraduationCap, label: "Student Enrollments" },
+    { key: "teachers", icon: UserCheck, label: "Class Teachers" },
   ];
 
   return (
@@ -630,11 +630,10 @@ export default function Classes() {
           <button
             key={key}
             onClick={() => setActiveTab(key)}
-            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${
-              activeTab === key
+            className={`flex items-center gap-2 px-5 py-3 text-sm font-semibold border-b-2 transition-all ${activeTab === key
                 ? "border-academic-blue text-academic-blue"
                 : "border-transparent text-slate-500 hover:text-slate-700"
-            }`}
+              }`}
           >
             <Icon size={16} /> {label}
           </button>
@@ -672,7 +671,7 @@ export default function Classes() {
         />
       )}
 
-      <Toast message={toast} onClose={() => setToast("")} />
+      <Toast message={toast?.message} tone={toast?.tone} onClose={() => setToast(null)} />
     </div>
   );
 }
