@@ -920,6 +920,98 @@ class TeacherLmsCoursesView(TeacherMixin, APIView):
         )
         return Response(serialise(courses))
 
+    def post(self, request):
+        if not table_exists("portal_course"):
+            return Response({"detail": "Course table does not exist."}, status=400)
+        
+        d = request.data
+        class_id = d.get("class_id")
+        subject_id = d.get("subject_id")
+        title = d.get("title", "").strip()
+        description = d.get("description", "").strip()
+
+        if not class_id or not subject_id or not title:
+            return Response({"detail": "class_id, subject_id, and title are required."}, status=400)
+
+        # Check if course already exists
+        exist = row("SELECT id FROM portal_course WHERE class_id=%s AND subject_id=%s", [class_id, subject_id])
+        if exist:
+            return Response({"detail": "A course already exists for this class and subject."}, status=400)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO portal_course (class_id, subject_id, title, description) VALUES (%s,%s,%s,%s) RETURNING id",
+                [class_id, subject_id, title, description]
+            )
+            course_id = cursor.fetchone()[0]
+
+            # Auto-allocate teacher to this class/subject so they can manage it
+            if table_exists("portal_academic_allocation"):
+                cursor.execute(
+                    "INSERT INTO portal_academic_allocation (class_id, subject_id, teacher_id) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
+                    [class_id, subject_id, request.user.id]
+                )
+
+        log_action(request.user, "lms.course.create", "portal_course", course_id, {"title": title})
+        return Response({"id": course_id, "detail": "Course created successfully."})
+
+    def put(self, request):
+        if not table_exists("portal_course"):
+            return Response({"detail": "Course table does not exist."}, status=400)
+
+        d = request.data
+        course_id = d.get("id")
+        title = d.get("title", "").strip()
+        description = d.get("description", "").strip()
+
+        if not course_id or not title:
+            return Response({"detail": "id and title are required."}, status=400)
+
+        # Security check: verify this teacher is allocated to this course
+        exist = row(
+            """
+            SELECT c.id FROM portal_course c
+            JOIN portal_academic_allocation aa ON aa.class_id = c.class_id AND aa.subject_id = c.subject_id
+            WHERE c.id=%s AND aa.teacher_id=%s
+            """, [course_id, request.user.id]
+        )
+        if not exist:
+            return Response({"detail": "Course not found or access denied."}, status=404)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE portal_course SET title=%s, description=%s WHERE id=%s",
+                [title, description, course_id]
+            )
+
+        log_action(request.user, "lms.course.update", "portal_course", course_id, {"title": title})
+        return Response({"detail": "Course updated successfully."})
+
+    def delete(self, request):
+        if not table_exists("portal_course"):
+            return Response({"detail": "Course table does not exist."}, status=400)
+
+        course_id = request.query_params.get("id") or request.data.get("id")
+        if not course_id:
+            return Response({"detail": "id parameter is required."}, status=400)
+
+        # Security check: verify this teacher is allocated to this course
+        exist = row(
+            """
+            SELECT c.id, c.title FROM portal_course c
+            JOIN portal_academic_allocation aa ON aa.class_id = c.class_id AND aa.subject_id = c.subject_id
+            WHERE c.id=%s AND aa.teacher_id=%s
+            """, [course_id, request.user.id]
+        )
+        if not exist:
+            return Response({"detail": "Course not found or access denied."}, status=404)
+
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_course WHERE id=%s", [course_id])
+
+        log_action(request.user, "lms.course.delete", "portal_course", course_id, {"title": exist["title"]})
+        return Response({"detail": "Course deleted successfully."})
+
 
 class TeacherLmsChaptersView(TeacherMixin, APIView):
     def get(self, request):
