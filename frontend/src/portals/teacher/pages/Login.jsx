@@ -41,11 +41,19 @@ export default function Login() {
     try {
       const data = await requestOtp(email, password);
       setUserId(data.user_id);
+      if (data.email_sent === false) {
+        setError(
+          <span className="text-amber-700">
+            ⚠️ {data.email_error || "OTP could not be sent to your email. Please contact the administrator for your one-time code."}
+          </span>
+        );
+      }
       setStep(2);
     } catch (err) {
+      const detail = err?.response?.data?.detail;
       setError(
         <span>
-          Invalid credentials. Please check your username/password and try again. Or{" "}
+          {detail || "Invalid credentials. Please check your username/password and try again."}{" "}
           <button
             type="button"
             onClick={() => {

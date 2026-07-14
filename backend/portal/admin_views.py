@@ -142,7 +142,9 @@ def _generate_credentials(enquiry):
         student_username = _unique_username(f"{enquiry.applicant_name}.{enquiry.registration_number[-4:]}")
         student = User.objects.create_user(
             username=student_username,
-            email=f"{student_username}@students.edunova.edu",
+            # Use parent's real email so OTP is deliverable to the parent
+            # who can relay the code to the student.
+            email=enquiry.parent_email,
             password=temp_password,
             first_name=enquiry.applicant_name.split(" ")[0] if enquiry.applicant_name else "",
             last_name=" ".join(enquiry.applicant_name.split(" ")[1:]) if enquiry.applicant_name else "",

@@ -163,16 +163,18 @@ def login_step1(request):
         send_login_otp_email(user, otp)
     except Exception as e:
         logger.exception("Failed to send OTP email")
-        if settings.DEBUG:
-            return Response({
-                "user_id": user.id,
-                "user_type": get_user_role(user),
-                "detail": "OTP generated in debug mode (check console).",
-            })
-        return Response(
-            {"detail": "Unable to send verification email."},
-            status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-        )
+        # Never return 500 here — that causes the frontend to show a
+        # generic "Invalid credentials" error which is very confusing.
+        # Instead return user_id with email_sent=False so the frontend
+        # can show a specific "contact admin for your OTP" message and
+        # still proceed to the OTP verification step.
+        return Response({
+            "user_id": user.id,
+            "user_type": get_user_role(user),
+            "detail": "OTP generated but email delivery failed.",
+            "email_sent": False,
+            "email_error": "We could not send the OTP to your registered email. Please contact the administrator to get your one-time code.",
+        })
 
     return Response({
         "user_id": user.id,

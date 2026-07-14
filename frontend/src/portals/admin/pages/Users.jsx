@@ -242,17 +242,50 @@ export default function Users() {
         onClose={() => setResetResult(null)}
       />
 
-      {created && (
-        <Card className="border-2 border-academic-green">
-          <p className="font-semibold text-academic-green mb-1">User created</p>
-          <p className="text-sm">
-            Username: <b>{created.username}</b> · Temp password: <b>{created.temp_password}</b> · Role: {created.role}
-          </p>
-          <button onClick={() => setCreated(null)} className="mt-2 text-xs text-ink-secondary hover:underline">
-            Dismiss
-          </button>
-        </Card>
-      )}
+      {created && (() => {
+        const portalMap = {
+          Student: "/student/login",
+          Teacher: "/teacher/login",
+          Parent: "/parent/login",
+          Admin: "/admin/login",
+          Employee: "/teacher/login",
+        };
+        const loginPath = portalMap[created.role] || "/login";
+        return (
+          <Card className="border-2 border-academic-green bg-emerald-50">
+            <p className="font-bold text-academic-green text-base mb-3">✅ User Created Successfully</p>
+            <div className="grid sm:grid-cols-2 gap-3 text-sm mb-3">
+              <div className="bg-white rounded-xl p-3 border border-emerald-200">
+                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Username</p>
+                <p className="font-mono font-bold text-slate-800 select-all">{created.username}</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-emerald-200">
+                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Temporary Password</p>
+                <p className="font-mono font-bold text-slate-800 select-all">{created.temp_password}</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-emerald-200">
+                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Role</p>
+                <p className="font-semibold text-slate-800">{created.role}</p>
+              </div>
+              <div className="bg-white rounded-xl p-3 border border-emerald-200">
+                <p className="text-xs text-slate-500 uppercase font-semibold mb-1">Login Portal</p>
+                <a
+                  href={loginPath}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="font-semibold text-academic-blue hover:underline text-sm"
+                >
+                  {window.location.origin}{loginPath}
+                </a>
+              </div>
+            </div>
+            <p className="text-xs text-slate-500 mb-2">⚠️ Share these credentials with the user. The temporary password must be changed after first login.</p>
+            <button onClick={() => setCreated(null)} className="text-xs text-ink-secondary hover:underline">
+              Dismiss
+            </button>
+          </Card>
+        );
+      })()}
 
       {/* Create User Form */}
       <Card>
