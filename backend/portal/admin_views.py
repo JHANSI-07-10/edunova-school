@@ -496,12 +496,17 @@ class SimpleTableView(AdminMixin, APIView):
     columns = ()          # columns accepted on create, in order
     order_by = "id"
 
-    def get(self, request):
+    def get(self, request, record_id=None):
         if not table_exists(self.table):
             return Response([])
+        if record_id:
+            r = row(f"SELECT * FROM {self.table} WHERE id=%s", [record_id])
+            if not r:
+                return Response({"detail": "Not found."}, status=404)
+            return Response(serialise(r))
         return Response(serialise(rows(f"SELECT * FROM {self.table} ORDER BY {self.order_by}")))
 
-    def post(self, request):
+    def post(self, request, record_id=None):
         if not table_exists(self.table):
             return Response({"detail": "Table not found. Apply the schema extension SQL first."}, status=400)
         values = [request.data.get(c) for c in self.columns]
@@ -512,6 +517,32 @@ class SimpleTableView(AdminMixin, APIView):
             new_id = cursor.fetchone()[0]
         log_action(request.user, f"{self.table}.create", self.table, new_id, dict(zip(self.columns, [str(v) for v in values])))
         return Response({"id": new_id, "detail": "Created."})
+
+    def patch(self, request, record_id):
+        """Update any subset of columns for a record."""
+        if not table_exists(self.table):
+            return Response({"detail": "Table not found."}, status=400)
+        updates = {k: v for k, v in request.data.items() if k in self.columns}
+        if not updates:
+            return Response({"detail": "No valid fields provided."}, status=400)
+        set_sql = ", ".join([f"{col} = %s" for col in updates])
+        values = list(updates.values()) + [record_id]
+        with connection.cursor() as cursor:
+            cursor.execute(f"UPDATE {self.table} SET {set_sql} WHERE id = %s", values)
+        log_action(request.user, f"{self.table}.update", self.table, record_id, updates)
+        return Response({"detail": "Updated."})
+
+    def delete(self, request, record_id):
+        """Delete a record by id."""
+        if not table_exists(self.table):
+            return Response({"detail": "Table not found."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(f"DELETE FROM {self.table} WHERE id = %s RETURNING id", [record_id])
+            deleted = cursor.fetchone()
+        if not deleted:
+            return Response({"detail": "Not found."}, status=404)
+        log_action(request.user, f"{self.table}.delete", self.table, record_id, {})
+        return Response({"detail": "Deleted."})
 
 
 class ClassView(SimpleTableView):
@@ -776,7 +807,7 @@ class BackupExportView(AdminMixin, APIView):
 
 
 class ClassEnrollmentView(AdminMixin, APIView):
-    def get(self, request):
+    def get(self, request, enrollment_id=None):
         if not table_exists("portal_student_enrollment"):
             return Response([])
         data = rows(
@@ -793,7 +824,7 @@ class ClassEnrollmentView(AdminMixin, APIView):
         )
         return Response(serialise(data))
 
-    def post(self, request):
+    def post(self, request, enrollment_id=None):
         d = request.data
         student_id = d.get("student_id")
         class_id = d.get("class_id")
@@ -804,7 +835,6 @@ class ClassEnrollmentView(AdminMixin, APIView):
             return Response({"detail": "student_id and class_id are required."}, status=400)
 
         with connection.cursor() as cursor:
-            # Check if student is already enrolled in this class for the academic year
             cursor.execute(
                 "SELECT id FROM portal_student_enrollment WHERE student_id=%s AND class_id=%s AND academic_year=%s",
                 [student_id, class_id, academic_year]
@@ -822,9 +852,36 @@ class ClassEnrollmentView(AdminMixin, APIView):
         log_action(request.user, "student_enrollment.create", "portal_student_enrollment", new_id, d)
         return Response({"id": new_id, "detail": "Student enrolled successfully."})
 
+    def patch(self, request, enrollment_id):
+        """Update roll number or class for an enrollment (admin only)."""
+        if not table_exists("portal_student_enrollment"):
+            return Response({"detail": "Table not found."}, status=400)
+        allowed = {"class_id", "roll_number", "academic_year"}
+        updates = {k: v for k, v in request.data.items() if k in allowed}
+        if not updates:
+            return Response({"detail": "No valid fields provided."}, status=400)
+        set_sql = ", ".join([f"{col} = %s" for col in updates])
+        values = list(updates.values()) + [enrollment_id]
+        with connection.cursor() as cursor:
+            cursor.execute(f"UPDATE portal_student_enrollment SET {set_sql} WHERE id = %s", values)
+        log_action(request.user, "student_enrollment.update", "portal_student_enrollment", enrollment_id, updates)
+        return Response({"detail": "Enrollment updated."})
+
+    def delete(self, request, enrollment_id):
+        """Remove a student from a class (admin only)."""
+        if not table_exists("portal_student_enrollment"):
+            return Response({"detail": "Table not found."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_student_enrollment WHERE id = %s RETURNING id", [enrollment_id])
+            deleted = cursor.fetchone()
+        if not deleted:
+            return Response({"detail": "Enrollment not found."}, status=404)
+        log_action(request.user, "student_enrollment.delete", "portal_student_enrollment", enrollment_id, {})
+        return Response({"detail": "Enrollment removed."})
+
 
 class ClassTeacherAssignView(AdminMixin, APIView):
-    def get(self, request):
+    def get(self, request, class_id=None):
         if not table_exists("portal_class_teacher"):
             return Response([])
         data = rows(
@@ -845,7 +902,7 @@ class ClassTeacherAssignView(AdminMixin, APIView):
         )
         return Response(serialise(data))
 
-    def post(self, request):
+    def post(self, request, class_id=None):
         d = request.data
         class_id = d.get("class_id")
         teacher_id = d.get("teacher_id")
@@ -868,6 +925,36 @@ class ClassTeacherAssignView(AdminMixin, APIView):
                 )
         log_action(request.user, "class_teacher.assign", "portal_class_teacher", class_id, d)
         return Response({"detail": "Class teacher and subject assigned successfully."})
+
+    def patch(self, request, class_id):
+        """Reassign a different teacher to a class."""
+        if not table_exists("portal_class_teacher"):
+            return Response({"detail": "Table not found."}, status=400)
+        teacher_id = request.data.get("teacher_id")
+        if not teacher_id:
+            return Response({"detail": "teacher_id is required."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE portal_class_teacher SET teacher_id = %s WHERE class_id = %s RETURNING class_id",
+                [teacher_id, class_id]
+            )
+            updated = cursor.fetchone()
+        if not updated:
+            return Response({"detail": "No class-teacher assignment found for this class."}, status=404)
+        log_action(request.user, "class_teacher.update", "portal_class_teacher", class_id, {"teacher_id": teacher_id})
+        return Response({"detail": "Class teacher updated."})
+
+    def delete(self, request, class_id):
+        """Remove the class teacher assignment for a class."""
+        if not table_exists("portal_class_teacher"):
+            return Response({"detail": "Table not found."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_class_teacher WHERE class_id = %s RETURNING class_id", [class_id])
+            deleted = cursor.fetchone()
+        if not deleted:
+            return Response({"detail": "No assignment found."}, status=404)
+        log_action(request.user, "class_teacher.delete", "portal_class_teacher", class_id, {})
+        return Response({"detail": "Class teacher assignment removed."})
 
 
 class AdminLmsAnalyticsView(AdminMixin, APIView):
