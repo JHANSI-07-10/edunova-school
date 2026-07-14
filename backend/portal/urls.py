@@ -166,4 +166,14 @@ urlpatterns = [
     # Admin exams management & publication
     path("admin-portal/exams/", exam_extras_views.AdminExamActionView.as_view()),
     path("admin-portal/exams/<int:exam_id>/action/", exam_extras_views.AdminExamActionView.as_view()),
+
+    # Timetable Management
+    path("admin-portal/timetable/",             admin_views.TimetableAdminView.as_view()),
+    path("admin-portal/timetable/<int:entry_id>/", admin_views.TimetableEntryAdminView.as_view()),
+    path("admin-portal/timetable/publish/",     admin_views.TimetablePublishView.as_view()),
+    path("admin-portal/timetable/conflicts/",   admin_views.TimetableConflictView.as_view()),
+    path("admin-portal/timetable/meta/",        admin_views.TimetableMetaView.as_view()),
+
+    # Parent portal — child timetable
+    path("parent/timetable/", parent_views.ParentChildTimetableView.as_view()),
 ]

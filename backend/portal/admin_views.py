@@ -1173,3 +1173,242 @@ class AdminCampusVisitsView(APIView):
         return Response({"detail": "Campus visit status updated successfully."})
 
 
+# ---------------------------------------------------------------------------
+# Timetable Management
+# ---------------------------------------------------------------------------
+
+class TimetableAdminView(AdminMixin, APIView):
+    """
+    GET  /admin-portal/timetable/?class_id=&academic_year=  → list all entries for a class
+    POST /admin-portal/timetable/                           → create a period/break
+    """
+    def get(self, request):
+        if not table_exists("portal_timetable"):
+            return Response([])
+        class_id = request.query_params.get("class_id")
+        academic_year = request.query_params.get("academic_year", "2025-26")
+        if not class_id:
+            return Response({"detail": "class_id is required."}, status=400)
+        data = rows(
+            """
+            SELECT t.id, t.class_id, t.subject_id, t.teacher_id,
+                   t.day_of_week, t.period_number, t.start_time, t.end_time,
+                   t.room_number, t.meeting_link, t.is_break, t.break_label,
+                   t.academic_year, t.is_published,
+                   COALESCE(s.name, '') AS subject_name,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username, '') AS teacher_name,
+                   COALESCE(c.name || '-' || c.section, '') AS class_name
+            FROM portal_timetable t
+            LEFT JOIN portal_subject s ON s.id = t.subject_id
+            LEFT JOIN auth_user u ON u.id = t.teacher_id
+            LEFT JOIN portal_class c ON c.id = t.class_id
+            WHERE t.class_id = %s AND t.academic_year = %s
+            ORDER BY
+              CASE t.day_of_week
+                WHEN 'Monday'    THEN 1 WHEN 'Tuesday'  THEN 2
+                WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4
+                WHEN 'Friday'    THEN 5 WHEN 'Saturday'  THEN 6
+              END, t.start_time
+            """, [class_id, academic_year]
+        )
+        return Response(serialise(data))
+
+    def post(self, request):
+        if not table_exists("portal_timetable"):
+            return Response({"detail": "Timetable schema not applied yet."}, status=503)
+        d = request.data
+        class_id      = d.get("class_id")
+        day           = d.get("day_of_week")
+        start_time    = d.get("start_time")
+        end_time      = d.get("end_time")
+        is_break      = bool(d.get("is_break", False))
+        academic_year = d.get("academic_year", "2025-26")
+        teacher_id    = d.get("teacher_id") or None
+        room_number   = d.get("room_number") or None
+
+        if not all([class_id, day, start_time, end_time]):
+            return Response({"detail": "class_id, day_of_week, start_time and end_time are required."}, status=400)
+
+        if teacher_id and not is_break:
+            conflict = row(
+                """
+                SELECT t.id, c.name || '-' || c.section AS conflict_class
+                FROM portal_timetable t
+                JOIN portal_class c ON c.id = t.class_id
+                WHERE t.teacher_id = %s AND t.day_of_week = %s AND t.academic_year = %s
+                  AND t.is_break = false
+                  AND (t.start_time, t.end_time) OVERLAPS (%s::time, %s::time)
+                """, [teacher_id, day, academic_year, start_time, end_time]
+            )
+            if conflict:
+                return Response({
+                    "detail": f"Teacher conflict: already assigned to {conflict['conflict_class']} at this time.",
+                    "conflict": True
+                }, status=409)
+
+        if room_number and not is_break:
+            room_conflict = row(
+                """
+                SELECT t.id, c.name || '-' || c.section AS conflict_class
+                FROM portal_timetable t
+                JOIN portal_class c ON c.id = t.class_id
+                WHERE t.room_number = %s AND t.day_of_week = %s AND t.academic_year = %s
+                  AND t.is_break = false
+                  AND (t.start_time, t.end_time) OVERLAPS (%s::time, %s::time)
+                """, [room_number, day, academic_year, start_time, end_time]
+            )
+            if room_conflict:
+                return Response({
+                    "detail": f"Room conflict: {room_number} already in use by {room_conflict['conflict_class']} at this time.",
+                    "conflict": True
+                }, status=409)
+
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """
+                INSERT INTO portal_timetable
+                  (class_id, subject_id, teacher_id, day_of_week, period_number,
+                   start_time, end_time, room_number, meeting_link, is_break, break_label,
+                   academic_year, is_published)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,false) RETURNING id
+                """,
+                [
+                    class_id, d.get("subject_id") or None, teacher_id,
+                    day, d.get("period_number", 1),
+                    start_time, end_time, room_number,
+                    d.get("meeting_link") or None,
+                    is_break, d.get("break_label", "Break"), academic_year,
+                ]
+            )
+            new_id = cursor.fetchone()[0]
+
+        log_action(request.user, "timetable.create", "portal_timetable", new_id, d)
+        return Response({"id": new_id, "detail": "Period added."}, status=201)
+
+
+class TimetableEntryAdminView(AdminMixin, APIView):
+    """PATCH/DELETE /admin-portal/timetable/<id>/"""
+    def patch(self, request, entry_id):
+        if not table_exists("portal_timetable"):
+            return Response({"detail": "Schema not applied."}, status=503)
+        d = request.data
+        allowed = ["subject_id","teacher_id","day_of_week","period_number",
+                   "start_time","end_time","room_number","meeting_link",
+                   "is_break","break_label","academic_year"]
+        updates = {k: (v or None) if k in ["subject_id","teacher_id","room_number","meeting_link"] else v
+                   for k, v in d.items() if k in allowed}
+        if not updates:
+            return Response({"detail": "No valid fields."}, status=400)
+        set_clause = ", ".join(f"{k}=%s" for k in updates)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE portal_timetable SET {set_clause}, updated_at=now() WHERE id=%s",
+                list(updates.values()) + [entry_id]
+            )
+        log_action(request.user, "timetable.update", "portal_timetable", entry_id, updates)
+        return Response({"detail": "Updated."})
+
+    def delete(self, request, entry_id):
+        if not table_exists("portal_timetable"):
+            return Response({"detail": "Schema not applied."}, status=503)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_timetable WHERE id=%s", [entry_id])
+        log_action(request.user, "timetable.delete", "portal_timetable", entry_id, {})
+        return Response({"detail": "Deleted."})
+
+
+class TimetablePublishView(AdminMixin, APIView):
+    """POST /admin-portal/timetable/publish/  { class_id, academic_year, publish: true/false }"""
+    def post(self, request):
+        if not table_exists("portal_timetable"):
+            return Response({"detail": "Schema not applied."}, status=503)
+        class_id      = request.data.get("class_id")
+        academic_year = request.data.get("academic_year", "2025-26")
+        publish       = bool(request.data.get("publish", True))
+        if not class_id:
+            return Response({"detail": "class_id is required."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "UPDATE portal_timetable SET is_published=%s, updated_at=now() WHERE class_id=%s AND academic_year=%s",
+                [publish, class_id, academic_year]
+            )
+        verb = "published" if publish else "unpublished"
+        log_action(request.user, f"timetable.{verb}", "portal_timetable", class_id, {"academic_year": academic_year})
+        return Response({"detail": f"Timetable {verb} successfully."})
+
+
+class TimetableConflictView(AdminMixin, APIView):
+    """GET /admin-portal/timetable/conflicts/?academic_year="""
+    def get(self, request):
+        if not table_exists("portal_timetable"):
+            return Response({"teacher_conflicts": [], "room_conflicts": []})
+        academic_year = request.query_params.get("academic_year", "2025-26")
+
+        teacher_conflicts = rows(
+            """
+            SELECT a.id AS id_a, b.id AS id_b, a.day_of_week,
+                   a.start_time, a.end_time,
+                   COALESCE(u.first_name||' '||u.last_name, u.username) AS teacher_name,
+                   ca.name||'-'||ca.section AS class_a, cb.name||'-'||cb.section AS class_b,
+                   sa.name AS subject_a, sb.name AS subject_b
+            FROM portal_timetable a
+            JOIN portal_timetable b ON a.teacher_id=b.teacher_id AND a.day_of_week=b.day_of_week
+              AND a.id < b.id AND a.academic_year=b.academic_year
+              AND (a.start_time,a.end_time) OVERLAPS (b.start_time,b.end_time)
+              AND a.is_break=false AND b.is_break=false
+            JOIN auth_user u ON u.id=a.teacher_id
+            JOIN portal_class ca ON ca.id=a.class_id
+            JOIN portal_class cb ON cb.id=b.class_id
+            LEFT JOIN portal_subject sa ON sa.id=a.subject_id
+            LEFT JOIN portal_subject sb ON sb.id=b.subject_id
+            WHERE a.academic_year=%s
+            """, [academic_year]
+        )
+
+        room_conflicts = rows(
+            """
+            SELECT a.id AS id_a, b.id AS id_b, a.day_of_week,
+                   a.start_time, a.end_time, a.room_number,
+                   ca.name||'-'||ca.section AS class_a, cb.name||'-'||cb.section AS class_b
+            FROM portal_timetable a
+            JOIN portal_timetable b ON a.room_number=b.room_number AND a.day_of_week=b.day_of_week
+              AND a.id < b.id AND a.academic_year=b.academic_year
+              AND (a.start_time,a.end_time) OVERLAPS (b.start_time,b.end_time)
+              AND a.is_break=false AND b.is_break=false
+            JOIN portal_class ca ON ca.id=a.class_id
+            JOIN portal_class cb ON cb.id=b.class_id
+            WHERE a.academic_year=%s AND a.room_number IS NOT NULL
+            """, [academic_year]
+        )
+
+        return Response({
+            "teacher_conflicts": serialise(teacher_conflicts),
+            "room_conflicts": serialise(room_conflicts),
+        })
+
+
+class TimetableMetaView(AdminMixin, APIView):
+    """GET /admin-portal/timetable/meta/ — classes, subjects, teachers for dropdowns"""
+    def get(self, request):
+        classes = serialise(rows(
+            "SELECT id, name||'-'||section AS label FROM portal_class ORDER BY name, section", []
+        )) if table_exists("portal_class") else []
+
+        subjects = serialise(rows(
+            "SELECT id, name AS label FROM portal_subject ORDER BY name", []
+        )) if table_exists("portal_subject") else []
+
+        teachers = serialise(rows(
+            """
+            SELECT u.id, COALESCE(u.first_name||' '||u.last_name, u.username) AS label
+            FROM auth_user u
+            JOIN portal_user_profile p ON p.user_id=u.id
+            WHERE p.user_type='Teacher' AND u.is_active=true ORDER BY label
+            """, []
+        )) if table_exists("portal_user_profile") else []
+
+        return Response({
+            "classes": classes, "subjects": subjects, "teachers": teachers,
+            "academic_years": ["2024-25", "2025-26", "2026-27"],
+            "days": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
+        })

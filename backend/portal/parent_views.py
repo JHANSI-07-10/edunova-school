@@ -657,3 +657,51 @@ class ParentLmsProgressView(ParentMixin, APIView):
             
         return Response(serialise({"courses": result_data}))
 
+
+class ParentChildTimetableView(ParentMixin, APIView):
+    """
+    GET /parent/timetable/?student_id=<id>
+    Returns the published timetable for a child of the logged-in parent.
+    """
+    def get(self, request):
+        if not table_exists("portal_timetable"):
+            return Response([])
+
+        student_id = request.query_params.get("student_id")
+        children = _children(request.user.id)
+        child_ids = [str(c["id"]) for c in serialise(children)]
+
+        if not child_ids:
+            return Response([])
+
+        # If no student_id given, use the first child
+        if not student_id or str(student_id) not in child_ids:
+            student_id = child_ids[0]
+
+        # Get the class for this child
+        cls = current_class_for_student(int(student_id))
+        if not cls:
+            return Response([])
+
+        data = rows(
+            """
+            SELECT t.id, t.day_of_week, t.start_time, t.end_time,
+                   t.period_number, t.is_break, t.break_label,
+                   COALESCE(s.name, '') AS subject_name,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username, '') AS teacher_name,
+                   COALESCE(t.room_number, '') AS room_number,
+                   COALESCE(t.meeting_link, '') AS meeting_link
+            FROM portal_timetable t
+            LEFT JOIN portal_subject s ON s.id = t.subject_id
+            LEFT JOIN auth_user u ON u.id = t.teacher_id
+            WHERE t.class_id = %s AND t.is_published = true
+            ORDER BY
+              CASE t.day_of_week
+                WHEN 'Monday' THEN 1 WHEN 'Tuesday' THEN 2
+                WHEN 'Wednesday' THEN 3 WHEN 'Thursday' THEN 4
+                WHEN 'Friday' THEN 5 WHEN 'Saturday' THEN 6
+              END, t.start_time
+            """, [cls["class_id"]]
+        )
+        return Response(serialise(data))
+
