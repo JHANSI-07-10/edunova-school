@@ -15,7 +15,8 @@ import {
   Settings,
   Shield,
   Layers,
-  MapPin
+  MapPin,
+  CheckCircle2
 } from 'lucide-react'
 import FadeIn from '../../../components/FadeIn'
 
