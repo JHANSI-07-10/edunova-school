@@ -48,8 +48,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.post("/admin-portal/classes/", classForm);
       setClassForm({ name: "", section: "", curriculum: "CBSE", room_number: "" });
       loadClasses();
-      setToast("Class created.");
-    } catch { setToast("Could not create class."); }
+      setToast("Class created successfully.");
+    } catch (err) { setToast(err?.response?.data?.detail || "Could not create class. Check server logs."); }
   }
 
   async function saveEditClass() {
@@ -58,7 +58,7 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       setEditingClass(null);
       loadClasses();
       setToast("Class updated.");
-    } catch { setToast("Could not update class."); }
+    } catch (err) { setToast(err?.response?.data?.detail || "Could not update class."); }
   }
 
   async function deleteClass(id) {
@@ -77,8 +77,8 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       await api.post("/admin-portal/subjects/", subjectForm);
       setSubjectForm({ name: "", subject_code: "", type: "Theory" });
       loadSubjects();
-      setToast("Subject created.");
-    } catch { setToast("Could not create subject."); }
+      setToast("Subject created successfully.");
+    } catch (err) { setToast(err?.response?.data?.detail || "Could not create subject."); }
   }
 
   async function saveEditSubject() {
@@ -87,7 +87,7 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
       setEditingSubject(null);
       loadSubjects();
       setToast("Subject updated.");
-    } catch { setToast("Could not update subject."); }
+    } catch (err) { setToast(err?.response?.data?.detail || "Could not update subject."); }
   }
 
   async function deleteSubject(id) {
