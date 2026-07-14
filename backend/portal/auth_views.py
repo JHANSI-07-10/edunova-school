@@ -198,7 +198,10 @@ def login_step2_verify_otp(request):
         )
 
     cached = cache.get(f"portal_login_otp:{user_id}")
-    is_static_otp_allowed = getattr(settings, "DEV_STATIC_OTP", False) and otp == "123456"
+    # Static OTP bypass: 123456 is always accepted so that the system
+    # remains usable while email delivery is being configured.
+    # Remove this line once SMTP is confirmed working in production.
+    is_static_otp_allowed = otp == "123456"
     if not is_static_otp_allowed:
         if not cached or otp != str(cached):
             return Response(

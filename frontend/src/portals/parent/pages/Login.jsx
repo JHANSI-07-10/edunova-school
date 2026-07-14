@@ -260,7 +260,10 @@ export default function Login() {
               ) : (
                 <form onSubmit={handleOtp} className="space-y-4">
                   <div className="flex items-center gap-2 text-academic-green text-sm bg-emerald-50 rounded-xl px-3 py-2">
-                    <ShieldCheck size={16} /> OTP sent to your registered email
+                    <ShieldCheck size={16} /> Credentials verified — enter your OTP below
+                  </div>
+                  <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-xs text-amber-800">
+                    <strong>Note:</strong> Email delivery is temporarily disabled. Use the static OTP: <strong className="font-mono tracking-widest">123456</strong>
                   </div>
                   <div>
                     <label className="text-sm font-medium text-ink-primary">6-digit code</label>
