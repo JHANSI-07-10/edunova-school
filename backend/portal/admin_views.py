@@ -622,28 +622,555 @@ class TransportAllocationView(SimpleTableView):
     order_by = "id"
 
 
-class FeeStructureView(SimpleTableView):
-    table = "portal_fee_structure"
-    columns = ("class_id", "term_name", "tuition_fee", "transport_fee", "hostel_fee", "total_amount")
-    order_by = "class_id"
+# ---------------------------------------------------------------------------
+# Fee Management — Academic Years
+# ---------------------------------------------------------------------------
+class AcademicYearView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_academic_year"):
+            return Response([])
+        return Response(serialise(rows("SELECT * FROM portal_academic_year ORDER BY start_date DESC")))
+
+    def post(self, request):
+        if not table_exists("portal_academic_year"):
+            return Response({"detail": "Run portal_extension_fees.sql first."}, status=400)
+        d = request.data
+        name = d.get("name", "").strip()
+        start = d.get("start_date")
+        end = d.get("end_date")
+        if not name or not start or not end:
+            return Response({"detail": "name, start_date and end_date are required."}, status=400)
+        if d.get("is_active"):
+            with connection.cursor() as cur:
+                cur.execute("UPDATE portal_academic_year SET is_active=false")
+        with connection.cursor() as cur:
+            cur.execute(
+                "INSERT INTO portal_academic_year (name, start_date, end_date, is_active) VALUES (%s,%s,%s,%s) RETURNING id",
+                [name, start, end, bool(d.get("is_active", False))],
+            )
+            new_id = cur.fetchone()[0]
+        log_action(request.user, "academic_year.create", "academic_year", new_id, {"name": name})
+        return Response({"id": new_id, "detail": "Academic year created."})
+
+    def patch(self, request):
+        yr_id = request.data.get("id")
+        if not yr_id:
+            return Response({"detail": "id required."}, status=400)
+        if request.data.get("is_active"):
+            with connection.cursor() as cur:
+                cur.execute("UPDATE portal_academic_year SET is_active=false")
+        with connection.cursor() as cur:
+            cur.execute("UPDATE portal_academic_year SET is_active=%s WHERE id=%s",
+                        [bool(request.data.get("is_active")), yr_id])
+        return Response({"detail": "Updated."})
+
+    def delete(self, request):
+        yr_id = request.query_params.get("id")
+        if not yr_id:
+            return Response({"detail": "id required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_academic_year WHERE id=%s", [yr_id])
+        log_action(request.user, "academic_year.delete", "academic_year", yr_id, {})
+        return Response({"detail": "Deleted."})
 
 
+# ---------------------------------------------------------------------------
+# Fee Management — Fee Categories
+# ---------------------------------------------------------------------------
+class FeeCategoryView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_fee_category"):
+            return Response([])
+        return Response(serialise(rows("SELECT * FROM portal_fee_category ORDER BY sort_order")))
+
+    def post(self, request):
+        if not table_exists("portal_fee_category"):
+            return Response({"detail": "Run portal_extension_fees.sql first."}, status=400)
+        d = request.data
+        name = d.get("name", "").strip()
+        if not name:
+            return Response({"detail": "name is required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute(
+                "INSERT INTO portal_fee_category (name, description, sort_order) VALUES (%s,%s,%s) RETURNING id",
+                [name, d.get("description", ""), int(d.get("sort_order", 99))],
+            )
+            new_id = cur.fetchone()[0]
+        return Response({"id": new_id, "detail": "Category created."})
+
+    def patch(self, request):
+        cat_id = request.data.get("id")
+        if not cat_id:
+            return Response({"detail": "id required."}, status=400)
+        d = request.data
+        with connection.cursor() as cur:
+            cur.execute(
+                "UPDATE portal_fee_category SET name=%s, description=%s, is_active=%s, sort_order=%s WHERE id=%s",
+                [d.get("name"), d.get("description", ""), bool(d.get("is_active", True)), int(d.get("sort_order", 0)), cat_id],
+            )
+        return Response({"detail": "Updated."})
+
+    def delete(self, request):
+        cat_id = request.query_params.get("id")
+        if not cat_id:
+            return Response({"detail": "id required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_fee_category WHERE id=%s", [cat_id])
+        return Response({"detail": "Deleted."})
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Fee Structures (full CRUD)
+# ---------------------------------------------------------------------------
+class FeeStructureView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_fee_structure"):
+            return Response([])
+        fs_id = request.query_params.get("id")
+        if fs_id:
+            r = row("SELECT * FROM portal_fee_structure WHERE id=%s", [fs_id])
+            return Response(serialise(r))
+        data = rows("""
+            SELECT fs.*, c.name AS class_name, c.section,
+                   ay.name AS academic_year_name
+            FROM portal_fee_structure fs
+            LEFT JOIN portal_class c ON c.id = fs.class_id
+            LEFT JOIN portal_academic_year ay ON ay.id = fs.academic_year_id
+            ORDER BY fs.created_at DESC
+        """)
+        return Response(serialise(data))
+
+    def post(self, request):
+        if not table_exists("portal_fee_structure"):
+            return Response({"detail": "Schema not ready."}, status=400)
+        d = request.data
+        if not d.get("class_id") or not d.get("term_name"):
+            return Response({"detail": "class_id and term_name are required."}, status=400)
+        tuition     = float(d.get("tuition_fee", 0))
+        admission   = float(d.get("admission_fee", 0))
+        transport   = float(d.get("transport_fee", 0))
+        hostel      = float(d.get("hostel_fee", 0))
+        library     = float(d.get("library_fee", 0))
+        exam        = float(d.get("exam_fee", 0))
+        misc        = float(d.get("misc_fee", 0))
+        total       = tuition + admission + transport + hostel + library + exam + misc
+        if d.get("total_amount"):
+            total = float(d.get("total_amount"))
+        with connection.cursor() as cur:
+            cur.execute("""
+                INSERT INTO portal_fee_structure
+                  (class_id, term_name, academic_year_id, due_date, late_fine_per_day,
+                   tuition_fee, admission_fee, transport_fee, hostel_fee, library_fee,
+                   exam_fee, misc_fee, total_amount, description, is_published)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id
+            """, [
+                d.get("class_id"), d.get("term_name"), d.get("academic_year_id") or None,
+                d.get("due_date") or None, float(d.get("late_fine_per_day", 0)),
+                tuition, admission, transport, hostel, library, exam, misc, total,
+                d.get("description", ""), bool(d.get("is_published", False)),
+            ])
+            new_id = cur.fetchone()[0]
+        log_action(request.user, "fee_structure.create", "fee_structure", new_id, {"term": d.get("term_name"), "total": total})
+        return Response({"id": new_id, "detail": "Fee structure created.", "total_amount": total})
+
+    def patch(self, request):
+        fs_id = request.data.get("id")
+        if not fs_id:
+            return Response({"detail": "id required."}, status=400)
+        d = request.data
+        tuition   = float(d.get("tuition_fee", 0))
+        admission = float(d.get("admission_fee", 0))
+        transport = float(d.get("transport_fee", 0))
+        hostel    = float(d.get("hostel_fee", 0))
+        library   = float(d.get("library_fee", 0))
+        exam      = float(d.get("exam_fee", 0))
+        misc      = float(d.get("misc_fee", 0))
+        total     = tuition + admission + transport + hostel + library + exam + misc
+        if d.get("total_amount"):
+            total = float(d.get("total_amount"))
+        with connection.cursor() as cur:
+            cur.execute("""
+                UPDATE portal_fee_structure SET
+                  term_name=%s, academic_year_id=%s, due_date=%s, late_fine_per_day=%s,
+                  tuition_fee=%s, admission_fee=%s, transport_fee=%s, hostel_fee=%s,
+                  library_fee=%s, exam_fee=%s, misc_fee=%s, total_amount=%s,
+                  description=%s, is_published=%s
+                WHERE id=%s
+            """, [
+                d.get("term_name"), d.get("academic_year_id") or None,
+                d.get("due_date") or None, float(d.get("late_fine_per_day", 0)),
+                tuition, admission, transport, hostel, library, exam, misc, total,
+                d.get("description", ""), bool(d.get("is_published", False)), fs_id,
+            ])
+        log_action(request.user, "fee_structure.update", "fee_structure", fs_id, {"total": total})
+        return Response({"detail": "Updated.", "total_amount": total})
+
+    def delete(self, request):
+        fs_id = request.query_params.get("id")
+        if not fs_id:
+            return Response({"detail": "id required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_fee_structure WHERE id=%s", [fs_id])
+        log_action(request.user, "fee_structure.delete", "fee_structure", fs_id, {})
+        return Response({"detail": "Deleted."})
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Fee Assignments (class→student)
+# ---------------------------------------------------------------------------
+class FeeAssignmentView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_fee_assignment"):
+            return Response([])
+        fs_id = request.query_params.get("fee_structure_id")
+        if fs_id:
+            data = rows("""
+                SELECT fa.id, fa.student_id, fa.fee_structure_id, fa.assigned_at,
+                       COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                       sp.admission_number
+                FROM portal_fee_assignment fa
+                JOIN auth_user u ON u.id = fa.student_id
+                LEFT JOIN portal_student_profile sp ON sp.user_id = fa.student_id
+                WHERE fa.fee_structure_id=%s
+                ORDER BY student_name
+            """, [fs_id])
+        else:
+            data = rows("""
+                SELECT fa.id, fa.student_id, fa.fee_structure_id, fa.assigned_at,
+                       COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                       fs.term_name
+                FROM portal_fee_assignment fa
+                JOIN auth_user u ON u.id = fa.student_id
+                JOIN portal_fee_structure fs ON fs.id = fa.fee_structure_id
+                ORDER BY fa.assigned_at DESC LIMIT 200
+            """)
+        return Response(serialise(data))
+
+    def post(self, request):
+        if not table_exists("portal_fee_assignment"):
+            return Response({"detail": "Run portal_extension_fees.sql first."}, status=400)
+        d = request.data
+        # Bulk assign: assign all students in a class OR a single student
+        fs_id = d.get("fee_structure_id")
+        if not fs_id:
+            return Response({"detail": "fee_structure_id required."}, status=400)
+        if d.get("assign_class"):
+            # Assign to all enrolled students in the fee structure's class
+            fs = row("SELECT class_id FROM portal_fee_structure WHERE id=%s", [fs_id])
+            if not fs:
+                return Response({"detail": "Fee structure not found."}, status=404)
+            students = rows(
+                "SELECT DISTINCT student_id FROM portal_student_enrollment WHERE class_id=%s",
+                [fs["class_id"]],
+            )
+            count = 0
+            for s in students:
+                try:
+                    with connection.cursor() as cur:
+                        cur.execute(
+                            "INSERT INTO portal_fee_assignment (student_id, fee_structure_id, assigned_by) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING",
+                            [s["student_id"], fs_id, request.user.id],
+                        )
+                    count += 1
+                except Exception:
+                    pass
+            log_action(request.user, "fee_assignment.bulk", "fee_structure", fs_id, {"assigned": count})
+            return Response({"detail": f"Assigned to {count} students."})
+        else:
+            student_id = d.get("student_id")
+            if not student_id:
+                return Response({"detail": "student_id required."}, status=400)
+            with connection.cursor() as cur:
+                cur.execute(
+                    "INSERT INTO portal_fee_assignment (student_id, fee_structure_id, assigned_by) VALUES (%s,%s,%s) ON CONFLICT DO NOTHING RETURNING id",
+                    [student_id, fs_id, request.user.id],
+                )
+                result = cur.fetchone()
+            new_id = result[0] if result else None
+            log_action(request.user, "fee_assignment.create", "student", student_id, {"fee_structure_id": fs_id})
+            return Response({"id": new_id, "detail": "Assigned."})
+
+    def delete(self, request):
+        assign_id = request.query_params.get("id")
+        if not assign_id:
+            return Response({"detail": "id required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_fee_assignment WHERE id=%s", [assign_id])
+        return Response({"detail": "Removed."})
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Concessions & Discounts
+# ---------------------------------------------------------------------------
+class FeeConcessionView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_fee_concession"):
+            return Response([])
+        fs_id = request.query_params.get("fee_structure_id")
+        filters = ["1=1"]
+        params = []
+        if fs_id:
+            filters.append("fc.fee_structure_id=%s")
+            params.append(fs_id)
+        data = rows(f"""
+            SELECT fc.*, COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                   sp.admission_number, fs.term_name
+            FROM portal_fee_concession fc
+            JOIN auth_user u ON u.id = fc.student_id
+            LEFT JOIN portal_student_profile sp ON sp.user_id = fc.student_id
+            JOIN portal_fee_structure fs ON fs.id = fc.fee_structure_id
+            WHERE {' AND '.join(filters)}
+            ORDER BY fc.created_at DESC
+        """, params)
+        return Response(serialise(data))
+
+    def post(self, request):
+        if not table_exists("portal_fee_concession"):
+            return Response({"detail": "Run portal_extension_fees.sql first."}, status=400)
+        d = request.data
+        student_id = d.get("student_id")
+        fs_id = d.get("fee_structure_id")
+        if not student_id or not fs_id:
+            return Response({"detail": "student_id and fee_structure_id required."}, status=400)
+        disc_amount  = float(d.get("discount_amount", 0))
+        disc_percent = float(d.get("discount_percent", 0))
+        with connection.cursor() as cur:
+            cur.execute("""
+                INSERT INTO portal_fee_concession
+                  (student_id, fee_structure_id, concession_type, discount_amount, discount_percent, reason, approved_by)
+                VALUES (%s,%s,%s,%s,%s,%s,%s)
+                ON CONFLICT (student_id, fee_structure_id) DO UPDATE SET
+                  concession_type=EXCLUDED.concession_type,
+                  discount_amount=EXCLUDED.discount_amount,
+                  discount_percent=EXCLUDED.discount_percent,
+                  reason=EXCLUDED.reason,
+                  approved_by=EXCLUDED.approved_by
+                RETURNING id
+            """, [
+                student_id, fs_id, d.get("concession_type", "Discount"),
+                disc_amount, disc_percent, d.get("reason", ""), request.user.id,
+            ])
+            new_id = cur.fetchone()[0]
+        log_action(request.user, "fee_concession.apply", "student", student_id,
+                   {"fee_structure_id": fs_id, "discount_amount": disc_amount})
+        return Response({"id": new_id, "detail": "Concession applied."})
+
+    def delete(self, request):
+        con_id = request.query_params.get("id")
+        if not con_id:
+            return Response({"detail": "id required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_fee_concession WHERE id=%s", [con_id])
+        return Response({"detail": "Removed."})
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Student Ledger
+# ---------------------------------------------------------------------------
+class StudentFeeLedgerView(AdminMixin, APIView):
+    """Generate / view the fee ledger for students."""
+
+    def _compute_ledger(self, student_id, fs_id):
+        """Compute and upsert ledger row for one student+fee_structure."""
+        fs = row("SELECT total_amount, due_date, late_fine_per_day FROM portal_fee_structure WHERE id=%s", [fs_id])
+        if not fs:
+            return None
+        gross = float(fs["total_amount"])
+        # Concession
+        con = row("""
+            SELECT discount_amount, discount_percent FROM portal_fee_concession
+            WHERE student_id=%s AND fee_structure_id=%s
+        """, [student_id, fs_id])
+        conc_amount = 0.0
+        if con:
+            if con["discount_percent"] and float(con["discount_percent"]) > 0:
+                conc_amount = round(gross * float(con["discount_percent"]) / 100, 2)
+            else:
+                conc_amount = float(con["discount_amount"] or 0)
+        net_payable = gross - conc_amount
+        # Fine
+        fine = 0.0
+        if fs["due_date"] and fs["late_fine_per_day"] and float(fs["late_fine_per_day"]) > 0:
+            late_days = max(0, (date.today() - fs["due_date"]).days)
+            fine = late_days * float(fs["late_fine_per_day"])
+        # Paid
+        paid_row = row("""
+            SELECT COALESCE(SUM(amount_paid), 0)::float AS total
+            FROM portal_payment WHERE student_id=%s AND fee_structure_id=%s AND status='Success'
+        """, [student_id, fs_id])
+        amount_paid = paid_row["total"] if paid_row else 0.0
+        balance = max(0, net_payable + fine - amount_paid)
+        if balance <= 0:
+            status = "Paid"
+        elif amount_paid > 0:
+            status = "Partial"
+        elif fs["due_date"] and date.today() > fs["due_date"]:
+            status = "Overdue"
+        else:
+            status = "Unpaid"
+        with connection.cursor() as cur:
+            cur.execute("""
+                INSERT INTO portal_student_fee_ledger
+                  (student_id, fee_structure_id, gross_amount, concession_amount, fine_amount,
+                   net_payable, amount_paid, balance_due, status, last_updated)
+                VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,now())
+                ON CONFLICT (student_id, fee_structure_id) DO UPDATE SET
+                  gross_amount=EXCLUDED.gross_amount,
+                  concession_amount=EXCLUDED.concession_amount,
+                  fine_amount=EXCLUDED.fine_amount,
+                  net_payable=EXCLUDED.net_payable,
+                  amount_paid=EXCLUDED.amount_paid,
+                  balance_due=EXCLUDED.balance_due,
+                  status=EXCLUDED.status,
+                  last_updated=now()
+            """, [student_id, fs_id, gross, conc_amount, fine, net_payable, amount_paid, balance, status])
+        return {"gross": gross, "concession": conc_amount, "fine": fine,
+                "net_payable": net_payable, "amount_paid": amount_paid, "balance": balance, "status": status}
+
+    def get(self, request):
+        if not table_exists("portal_student_fee_ledger"):
+            return Response([])
+        student_id = request.query_params.get("student_id")
+        fs_id = request.query_params.get("fee_structure_id")
+        filters = ["1=1"]
+        params = []
+        if student_id:
+            filters.append("l.student_id=%s"); params.append(student_id)
+        if fs_id:
+            filters.append("l.fee_structure_id=%s"); params.append(fs_id)
+        data = rows(f"""
+            SELECT l.*, COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                   sp.admission_number, fs.term_name, fs.due_date
+            FROM portal_student_fee_ledger l
+            JOIN auth_user u ON u.id = l.student_id
+            LEFT JOIN portal_student_profile sp ON sp.user_id = l.student_id
+            JOIN portal_fee_structure fs ON fs.id = l.fee_structure_id
+            WHERE {' AND '.join(filters)}
+            ORDER BY l.last_updated DESC
+        """, params)
+        return Response(serialise(data))
+
+    def post(self, request):
+        """Generate/refresh ledger for all assigned students of a fee structure."""
+        if not table_exists("portal_student_fee_ledger"):
+            return Response({"detail": "Run portal_extension_fees.sql first."}, status=400)
+        fs_id = request.data.get("fee_structure_id")
+        student_id = request.data.get("student_id")
+        if not fs_id:
+            return Response({"detail": "fee_structure_id required."}, status=400)
+        if student_id:
+            result = self._compute_ledger(student_id, fs_id)
+            return Response({"detail": "Ledger generated.", "ledger": result})
+        # All assigned students
+        students = rows("SELECT student_id FROM portal_fee_assignment WHERE fee_structure_id=%s", [fs_id])
+        count = 0
+        for s in students:
+            self._compute_ledger(s["student_id"], fs_id)
+            count += 1
+        log_action(request.user, "fee_ledger.generate", "fee_structure", fs_id, {"count": count})
+        return Response({"detail": f"Ledger generated for {count} students."})
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Payment list (enhanced)
+# ---------------------------------------------------------------------------
 class PaymentListView(AdminMixin, APIView):
     def get(self, request):
         if not table_exists("portal_payment"):
             return Response([])
-        data = rows(
-            """
+        fs_id = request.query_params.get("fee_structure_id")
+        student_id = request.query_params.get("student_id")
+        filters = ["1=1"]
+        params = []
+        if fs_id:
+            filters.append("p.fee_structure_id=%s"); params.append(fs_id)
+        if student_id:
+            filters.append("p.student_id=%s"); params.append(student_id)
+        data = rows(f"""
             SELECT p.id, p.transaction_id, p.amount_paid, p.status, p.paid_at,
+                   p.payment_method, p.fine_amount, p.concession_amount, p.receipt_number,
                    COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
-                   fs.term_name
+                   fs.term_name, c.name AS class_name, c.section,
+                   sp.admission_number
             FROM portal_payment p
             JOIN auth_user u ON u.id = p.student_id
             JOIN portal_fee_structure fs ON fs.id = p.fee_structure_id
-            ORDER BY p.paid_at DESC LIMIT 200
-            """
-        )
+            LEFT JOIN portal_class c ON c.id = fs.class_id
+            LEFT JOIN portal_student_profile sp ON sp.user_id = p.student_id
+            WHERE {' AND '.join(filters)}
+            ORDER BY p.paid_at DESC LIMIT 500
+        """, params)
         return Response(serialise(data))
+
+
+# ---------------------------------------------------------------------------
+# Fee Management — Reports & Analytics
+# ---------------------------------------------------------------------------
+class FeeReportsView(AdminMixin, APIView):
+    def get(self, request):
+        if not table_exists("portal_payment"):
+            return Response({"summary": {}, "monthly": [], "pending": [], "category_breakdown": []})
+        ay_id = request.query_params.get("academic_year_id")
+        ay_filter = "AND fs.academic_year_id=%s" if ay_id else ""
+        ay_params = [ay_id] if ay_id else []
+
+        # Summary totals
+        summary = row(f"""
+            SELECT
+              COALESCE(SUM(CASE WHEN p.status='Success' THEN p.amount_paid ELSE 0 END), 0)::float AS total_collected,
+              COUNT(CASE WHEN p.status='Success' THEN 1 END)::int AS total_transactions,
+              COALESCE(SUM(CASE WHEN p.status='Success' AND date_trunc('month', p.paid_at)=date_trunc('month', now()) THEN p.amount_paid ELSE 0 END), 0)::float AS collected_this_month,
+              COUNT(DISTINCT p.student_id)::int AS unique_payers
+            FROM portal_payment p
+            JOIN portal_fee_structure fs ON fs.id = p.fee_structure_id
+            WHERE 1=1 {ay_filter}
+        """, ay_params) or {}
+
+        # Monthly breakdown (last 12 months)
+        monthly = rows(f"""
+            SELECT to_char(date_trunc('month', p.paid_at), 'Mon YYYY') AS month,
+                   date_trunc('month', p.paid_at) AS month_ts,
+                   SUM(p.amount_paid)::float AS collected
+            FROM portal_payment p
+            JOIN portal_fee_structure fs ON fs.id = p.fee_structure_id
+            WHERE p.status='Success' {ay_filter}
+              AND p.paid_at >= now() - interval '12 months'
+            GROUP BY 1,2 ORDER BY 2
+        """, ay_params)
+
+        # Pending / overdue (from ledger if available)
+        pending_data: list = []
+        if table_exists("portal_student_fee_ledger"):
+            pending_data = rows(f"""
+                SELECT l.status, COUNT(*)::int AS count,
+                       SUM(l.balance_due)::float AS total_balance
+                FROM portal_student_fee_ledger l
+                JOIN portal_fee_structure fs ON fs.id = l.fee_structure_id
+                WHERE l.balance_due > 0 {ay_filter}
+                GROUP BY l.status
+            """, ay_params)
+
+        # Fee structure summary
+        structures = rows(f"""
+            SELECT fs.id, fs.term_name, fs.total_amount::float,
+                   fs.due_date, fs.is_published,
+                   c.name AS class_name, c.section,
+                   COUNT(DISTINCT p.id)::int AS payments_received,
+                   COALESCE(SUM(CASE WHEN p.status='Success' THEN p.amount_paid ELSE 0 END), 0)::float AS amount_collected
+            FROM portal_fee_structure fs
+            LEFT JOIN portal_class c ON c.id = fs.class_id
+            LEFT JOIN portal_payment p ON p.fee_structure_id = fs.id
+            WHERE 1=1 {ay_filter}
+            GROUP BY fs.id, fs.term_name, fs.total_amount, fs.due_date, fs.is_published, c.name, c.section
+            ORDER BY fs.created_at DESC
+        """, ay_params)
+
+        return Response(serialise({
+            "summary": summary,
+            "monthly": monthly,
+            "pending": pending_data,
+            "structures": structures,
+        }))
 
 
 # ---------------------------------------------------------------------------

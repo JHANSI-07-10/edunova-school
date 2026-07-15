@@ -617,27 +617,70 @@ class ResultListView(StudentOnlyMixin, APIView):
 
 class FeesView(StudentOnlyMixin, APIView):
     def get(self, request):
-        cls = current_class_for_student(request.user.id)
+        student_id = request.user.id
+        cls = current_class_for_student(student_id)
         pending, history = [], []
+        today = date.today()
         if cls and table_exists("portal_fee_structure"):
-            pending = rows(
-                """
-                SELECT fs.id, fs.term_name, fs.tuition_fee, fs.transport_fee, fs.hostel_fee, fs.total_amount
-                FROM portal_fee_structure fs
-                WHERE fs.class_id=%s AND NOT EXISTS (
-                  SELECT 1 FROM portal_payment p WHERE p.fee_structure_id=fs.id AND p.student_id=%s AND p.status='Success'
-                ) ORDER BY fs.id
-                """, [cls["class_id"], request.user.id]
-            )
+            if table_exists("portal_fee_assignment"):
+                pending = rows("""
+                    SELECT fs.id, fs.term_name, fs.tuition_fee, fs.admission_fee, fs.transport_fee,
+                           fs.hostel_fee, fs.library_fee, fs.exam_fee, fs.misc_fee,
+                           fs.total_amount, fs.due_date, fs.late_fine_per_day, fs.description
+                    FROM portal_fee_structure fs
+                    JOIN portal_fee_assignment fa ON fa.fee_structure_id = fs.id
+                    WHERE fa.student_id=%s AND fs.is_published=true
+                      AND NOT EXISTS (
+                        SELECT 1 FROM portal_payment p
+                        WHERE p.fee_structure_id=fs.id AND p.student_id=%s AND p.status='Success'
+                      )
+                    ORDER BY fs.due_date NULLS LAST
+                """, [student_id, student_id])
+            else:
+                pending = rows("""
+                    SELECT fs.id, fs.term_name, fs.tuition_fee, fs.transport_fee,
+                           fs.hostel_fee, fs.total_amount, fs.due_date, fs.late_fine_per_day
+                    FROM portal_fee_structure fs
+                    WHERE fs.class_id=%s AND NOT EXISTS (
+                      SELECT 1 FROM portal_payment p WHERE p.fee_structure_id=fs.id AND p.student_id=%s AND p.status='Success'
+                    ) ORDER BY fs.id
+                """, [cls["class_id"], student_id])
+        for fs in pending:
+            fine = 0.0
+            if fs.get("due_date") and fs.get("late_fine_per_day") and float(fs.get("late_fine_per_day", 0)) > 0:
+                late_days = max(0, (today - fs["due_date"]).days)
+                fine = late_days * float(fs["late_fine_per_day"])
+            fs["fine_amount"] = fine
+            if table_exists("portal_fee_concession"):
+                con = row(
+                    "SELECT concession_type, discount_amount, discount_percent, reason FROM portal_fee_concession WHERE student_id=%s AND fee_structure_id=%s",
+                    [student_id, fs["id"]],
+                )
+                if con:
+                    gross = float(fs["total_amount"])
+                    if con["discount_percent"] and float(con["discount_percent"]) > 0:
+                        disc = round(gross * float(con["discount_percent"]) / 100, 2)
+                    else:
+                        disc = float(con["discount_amount"] or 0)
+                    fs["concession"] = dict(con)
+                    fs["concession_amount"] = disc
+                    fs["net_payable"] = max(0, gross - disc) + fine
+                else:
+                    fs["concession"] = None
+                    fs["concession_amount"] = 0
+                    fs["net_payable"] = float(fs["total_amount"]) + fine
+            else:
+                fs["concession"] = None
+                fs["concession_amount"] = 0
+                fs["net_payable"] = float(fs["total_amount"]) + fine
         if table_exists("portal_payment"):
-            history = rows(
-                """
+            history = rows("""
                 SELECT p.id, p.transaction_id, p.amount_paid, p.status, p.paid_at,
+                       p.payment_method, p.fine_amount, p.concession_amount, p.receipt_number,
                        json_build_object('id', fs.id, 'term_name', fs.term_name, 'total_amount', fs.total_amount) AS fee_structure_detail
                 FROM portal_payment p JOIN portal_fee_structure fs ON fs.id=p.fee_structure_id
                 WHERE p.student_id=%s ORDER BY p.paid_at DESC
-                """, [request.user.id]
-            )
+            """, [student_id])
         return Response(serialise({"pending": pending, "payment_history": history}))
 
 
@@ -647,19 +690,39 @@ class InitiatePaymentView(StudentOnlyMixin, APIView):
             return Response({"detail": "Portal schema has not been applied."}, status=400)
         fee_id = request.data.get("fee_structure_id")
         method = request.data.get("payment_method") or "Online"
-        fee = row("SELECT total_amount FROM portal_fee_structure WHERE id=%s", [fee_id])
+        fee = row("SELECT total_amount, due_date, late_fine_per_day FROM portal_fee_structure WHERE id=%s", [fee_id])
         if not fee:
             return Response({"detail": "Invalid fee."}, status=400)
+        student_id = request.user.id
+        gross = float(fee["total_amount"])
+        conc_amount = 0.0
+        if table_exists("portal_fee_concession"):
+            con = row(
+                "SELECT discount_amount, discount_percent FROM portal_fee_concession WHERE student_id=%s AND fee_structure_id=%s",
+                [student_id, fee_id],
+            )
+            if con:
+                if con["discount_percent"] and float(con["discount_percent"]) > 0:
+                    conc_amount = round(gross * float(con["discount_percent"]) / 100, 2)
+                else:
+                    conc_amount = float(con["discount_amount"] or 0)
+        fine_amount = 0.0
+        today = date.today()
+        if fee.get("due_date") and fee.get("late_fine_per_day") and float(fee.get("late_fine_per_day", 0)) > 0:
+            late_days = max(0, (today - fee["due_date"]).days)
+            fine_amount = late_days * float(fee["late_fine_per_day"])
+        net_amount = max(0, gross - conc_amount) + fine_amount
         tx = f"EDN-{uuid4().hex[:10].upper()}"
+        receipt_no = f"REC-{uuid4().hex[:8].upper()}"
         with connection.cursor() as cursor:
             cursor.execute(
-                """
-                INSERT INTO portal_payment (student_id, fee_structure_id, transaction_id, amount_paid, payment_method, status)
-                VALUES (%s,%s,%s,%s,%s,'Success') RETURNING id
-                """, [request.user.id, fee_id, tx, fee["total_amount"], method]
+                "INSERT INTO portal_payment (student_id, fee_structure_id, transaction_id, amount_paid, payment_method, status, fine_amount, concession_amount, receipt_number) VALUES (%s,%s,%s,%s,%s,'Success',%s,%s,%s) RETURNING id",
+                [student_id, fee_id, tx, net_amount, method, fine_amount, conc_amount, receipt_no]
             )
             pid = cursor.fetchone()[0]
-        return Response({"detail": "Payment recorded successfully.", "id": pid, "transaction_id": tx})
+        return Response({"detail": "Payment recorded successfully.", "id": str(pid), "transaction_id": tx,
+                         "receipt_number": receipt_no, "amount_paid": net_amount,
+                         "fine_amount": fine_amount, "concession_amount": conc_amount})
 
 
 class LibraryView(StudentOnlyMixin, APIView):
