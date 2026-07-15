@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views
+from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views
 
 urlpatterns = [
     # Auth (credentials -> OTP -> JWT), shared by every portal
@@ -41,6 +41,8 @@ urlpatterns = [
     path("student/transport/", facilities_views.StudentTransportView.as_view()),
     path("student/medical-records/", facilities_views.StudentMedicalView.as_view()),
     path("student/report-card/", exam_extras_views.StudentReportCardView.as_view()),
+    path("student/scholarships/", scholarship_views.ScholarshipStudentApplicationView.as_view()),
+    path("student/scholarships/renew/", scholarship_views.ScholarshipRenewalView.as_view()),
     path("lms/forum-topics/", lms_extras_views.ForumTopicListView.as_view()),
     path("lms/forum-topics/<int:topic_id>/", lms_extras_views.ForumTopicDetailView.as_view()),
     path("lms/forum-topics/<int:topic_id>/reply/", lms_extras_views.ForumPostView.as_view()),
@@ -154,6 +156,8 @@ urlpatterns = [
     path("admin-portal/fee-assignments/", admin_views.FeeAssignmentView.as_view()),
     path("admin-portal/fee-concessions/", admin_views.FeeConcessionView.as_view()),
     path("admin-portal/fee-ledger/", admin_views.StudentFeeLedgerView.as_view()),
+    path("admin-portal/scholarships/", scholarship_views.ScholarshipAdminActionView.as_view()),
+    path("admin-portal/scholarships/renew/", scholarship_views.ScholarshipRenewalView.as_view()),
     path("admin-portal/fee-reports/", admin_views.FeeReportsView.as_view()),
     path("admin-portal/payments/", admin_views.PaymentListView.as_view()),
     path("admin-portal/library/books/", admin_views.LibraryBookView.as_view()),
@@ -225,4 +229,5 @@ urlpatterns = [
 
     # Parent portal — child timetable
     path("parent/timetable/", parent_views.ParentChildTimetableView.as_view()),
+    path("parent/scholarships/", scholarship_views.ScholarshipParentView.as_view()),
 ]
