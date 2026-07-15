@@ -111,9 +111,32 @@ urlpatterns = [
     path("admin-portal/class-teachers/<int:class_id>/", admin_views.ClassTeacherAssignView.as_view()),
     path("admin-portal/subjects/", admin_views.SubjectView.as_view()),
     path("admin-portal/subjects/<int:record_id>/", admin_views.SubjectView.as_view()),
+    # Transport — Vehicles
     path("admin-portal/vehicles/", admin_views.VehicleView.as_view()),
+    # Transport — Routes
     path("admin-portal/routes/", admin_views.RouteView.as_view()),
+    # Transport — Student Allocations
     path("admin-portal/transport-allocations/", admin_views.TransportAllocationView.as_view()),
+    # Transport — Drivers
+    path("admin-portal/transport/drivers/", admin_views.DriverView.as_view()),
+    # Transport — Attendants
+    path("admin-portal/transport/attendants/", admin_views.AttendantView.as_view()),
+    # Transport — Pickup / Drop Points
+    path("admin-portal/transport/pickup-points/", admin_views.PickupPointView.as_view()),
+    # Transport — Passes
+    path("admin-portal/transport/passes/", admin_views.TransportPassView.as_view()),
+    # Transport — Trip Logs
+    path("admin-portal/transport/trips/", admin_views.TripLogView.as_view()),
+    # Transport — Notifications / Alerts
+    path("admin-portal/transport/notifications/", admin_views.TransportNotificationView.as_view()),
+    # Transport — Settings
+    path("admin-portal/transport/settings/", admin_views.TransportSettingsView.as_view()),
+    # Transport — Reports
+    path("admin-portal/transport/reports/", admin_views.TransportReportsView.as_view()),
+    # Transport — Live Fleet Map (latest GPS ping per vehicle)
+    path("admin-portal/transport/live-map/", admin_views.LiveBusMapView.as_view()),
+    # Transport — Transport Fees
+    path("admin-portal/transport/fees/", admin_views.TransportFeeView.as_view()),
     path("admin-portal/fee-structures/", admin_views.FeeStructureView.as_view()),
     path("admin-portal/fee-structures/<int:record_id>/", admin_views.FeeStructureView.as_view()),
     path("admin-portal/academic-years/", admin_views.AcademicYearView.as_view()),

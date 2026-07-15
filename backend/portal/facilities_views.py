@@ -141,7 +141,7 @@ class StudentHostelView(StudentOnlyMixin, APIView):
 
 
 class StudentTransportView(StudentOnlyMixin, APIView):
-    """A student's own current transport allocation, if any."""
+    """A student's own current transport allocation + pass + pickup timing + latest GPS ping."""
 
     def get(self, request):
         if not table_exists("portal_transport_allocation"):
@@ -149,17 +149,65 @@ class StudentTransportView(StudentOnlyMixin, APIView):
         data = row(
             """
             SELECT ta.pickup_point, v.id AS vehicle_id, v.vehicle_number, v.maintenance_status,
-                   r.route_name, r.start_point, r.end_point,
-                   COALESCE(du.first_name || ' ' || du.last_name, du.username) AS driver_name
+                   r.id AS route_id, r.route_name, r.start_point, r.end_point,
+                   COALESCE(du.first_name || ' ' || du.last_name, du.username) AS driver_name,
+                   dr.phone AS driver_phone, dr.license_number
             FROM portal_transport_allocation ta
             JOIN portal_vehicle v ON v.id = ta.vehicle_id
             JOIN portal_route r ON r.id = ta.route_id
             LEFT JOIN auth_user du ON du.id = v.driver_id
+            LEFT JOIN portal_transport_driver dr ON dr.user_id = v.driver_id
             WHERE ta.student_id = %s
             """,
             [request.user.id],
         )
-        return Response(serialise(data))
+        if not data:
+            return Response(None)
+
+        # Transport pass
+        transport_pass = None
+        if table_exists("portal_transport_pass"):
+            transport_pass = row(
+                "SELECT pass_number, issued_at, valid_until, is_active FROM portal_transport_pass WHERE student_id=%s",
+                [request.user.id],
+            )
+
+        # Pickup point details (the stop matching the student's pickup_point name)
+        pickup_detail = None
+        if table_exists("portal_pickup_point") and data.get("pickup_point"):
+            pickup_detail = row(
+                "SELECT name, sequence_order, pickup_time, drop_time FROM portal_pickup_point "
+                "WHERE route_id=%s AND name=%s",
+                [data["route_id"], data["pickup_point"]],
+            )
+
+        # All stops on this route (for the route timeline)
+        all_stops = []
+        if table_exists("portal_pickup_point"):
+            all_stops = rows(
+                "SELECT name, sequence_order, pickup_time, drop_time FROM portal_pickup_point "
+                "WHERE route_id=%s ORDER BY sequence_order",
+                [data["route_id"]],
+            )
+
+        # Latest GPS ping
+        last_location = None
+        if table_exists("portal_live_bus_log"):
+            last_location = row(
+                "SELECT latitude, longitude, updated_at FROM portal_live_bus_log "
+                "WHERE vehicle_id=%s ORDER BY updated_at DESC LIMIT 1",
+                [data["vehicle_id"]],
+            )
+
+        return Response(serialise({
+            **data,
+            "transport_pass": transport_pass,
+            "pickup_detail": pickup_detail,
+            "all_stops": all_stops,
+            "last_location": last_location,
+        }))
+
+
 
 
 class ChildHostelView(ParentMixin, APIView):
