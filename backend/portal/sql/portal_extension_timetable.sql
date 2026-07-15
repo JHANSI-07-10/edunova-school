@@ -1,5 +1,5 @@
 -- EduNova Portal Extension #6 — Timetable Management
--- Safe to run multiple times: every statement is IF NOT EXISTS.
+-- Safe to run multiple times: every statement is IF NOT EXISTS / ADD COLUMN IF NOT EXISTS.
 
 -- ---------------------------------------------------------------------------
 -- Core Timetable table
@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS public.portal_timetable (
   CONSTRAINT portal_timetable_no_overlap
     UNIQUE (class_id, day_of_week, start_time, academic_year)
 );
+
+ALTER TABLE public.portal_timetable ADD COLUMN IF NOT EXISTS academic_year varchar(10) NOT NULL DEFAULT '2025-26';
 
 -- Index for fast teacher schedule lookups
 CREATE INDEX IF NOT EXISTS idx_portal_timetable_teacher

@@ -163,6 +163,11 @@ urlpatterns = [
     path("admin-portal/rooms/", facilities_views.RoomView.as_view()),
     path("admin-portal/hostel-allocations/", facilities_views.HostelAllocationView.as_view()),
     path("admin-portal/hostel-allocations/<int:allocation_id>/vacate/", facilities_views.HostelVacateView.as_view()),
+    path("hostels/applications/", facilities_views.HostelApplicationView.as_view()),
+    path("hostels/leaves/", facilities_views.HostelLeaveView.as_view()),
+    path("hostels/complaints/", facilities_views.HostelComplaintView.as_view()),
+    path("hostels/fees/", facilities_views.HostelFeeView.as_view()),
+    path("hostels/reports/", facilities_views.HostelReportsView.as_view()),
 
     # Inventory module
     path("admin-portal/inventory/", facilities_views.InventoryView.as_view()),
