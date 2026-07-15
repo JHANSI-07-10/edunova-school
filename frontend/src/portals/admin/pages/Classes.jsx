@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import { Card, EmptyState, Loader, SectionTitle, Toast } from "../components/Common";
-import { BookOpen, UserCheck, GraduationCap, Pencil, Trash2, X, Check } from "lucide-react";
+import { BookOpen, UserCheck, GraduationCap, Pencil, Trash2, X, Check, CheckCircle, ArrowRight, Users, User } from "lucide-react";
 
 // ── Tiny helpers ────────────────────────────────────────────────────────────
 function Btn({ children, onClick, variant = "primary", disabled = false, className = "" }) {
@@ -35,7 +35,7 @@ function ConfirmDeleteModal({ label, onConfirm, onCancel }) {
 }
 
 // ── Tab 1: Classes & Subjects ────────────────────────────────────────────────
-function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
+function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast, onClassCreated }) {
   const [classForm, setClassForm] = useState({ name: "", section: "", curriculum: "CBSE", room_number: "" });
   const [subjectForm, setSubjectForm] = useState({ name: "", subject_code: "", type: "Theory" });
   const [editingClass, setEditingClass] = useState(null); // { id, name, section, curriculum, room_number }
@@ -45,10 +45,11 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast }) {
   async function addClass(e) {
     e.preventDefault();
     try {
-      await api.post("/admin-portal/classes/", classForm);
+      const { data } = await api.post("/admin-portal/classes/", classForm);
       setClassForm({ name: "", section: "", curriculum: "CBSE", room_number: "" });
       loadClasses();
-      setToast({ message: "Class created successfully.", tone: "success" });
+      setToast({ message: `Class "${data.name}-${data.section}" created! Complete setup ↓`, tone: "success" });
+      if (onClassCreated) onClassCreated(data);
     } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not create class.", tone: "error" }); }
   }
 
@@ -603,6 +604,9 @@ export default function Classes() {
   const [enrollments, setEnrollments] = useState([]);
   const [classTeachers, setClassTeachers] = useState([]);
   const [toast, setToast] = useState(null);
+  const [newlyCreated, setNewlyCreated] = useState(null);
+  const [prefilledEnrollClassId, setPrefilledEnrollClassId] = useState("");
+  const [prefilledTeacherClassId, setPrefilledTeacherClassId] = useState("");
 
   function loadClasses() { api.get("/admin-portal/classes/").then(({ data }) => setClasses(data)).catch(() => setClasses([])); }
   function loadSubjects() { api.get("/admin-portal/subjects/").then(({ data }) => setSubjects(data)).catch(() => setSubjects([])); }
@@ -615,6 +619,20 @@ export default function Classes() {
     loadClasses(); loadSubjects(); loadStudents();
     loadTeachers(); loadEnrollments(); loadClassTeachers();
   }, []);
+
+  function handleClassCreated(cls) {
+    setNewlyCreated(cls);
+    setPrefilledEnrollClassId(String(cls.id));
+    setPrefilledTeacherClassId(String(cls.id));
+  }
+
+  function goAssignTeacher() {
+    setActiveTab("teachers");
+  }
+
+  function goEnrollStudents() {
+    setActiveTab("enroll");
+  }
 
   const TABS = [
     { key: "config", icon: BookOpen, label: "Classes & Subjects" },
@@ -640,6 +658,54 @@ export default function Classes() {
         ))}
       </div>
 
+      {/* ─── Guided Setup Banner ─────────────────────────────────────── */}
+      {newlyCreated && (
+        <div className="relative rounded-2xl border-2 border-academic-blue/30 bg-gradient-to-br from-blue-50 via-indigo-50 to-sky-50 p-5 shadow-sm">
+          <button onClick={() => setNewlyCreated(null)} className="absolute top-3 right-3 text-slate-400 hover:text-slate-700" title="Dismiss">
+            <X size={16} />
+          </button>
+          <div className="flex items-center gap-3 mb-4">
+            <div className="w-10 h-10 rounded-full bg-academic-blue/10 border border-academic-blue/20 flex items-center justify-center text-academic-blue">
+              <CheckCircle size={20} />
+            </div>
+            <div>
+              <p className="font-bold text-academic-blue">Class "{newlyCreated.name}-{newlyCreated.section}" ({newlyCreated.curriculum}) Created!</p>
+              <p className="text-xs text-slate-500 mt-0.5">Complete 2 more steps so it appears in teacher &amp; student portals.</p>
+            </div>
+          </div>
+          <div className="grid sm:grid-cols-3 gap-3 mb-5">
+            <div className="bg-green-50 border border-green-200 rounded-xl p-3 flex items-center gap-3">
+              <span className="w-7 h-7 rounded-full bg-green-500 text-white flex items-center justify-center text-xs font-bold shrink-0">✓</span>
+              <div><p className="text-xs font-bold text-green-700">Step 1 — Done</p><p className="text-xs text-green-600">Class exists in the system</p></div>
+            </div>
+            <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 flex items-center gap-3">
+              <span className="w-7 h-7 rounded-full bg-amber-400 text-white flex items-center justify-center text-xs font-bold shrink-0">2</span>
+              <div><p className="text-xs font-bold text-amber-700">Step 2 — Assign Teacher</p><p className="text-xs text-amber-600">Teacher portal shows this class</p></div>
+            </div>
+            <div className="bg-slate-100 border border-slate-200 rounded-xl p-3 flex items-center gap-3">
+              <span className="w-7 h-7 rounded-full bg-slate-400 text-white flex items-center justify-center text-xs font-bold shrink-0">3</span>
+              <div><p className="text-xs font-bold text-slate-600">Step 3 — Enroll Students</p><p className="text-xs text-slate-500">Students &amp; parents see their class</p></div>
+            </div>
+          </div>
+          <div className="bg-white/80 rounded-xl border border-slate-200 p-4 mb-4">
+            <p className="text-xs font-bold text-slate-700 mb-2">📡 How this class propagates to other portals:</p>
+            <div className="grid sm:grid-cols-3 gap-3 text-xs text-slate-600">
+              <div className="flex items-start gap-2"><User size={12} className="mt-0.5 text-academic-blue shrink-0" /><span><strong>Teacher Portal:</strong> Appears under "My Classes" once a teacher is assigned.</span></div>
+              <div className="flex items-start gap-2"><GraduationCap size={12} className="mt-0.5 text-academic-green shrink-0" /><span><strong>Student Portal:</strong> Students see their class, timetable &amp; homework once enrolled.</span></div>
+              <div className="flex items-start gap-2"><Users size={12} className="mt-0.5 text-amber-500 shrink-0" /><span><strong>Parent Portal:</strong> Inherits the child's enrollment automatically.</span></div>
+            </div>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <button onClick={goAssignTeacher} className="flex items-center gap-2 bg-academic-blue text-white rounded-xl px-4 py-2 text-sm font-semibold hover:bg-academic-blue/90 transition-colors">
+              <UserCheck size={15} /> Assign Teacher to this Class <ArrowRight size={14} />
+            </button>
+            <button onClick={goEnrollStudents} className="flex items-center gap-2 bg-academic-green text-white rounded-xl px-4 py-2 text-sm font-semibold hover:bg-academic-green/90 transition-colors">
+              <GraduationCap size={15} /> Enroll Students into this Class <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      )}
+
       {activeTab === "config" && (
         <TabConfig
           classes={classes}
@@ -647,6 +713,7 @@ export default function Classes() {
           loadClasses={loadClasses}
           loadSubjects={loadSubjects}
           setToast={setToast}
+          onClassCreated={handleClassCreated}
         />
       )}
 
@@ -657,6 +724,9 @@ export default function Classes() {
           enrollments={enrollments}
           loadEnrollments={loadEnrollments}
           setToast={setToast}
+          prefilledClassId={prefilledEnrollClassId}
+          newlyCreated={newlyCreated}
+          onEnrolled={loadClasses}
         />
       )}
 
@@ -668,6 +738,9 @@ export default function Classes() {
           classTeachers={classTeachers}
           loadClassTeachers={loadClassTeachers}
           setToast={setToast}
+          prefilledClassId={prefilledTeacherClassId}
+          newlyCreated={newlyCreated}
+          onAssigned={loadClasses}
         />
       )}
 
