@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import { Badge, Card, EmptyState, Loader, SectionTitle, Toast } from "../components/Common";
+import { isNonEmptyString, isValidEmail } from "../../../utils/validation";
 
 const ROLES = ["Student", "Teacher", "Parent", "Admin", "Employee"];
 const ROLE_TONE = { Student: "blue", Teacher: "green", Parent: "gold", Admin: "red", Employee: "slate" };
@@ -159,6 +160,7 @@ export default function Users() {
   });
   const [toast, setToast] = useState({ message: "", tone: "success" });
   const [created, setCreated] = useState(null);
+  const [validationErrors, setValidationErrors] = useState({});
 
   // Reset-password flow state
   const [confirmUser, setConfirmUser] = useState(null);  // user awaiting confirmation
@@ -179,6 +181,11 @@ export default function Users() {
 
   async function createUser(e) {
     e.preventDefault();
+    const errs = {};
+    if (!isNonEmptyString(form.first_name)) errs.first_name = "First name is required.";
+    if (!isValidEmail(form.email)) errs.email = "Please enter a valid email address.";
+    if (Object.keys(errs).length > 0) { setValidationErrors(errs); return; }
+    setValidationErrors({});
     try {
       const { data } = await api.post("/admin-portal/users/", form);
       setCreated(data);
@@ -309,8 +316,9 @@ export default function Users() {
                 placeholder="First name"
                 value={form.first_name}
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                className={`rounded-xl border px-3 py-2 text-sm outline-none focus-ring ${validationErrors.first_name ? "border-danger" : "border-slate-200"}`}
               />
+              {validationErrors.first_name && <p className="text-xs text-danger">{validationErrors.first_name}</p>}
             </div>
             <div className="flex flex-col gap-1">
               <label className="text-xs font-semibold text-slate-500 uppercase">Last Name</label>
@@ -329,8 +337,9 @@ export default function Users() {
                 placeholder="Email"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
-                className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                className={`rounded-xl border px-3 py-2 text-sm outline-none focus-ring ${validationErrors.email ? "border-danger" : "border-slate-200"}`}
               />
+              {validationErrors.email && <p className="text-xs text-danger">{validationErrors.email}</p>}
             </div>
           </div>
 
