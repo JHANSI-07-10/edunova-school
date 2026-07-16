@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views
+from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views
 
 urlpatterns = [
     # Auth (credentials -> OTP -> JWT), shared by every portal
@@ -230,4 +230,93 @@ urlpatterns = [
     # Parent portal — child timetable
     path("parent/timetable/", parent_views.ParentChildTimetableView.as_view()),
     path("parent/scholarships/", scholarship_views.ScholarshipParentView.as_view()),
+
+    # =========================================================================
+    # COMPLETE ADMISSION WORKFLOW (Phase 1-18)
+    # =========================================================================
+
+    # Phase 1: Admission Enquiry Management
+    path("admin-portal/admissions/enquiries/", admission_workflow_views.AdmissionEnquiryAdminView.as_view(), name="admission-enquiries"),
+
+    # Phase 2: Counselling
+    path("admin-portal/admissions/<str:registration_number>/counselling/", admission_workflow_views.AdmissionCounsellingView.as_view(), name="admission-counselling"),
+
+    # Phase 4: Application Form Details
+    path("admin-portal/admissions/<str:registration_number>/application/", admission_workflow_views.AdmissionApplicationDetailView.as_view(), name="admission-application"),
+
+    # Phase 5: Document Upload & Verification
+    path("admin-portal/admissions/<str:registration_number>/documents/", admission_workflow_views.AdmissionDocumentView.as_view(), name="admission-documents"),
+    path("admin-portal/admissions/<str:registration_number>/documents/<int:document_id>/", admission_workflow_views.AdmissionDocumentView.as_view(), name="admission-document-detail"),
+
+    # Phase 6: Eligibility Validation
+    path("admin-portal/admissions/<str:registration_number>/eligibility/", admission_workflow_views.AdmissionEligibilityView.as_view(), name="admission-eligibility"),
+
+    # Phase 7: Application Review
+    path("admin-portal/admissions/<str:registration_number>/review/", admission_workflow_views.AdmissionReviewView.as_view(), name="admission-review"),
+
+    # Phase 8: Interview / Assessment
+    path("admin-portal/admissions/<str:registration_number>/interview/", admission_workflow_views.AdmissionInterviewView.as_view(), name="admission-interview"),
+
+    # Phase 9: Seat Allocation
+    path("admin-portal/admissions/<str:registration_number>/seat/", admission_workflow_views.AdmissionSeatAllocationView.as_view(), name="admission-seat"),
+
+    # Phase 10: Admission Decision
+    path("admin-portal/admissions/<str:registration_number>/decision/", admission_workflow_views.AdmissionDecisionView.as_view(), name="admission-decision"),
+
+    # Phase 11: Fee Payment
+    path("admin-portal/admissions/<str:registration_number>/fee/", admission_workflow_views.AdmissionFeePaymentView.as_view(), name="admission-fee"),
+
+    # Phase 12: Admission Confirmation & Account Generation
+    path("admin-portal/admissions/<str:registration_number>/confirm/", admission_workflow_views.AdmissionConfirmView.as_view(), name="admission-confirm"),
+
+    # Phase 14: Academic Allocation
+    path("admin-portal/admissions/<str:registration_number>/allocation/", admission_workflow_views.AdmissionAcademicAllocationView.as_view(), name="admission-allocation"),
+
+    # Phase 15: Optional Module Allocation (Transport/Hostel/Library/LMS)
+    path("admin-portal/admissions/<str:registration_number>/modules/", admission_workflow_views.AdmissionModuleAllocationView.as_view(), name="admission-modules"),
+
+    # Phase 16: Notifications
+    path("admin-portal/admissions/<str:registration_number>/notifications/", admission_workflow_views.AdmissionNotificationView.as_view(), name="admission-notifications"),
+
+    # Phase 17: Portal Synchronization - Dashboard Stats
+    path("admin-portal/admissions/dashboard-stats/", admission_workflow_views.AdmissionDashboardStatsView.as_view(), name="admission-dashboard-stats"),
+
+    # Phase 18: Reports & Analytics
+    path("admin-portal/admissions/reports/", admission_workflow_views.AdmissionReportsView.as_view(), name="admission-reports"),
+
+    # =========================================================================
+    # ACADEMIC WEBSITE — Public endpoints (no auth required)
+    # =========================================================================
+    path("website/levels/", academic_website_views.AcademicLevelsView.as_view(), name="website-levels"),
+    path("website/classes/", academic_website_views.PublicClassesListView.as_view(), name="website-classes"),
+    path("website/classes/<int:class_id>/", academic_website_views.PublicClassDetailView.as_view(), name="website-class-detail"),
+    path("website/subjects/", academic_website_views.PublicSubjectsListView.as_view(), name="website-subjects"),
+    path("website/subjects/<int:subject_id>/", academic_website_views.PublicSubjectDetailView.as_view(), name="website-subject-detail"),
+    path("website/faculty/", academic_website_views.PublicFacultyListView.as_view(), name="website-faculty"),
+    path("website/faculty/<int:faculty_id>/", academic_website_views.PublicFacultyDetailView.as_view(), name="website-faculty-detail"),
+    path("website/curriculum/", academic_website_views.PublicCurriculumView.as_view(), name="website-curriculum"),
+    path("website/downloads/", academic_website_views.PublicAcademicDownloadsView.as_view(), name="website-downloads"),
+    path("website/search/", academic_website_views.PublicAcademicSearchView.as_view(), name="website-search"),
+    path("website/stats/", academic_website_views.PublicAcademicStatsView.as_view(), name="website-stats"),
+
+    # =========================================================================
+    # ACADEMIC WEBSITE — Admin management endpoints
+    # =========================================================================
+    path("admin-portal/academic/levels/", admin_academic_views.AdminAcademicLevelView.as_view(), name="admin-levels"),
+    path("admin-portal/academic/levels/<int:record_id>/", admin_academic_views.AdminAcademicLevelView.as_view(), name="admin-level-detail"),
+    path("admin-portal/academic/class-details/", admin_academic_views.AdminClassDetailView.as_view(), name="admin-class-details"),
+    path("admin-portal/academic/class-details/<int:record_id>/", admin_academic_views.AdminClassDetailView.as_view(), name="admin-class-detail-detail"),
+    path("admin-portal/academic/subject-details/", admin_academic_views.AdminSubjectDetailView.as_view(), name="admin-subject-details"),
+    path("admin-portal/academic/subject-details/<int:record_id>/", admin_academic_views.AdminSubjectDetailView.as_view(), name="admin-subject-detail-detail"),
+    path("admin-portal/academic/class-subjects/", admin_academic_views.AdminClassSubjectView.as_view(), name="admin-class-subjects"),
+    path("admin-portal/academic/class-subjects/<int:record_id>/", admin_academic_views.AdminClassSubjectView.as_view(), name="admin-class-subject-detail"),
+    path("admin-portal/academic/curriculum/", admin_academic_views.AdminCurriculumView.as_view(), name="admin-curriculum"),
+    path("admin-portal/academic/curriculum/<int:record_id>/", admin_academic_views.AdminCurriculumView.as_view(), name="admin-curriculum-detail"),
+    path("admin-portal/academic/faculty/", admin_academic_views.AdminFacultyManagementView.as_view(), name="admin-faculty-mgmt"),
+    path("admin-portal/academic/faculty/<int:record_id>/", admin_academic_views.AdminFacultyManagementView.as_view(), name="admin-faculty-mgmt-detail"),
+    path("admin-portal/academic/faculty-subjects/", admin_academic_views.AdminFacultySubjectView.as_view(), name="admin-faculty-subjects"),
+    path("admin-portal/academic/faculty-subjects/<int:record_id>/", admin_academic_views.AdminFacultySubjectView.as_view(), name="admin-faculty-subject-detail"),
+    path("admin-portal/academic/downloads/", admin_academic_views.AdminAcademicDownloadView.as_view(), name="admin-downloads"),
+    path("admin-portal/academic/downloads/<int:record_id>/", admin_academic_views.AdminAcademicDownloadView.as_view(), name="admin-download-detail"),
+    path("admin-portal/academic/dashboard/", admin_academic_views.AdminAcademicDashboardView.as_view(), name="admin-academic-dashboard"),
 ]
