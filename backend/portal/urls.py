@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views
+from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views
 
 urlpatterns = [
     # Auth (credentials -> OTP -> JWT), shared by every portal
@@ -226,6 +226,53 @@ urlpatterns = [
     path("admin-portal/timetable/publish/",     admin_views.TimetablePublishView.as_view()),
     path("admin-portal/timetable/conflicts/",   admin_views.TimetableConflictView.as_view()),
     path("admin-portal/timetable/meta/",        admin_views.TimetableMetaView.as_view()),
+
+    # Timetable Workflow — Phase 1: Academic Calendar
+    path("admin-portal/timetable/calendar/",                 timetable_workflow_views.AcademicCalendarView.as_view()),
+    path("admin-portal/timetable/calendar/<int:record_id>/", timetable_workflow_views.AcademicCalendarDetailView.as_view()),
+    path("admin-portal/timetable/calendar/events/",          timetable_workflow_views.CalendarEventView.as_view()),
+    path("admin-portal/timetable/calendar/events/<int:record_id>/", timetable_workflow_views.CalendarEventDetailView.as_view()),
+
+    # Timetable Workflow — Phase 2-3: Working Days & School Timings
+    path("admin-portal/timetable/working-days/",                 timetable_workflow_views.WorkingDayView.as_view()),
+    path("admin-portal/timetable/school-timings/",               timetable_workflow_views.SchoolTimingView.as_view()),
+    path("admin-portal/timetable/school-timings/<int:record_id>/", timetable_workflow_views.SchoolTimingView.as_view()),
+
+    # Timetable Workflow — Phase 4: Period Management
+    path("admin-portal/timetable/periods/",                 timetable_workflow_views.PeriodManagementView.as_view()),
+    path("admin-portal/timetable/periods/<int:record_id>/", timetable_workflow_views.PeriodManagementView.as_view()),
+    path("admin-portal/timetable/periods/generate-defaults/", timetable_workflow_views.GenerateDefaultPeriodsView.as_view()),
+
+    # Timetable Workflow — Phase 6-8: Allocations
+    path("admin-portal/timetable/subject-allocations/",                 timetable_workflow_views.SubjectAllocationView.as_view()),
+    path("admin-portal/timetable/subject-allocations/<int:record_id>/", timetable_workflow_views.SubjectAllocationView.as_view()),
+    path("admin-portal/timetable/teacher-allocations/",                 timetable_workflow_views.TeacherAllocationView.as_view()),
+    path("admin-portal/timetable/teacher-allocations/<int:record_id>/", timetable_workflow_views.TeacherAllocationView.as_view()),
+    path("admin-portal/timetable/classroom-allocations/",                 timetable_workflow_views.ClassroomAllocationView.as_view()),
+    path("admin-portal/timetable/classroom-allocations/<int:record_id>/", timetable_workflow_views.ClassroomAllocationView.as_view()),
+
+    # Timetable Workflow — Phase 10: Substitute Teachers
+    path("admin-portal/timetable/substitutes/",                 timetable_workflow_views.SubstituteTeacherView.as_view()),
+    path("admin-portal/timetable/substitutes/<int:record_id>/", timetable_workflow_views.SubstituteTeacherView.as_view()),
+
+    # Timetable Workflow — Phase 12: Approval Workflow
+    path("admin-portal/timetable/approvals/",                 timetable_workflow_views.TimetableApprovalView.as_view()),
+    path("admin-portal/timetable/approvals/<int:record_id>/", timetable_workflow_views.TimetableApprovalView.as_view()),
+
+    # Timetable Workflow — Phase 14: Notifications
+    path("admin-portal/timetable/notifications/",                   timetable_workflow_views.TimetableNotificationView.as_view()),
+    path("admin-portal/timetable/notifications/<int:record_id>/",   timetable_workflow_views.TimetableNotificationView.as_view()),
+    path("admin-portal/timetable/notifications/send/",              timetable_workflow_views.SendTimetableNotificationView.as_view()),
+
+    # Timetable Workflow — Phase 20: Audit Logs
+    path("admin-portal/timetable/audit-logs/", timetable_workflow_views.TimetableAuditLogView.as_view()),
+
+    # Timetable Workflow — Phase 15-16: Reports & Analytics
+    path("admin-portal/timetable/reports/",   timetable_workflow_views.TimetableReportsView.as_view()),
+    path("admin-portal/timetable/analytics/", timetable_workflow_views.TimetableAnalyticsView.as_view()),
+
+    # Timetable Workflow — Config / Status
+    path("admin-portal/timetable/workflow-config/", timetable_workflow_views.TimetableWorkflowConfigView.as_view()),
 
     # Parent portal — child timetable
     path("parent/timetable/", parent_views.ParentChildTimetableView.as_view()),
