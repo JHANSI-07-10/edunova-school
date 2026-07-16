@@ -163,7 +163,7 @@ export default function Login() {
               )}
               <form onSubmit={handleResetSubmit} className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium text-ink-primary">Email Address</label>
+                  <label className="text-sm font-medium text-ink-primary">Email Address (*)</label>
                   <input
                     required
                     type="email"
@@ -209,7 +209,7 @@ export default function Login() {
               {step === 1 ? (
                 <form onSubmit={handleCredentials} className="space-y-4">
                   <div>
-                    <label className="text-sm font-medium text-ink-primary">Email or username</label>
+                    <label className="text-sm font-medium text-ink-primary">Email or username (*)</label>
                     <input
                       required
                       value={email}
@@ -224,7 +224,7 @@ export default function Login() {
                     )}
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-ink-primary">Password</label>
+                    <label className="text-sm font-medium text-ink-primary">Password (*)</label>
                     <input required type="password" value={password} onChange={(e) => setPassword(e.target.value)} className="mt-1 w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none" placeholder="••••••••" />
                   </div>
                   <button disabled={loading} className="w-full bg-bg-dark text-white rounded-xl py-2.5 font-medium hover:bg-bg-dark/90 transition-colors disabled:opacity-60">
@@ -252,7 +252,7 @@ export default function Login() {
                     <strong>Note:</strong> Email delivery is temporarily disabled. Use the static OTP: <strong className="font-mono tracking-widest">123456</strong>
                   </div>
                   <div>
-                    <label className="text-sm font-medium text-ink-primary">6-digit code</label>
+                    <label className="text-sm font-medium text-ink-primary">6-digit code (*)</label>
                     <input
                       required
                       maxLength={6}

@@ -175,7 +175,7 @@ function PeriodModal({ meta, classId, academicYear, editEntry, onSave, onClose }
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Day *</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Day * (*)</label>
               <select
                 required
                 value={form.day_of_week}
@@ -210,7 +210,7 @@ function PeriodModal({ meta, classId, academicYear, editEntry, onSave, onClose }
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Start Time *</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">Start Time * (*)</label>
               <input
                 required type="time"
                 value={form.start_time}
@@ -219,7 +219,7 @@ function PeriodModal({ meta, classId, academicYear, editEntry, onSave, onClose }
               />
             </div>
             <div>
-              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">End Time *</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase mb-1 block">End Time * (*)</label>
               <input
                 required type="time"
                 value={form.end_time}

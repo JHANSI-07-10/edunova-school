@@ -724,7 +724,7 @@ export default function Lms() {
             </h3>
             <form onSubmit={handleAddChapter} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-ink-secondary block mb-1">Target Class & Subject</label>
+                <label className="text-xs font-semibold text-ink-secondary block mb-1">Target Class & Subject (*)</label>
                 <select
                   required
                   value={chapterForm.course_id ? String(chapterForm.course_id) : ""}
@@ -743,10 +743,10 @@ export default function Lms() {
                 )}
               </div>
               <div>
-                <label className="text-xs font-semibold text-ink-secondary block mb-1">Chapter Title</label>
+                <label className="text-xs font-semibold text-ink-secondary block mb-1">Chapter Title (*)</label>
                 <input 
                   required
-                  placeholder="e.g. Chapter 1: Introduction to Mechanics"
+                  placeholder="e.g. Chapter 1: Introduction to Mechanics (*)"
                   value={chapterForm.title}
                   onChange={e => setChapterForm(f => ({ ...f, title: e.target.value }))}
                   className={`w-full rounded-xl border px-3 py-2.5 text-sm focus-ring outline-none ${
@@ -808,10 +808,10 @@ export default function Lms() {
             </h3>
             <form onSubmit={handleAddLesson} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-ink-secondary block mb-1">Lesson Title</label>
+                <label className="text-xs font-semibold text-ink-secondary block mb-1">Lesson Title (*)</label>
                 <input 
                   required
-                  placeholder="e.g. Lesson 1.1: Newton's Laws of Motion"
+                  placeholder="e.g. Lesson 1.1: Newton's Laws of Motion (*)"
                   value={lessonForm.title}
                   onChange={e => setLessonForm(f => ({ ...f, title: e.target.value }))}
                   className={`w-full rounded-xl border px-3 py-2.5 text-sm focus-ring outline-none ${
@@ -860,10 +860,10 @@ export default function Lms() {
             <form onSubmit={handleAddResource} className="space-y-4">
               <div className="grid sm:grid-cols-2 gap-4">
                 <div>
-                  <label className="text-xs font-semibold text-ink-secondary block mb-1">Resource Title</label>
+                  <label className="text-xs font-semibold text-ink-secondary block mb-1">Resource Title (*)</label>
                   <input 
                     required
-                    placeholder="e.g. Intro to Trigonometry PDF"
+                    placeholder="e.g. Intro to Trigonometry PDF (*)"
                     value={resourceForm.title}
                     onChange={e => setResourceForm(f => ({ ...f, title: e.target.value }))}
                     className={`w-full rounded-xl border px-3 py-2.5 text-sm focus-ring outline-none ${
@@ -942,10 +942,10 @@ export default function Lms() {
                         </button>
                       )}
                       <div>
-                        <label className="text-xs font-semibold text-ink-secondary block mb-1">Question {qIdx + 1}</label>
+                        <label className="text-xs font-semibold text-ink-secondary block mb-1">Question {qIdx + 1} (*)</label>
                         <input
                           required
-                          placeholder="Type question text..."
+                          placeholder="Type question text... (*)"
                           value={q.question_text}
                           onChange={e => updateQuestion(qIdx, "question_text", e.target.value)}
                           className="w-full rounded-lg border border-slate-200 px-3 py-2 text-sm bg-white focus-ring outline-none"
@@ -954,7 +954,7 @@ export default function Lms() {
                       <div className="grid grid-cols-2 gap-2">
                         {q.options.map((opt, oIdx) => (
                           <div key={oIdx}>
-                            <label className="text-[10px] font-semibold text-slate-400 block">Option {chr(65+oIdx)}</label>
+                            <label className="text-[10px] font-semibold text-slate-400 block">Option {chr(65+oIdx)} (*)</label>
                             <input
                               required
                               placeholder={`Option ${chr(65+oIdx)}`}
@@ -966,7 +966,7 @@ export default function Lms() {
                         ))}
                       </div>
                       <div>
-                        <label className="text-xs font-semibold text-ink-secondary block mb-1">Correct Option Text</label>
+                        <label className="text-xs font-semibold text-ink-secondary block mb-1">Correct Option Text (*)</label>
                         <select
                           required
                           value={q.correct_answer}
@@ -986,7 +986,7 @@ export default function Lms() {
                 // GRANTED ASSIGNMENT METADATA
                 <div className="grid sm:grid-cols-2 gap-4 border-t border-slate-100 pt-4 animate-[fadeIn_.2s_ease]">
                   <div>
-                    <label className="text-xs font-semibold text-ink-secondary block mb-1">Due Date</label>
+                    <label className="text-xs font-semibold text-ink-secondary block mb-1">Due Date (*)</label>
                     <input 
                       type="datetime-local"
                       required
@@ -1001,7 +1001,7 @@ export default function Lms() {
                     )}
                   </div>
                   <div>
-                    <label className="text-xs font-semibold text-ink-secondary block mb-1">Max Marks</label>
+                    <label className="text-xs font-semibold text-ink-secondary block mb-1">Max Marks (*)</label>
                     <input 
                       type="number"
                       required
@@ -1098,10 +1098,10 @@ export default function Lms() {
             </h3>
             <form onSubmit={handleAddCourse} className="space-y-4">
               <div>
-                <label className="text-xs font-semibold text-ink-secondary block mb-1">Course Title</label>
+                <label className="text-xs font-semibold text-ink-secondary block mb-1">Course Title (*)</label>
                 <input 
                   required
-                  placeholder="e.g. Grade 8 Mathematics (Advanced)"
+                  placeholder="e.g. Grade 8 Mathematics (Advanced) (*)"
                   value={courseForm.title}
                   onChange={e => setCourseForm(f => ({ ...f, title: e.target.value }))}
                   className={`w-full rounded-xl border px-3 py-2.5 text-sm focus-ring outline-none ${

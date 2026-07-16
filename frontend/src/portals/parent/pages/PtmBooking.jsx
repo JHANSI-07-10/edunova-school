@@ -107,18 +107,18 @@ export default function PtmBooking() {
         <SectionTitle>Book a parent-teacher meeting</SectionTitle>
         <form onSubmit={startVerification} className="grid sm:grid-cols-2 gap-4">
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-ink-secondary">Select Teacher</label>
+            <label className="text-xs font-semibold text-ink-secondary">Select Teacher (*)</label>
             <select required value={form.teacher_id} onChange={(e) => setForm({ ...form, teacher_id: e.target.value })} className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none">
               <option value="">Select teacher</option>
               {teachers.map((t) => <option key={t.id} value={t.id}>{t.name} — {t.subject_name}</option>)}
             </select>
           </div>
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-ink-secondary">Time Slot (Even minutes = Available, Odd = Booked)</label>
+            <label className="text-xs font-semibold text-ink-secondary">Time Slot (Even minutes = Available, Odd = Booked) (*)</label>
             <input required type="time" value={form.time_slot} onChange={(e) => setForm({ ...form, time_slot: e.target.value })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
           </div>
           <div className="space-y-1 sm:col-span-2">
-            <label className="text-xs font-semibold text-ink-secondary">Meeting Date</label>
+            <label className="text-xs font-semibold text-ink-secondary">Meeting Date (*)</label>
             <input required type="date" value={form.meeting_date} onChange={(e) => setForm({ ...form, meeting_date: e.target.value })} className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
           </div>
           <div className="space-y-1 sm:col-span-2">

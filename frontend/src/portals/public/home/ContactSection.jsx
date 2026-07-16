@@ -25,12 +25,12 @@ export default function ContactSection() {
         <h2 className="font-heading text-3xl font-bold text-center mb-8">Get in Touch</h2>
         <form onSubmit={handleSubmit} className="space-y-4">
           <input
-            required placeholder="Your name" value={form.name}
+            required placeholder="Your name (*)" value={form.name}
             onChange={(e) => setForm({ ...form, name: e.target.value })}
             className="w-full border border-gray-200 rounded-lg px-4 py-3 font-body"
           />
           <input
-            required type="email" placeholder="Email address" value={form.email}
+            required type="email" placeholder="Email address (*)" value={form.email}
             onChange={(e) => setForm({ ...form, email: e.target.value })}
             className="w-full border border-gray-200 rounded-lg px-4 py-3 font-body"
           />
@@ -40,7 +40,7 @@ export default function ContactSection() {
             className="w-full border border-gray-200 rounded-lg px-4 py-3 font-body"
           />
           <textarea
-            required placeholder="Your message" rows={4} value={form.message}
+            required placeholder="Your message (*)" rows={4} value={form.message}
             onChange={(e) => setForm({ ...form, message: e.target.value })}
             className="w-full border border-gray-200 rounded-lg px-4 py-3 font-body"
           />

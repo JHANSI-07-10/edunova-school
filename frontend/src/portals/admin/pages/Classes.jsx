@@ -117,10 +117,10 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast, onC
           <Card>
             <SectionTitle>Add Class</SectionTitle>
             <form onSubmit={addClass} className="grid grid-cols-2 gap-3">
-              <input required placeholder="Name (e.g. Grade 6)" value={classForm.name}
+              <input required placeholder="Name (e.g. Grade 6) (*)" value={classForm.name}
                 onChange={(e) => setClassForm({ ...classForm, name: e.target.value })}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
-              <input required placeholder="Section (e.g. A)" value={classForm.section}
+              <input required placeholder="Section (e.g. A) (*)" value={classForm.section}
                 onChange={(e) => setClassForm({ ...classForm, section: e.target.value })}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
               <select value={classForm.curriculum}
@@ -191,10 +191,10 @@ function TabConfig({ classes, subjects, loadClasses, loadSubjects, setToast, onC
           <Card>
             <SectionTitle>Add Subject</SectionTitle>
             <form onSubmit={addSubject} className="grid grid-cols-2 gap-3">
-              <input required placeholder="Name" value={subjectForm.name}
+              <input required placeholder="Name (*)" value={subjectForm.name}
                 onChange={(e) => setSubjectForm({ ...subjectForm, name: e.target.value })}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
-              <input required placeholder="Subject code" value={subjectForm.subject_code}
+              <input required placeholder="Subject code (*)" value={subjectForm.subject_code}
                 onChange={(e) => setSubjectForm({ ...subjectForm, subject_code: e.target.value })}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
               <select value={subjectForm.type}
@@ -329,7 +329,7 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
           <SectionTitle>Enroll Student in Class</SectionTitle>
           <form onSubmit={handleEnroll} className="space-y-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Select Student</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Select Student (*)</label>
               <select required value={enrollForm.student_id}
                 onChange={(e) => setEnrollForm({ ...enrollForm, student_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring">
@@ -339,7 +339,7 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class (*)</label>
               <select required value={enrollForm.class_id}
                 onChange={(e) => setEnrollForm({ ...enrollForm, class_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring">
@@ -356,8 +356,8 @@ function TabEnroll({ classes, students, enrollments, loadEnrollments, setToast }
                   className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring" />
               </div>
               <div className="flex flex-col gap-1">
-                <label className="text-xs font-semibold text-slate-500 uppercase">Academic Year</label>
-                <input required placeholder="2025-26" value={enrollForm.academic_year}
+                <label className="text-xs font-semibold text-slate-500 uppercase">Academic Year (*)</label>
+                <input required placeholder="2025-26 (*)" value={enrollForm.academic_year}
                   onChange={(e) => setEnrollForm({ ...enrollForm, academic_year: e.target.value })}
                   className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring" />
               </div>
@@ -500,7 +500,7 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
           <SectionTitle>Assign Class Teacher</SectionTitle>
           <form onSubmit={handleTeacherAssign} className="space-y-3">
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class (*)</label>
               <select required value={teacherAssignForm.class_id}
                 onChange={(e) => setTeacherAssignForm({ ...teacherAssignForm, class_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring">
@@ -510,7 +510,7 @@ function TabTeachers({ classes, subjects, teachers, classTeachers, loadClassTeac
             </div>
 
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class Teacher</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Select Class Teacher (*)</label>
               <select required value={teacherAssignForm.teacher_id}
                 onChange={(e) => setTeacherAssignForm({ ...teacherAssignForm, teacher_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2.5 text-sm outline-none focus-ring">

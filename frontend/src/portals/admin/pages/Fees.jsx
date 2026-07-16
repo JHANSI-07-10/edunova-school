@@ -142,7 +142,7 @@ function OverviewTab({ showToast }) {
         </div>
         {showAyForm && (
           <form onSubmit={createAcademicYear} className="grid sm:grid-cols-4 gap-3 mb-4 p-4 bg-slate-50 rounded-xl border border-slate-100">
-            <input required placeholder="e.g. 2025-26" value={ayForm.name}
+            <input required placeholder="e.g. 2025-26 (*)" value={ayForm.name}
               onChange={(e) => setAyForm({ ...ayForm, name: e.target.value })}
               className="rounded-xl border border-slate-200 px-3 py-2 text-sm" />
             <input required type="date" value={ayForm.start_date}
@@ -325,7 +325,7 @@ function StructuresTab({ showToast }) {
           <form onSubmit={submit} className="space-y-4">
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-medium text-ink-secondary mb-1 block">Class *</label>
+                <label className="text-xs font-medium text-ink-secondary mb-1 block">Class * (*)</label>
                 <select required value={form.class_id} onChange={(e) => setForm({ ...form, class_id: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
                   <option value="">Select class</option>
@@ -333,8 +333,8 @@ function StructuresTab({ showToast }) {
                 </select>
               </div>
               <div>
-                <label className="text-xs font-medium text-ink-secondary mb-1 block">Term Name *</label>
-                <input required placeholder="e.g. Term 1 – 2025" value={form.term_name}
+                <label className="text-xs font-medium text-ink-secondary mb-1 block">Term Name * (*)</label>
+                <input required placeholder="e.g. Term 1 – 2025 (*)" value={form.term_name}
                   onChange={(e) => setForm({ ...form, term_name: e.target.value })}
                   className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />
               </div>
@@ -664,7 +664,7 @@ function ConcessionsTab({ showToast }) {
         <form onSubmit={submit} className="space-y-4">
           <div className="grid sm:grid-cols-3 gap-4">
             <div>
-              <label className="text-xs font-medium text-ink-secondary mb-1 block">Student *</label>
+              <label className="text-xs font-medium text-ink-secondary mb-1 block">Student * (*)</label>
               <select required value={form.student_id} onChange={(e) => setForm({ ...form, student_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
                 <option value="">Select student</option>
@@ -674,7 +674,7 @@ function ConcessionsTab({ showToast }) {
               </select>
             </div>
             <div>
-              <label className="text-xs font-medium text-ink-secondary mb-1 block">Fee Structure *</label>
+              <label className="text-xs font-medium text-ink-secondary mb-1 block">Fee Structure * (*)</label>
               <select required value={form.fee_structure_id} onChange={(e) => setForm({ ...form, fee_structure_id: e.target.value })}
                 className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm">
                 <option value="">Select structure</option>
@@ -1076,7 +1076,7 @@ function CategoriesTab({ showToast }) {
         <SectionTitle>Add Fee Category</SectionTitle>
         <form onSubmit={submit} className="grid sm:grid-cols-3 gap-4">
           <div>
-            <label className="text-xs font-medium text-ink-secondary mb-1 block">Category Name *</label>
+            <label className="text-xs font-medium text-ink-secondary mb-1 block">Category Name * (*)</label>
             <input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })}
               placeholder="e.g. Sports Fee"
               className="w-full rounded-xl border border-slate-200 px-3 py-2 text-sm" />

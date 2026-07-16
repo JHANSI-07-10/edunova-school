@@ -310,10 +310,10 @@ export default function Users() {
               </select>
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">First Name</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">First Name (*)</label>
               <input
                 required
-                placeholder="First name"
+                placeholder="First name (*)"
                 value={form.first_name}
                 onChange={(e) => setForm({ ...form, first_name: e.target.value })}
                 className={`rounded-xl border px-3 py-2 text-sm outline-none focus-ring ${validationErrors.first_name ? "border-danger" : "border-slate-200"}`}
@@ -330,11 +330,11 @@ export default function Users() {
               />
             </div>
             <div className="flex flex-col gap-1">
-              <label className="text-xs font-semibold text-slate-500 uppercase">Email Address</label>
+              <label className="text-xs font-semibold text-slate-500 uppercase">Email Address (*)</label>
               <input
                 required
                 type="email"
-                placeholder="Email"
+                placeholder="Email (*)"
                 value={form.email}
                 onChange={(e) => setForm({ ...form, email: e.target.value })}
                 className={`rounded-xl border px-3 py-2 text-sm outline-none focus-ring ${validationErrors.email ? "border-danger" : "border-slate-200"}`}
