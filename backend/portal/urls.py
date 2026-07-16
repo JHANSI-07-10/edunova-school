@@ -1,7 +1,7 @@
 from django.urls import path
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views
+from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views, exam_workflow_views, assignment_workflow_views
 
 urlpatterns = [
     # Auth (credentials -> OTP -> JWT), shared by every portal
@@ -219,6 +219,43 @@ urlpatterns = [
     path("admin-portal/exams/revaluation/", exam_extras_views.RevaluationRequestView.as_view()),
     path("admin-portal/exams/supplementary/", exam_extras_views.SupplementaryRegistrationView.as_view()),
     path("admin-portal/exams/certificates/", exam_extras_views.AcademicCertificateView.as_view()),
+
+    # === EXAM WORKFLOW (22 submodules) ===
+    path("admin-portal/exam-workflow/types/",                       exam_workflow_views.ExamTypeView.as_view()),
+    path("admin-portal/exam-workflow/subjects/",                    exam_workflow_views.ExamSubjectConfigView.as_view()),
+    path("admin-portal/exam-workflow/subjects/<int:record_id>/",    exam_workflow_views.ExamSubjectConfigView.as_view()),
+    path("admin-portal/exam-workflow/seating/",                     exam_workflow_views.SeatingArrangementView.as_view()),
+    path("admin-portal/exam-workflow/seating/<int:record_id>/",     exam_workflow_views.SeatingArrangementView.as_view()),
+    path("admin-portal/exam-workflow/invigilators/",                exam_workflow_views.InvigilatorAllocationView.as_view()),
+    path("admin-portal/exam-workflow/invigilators/<int:record_id>/",exam_workflow_views.InvigilatorAllocationView.as_view()),
+    path("admin-portal/exam-workflow/hall-tickets/generate/",      exam_workflow_views.HallTicketGenerationView.as_view()),
+    path("admin-portal/exam-workflow/verify-marks/",                exam_workflow_views.MarksVerificationView.as_view()),
+    path("admin-portal/exam-workflow/grade-config/",                exam_workflow_views.GradeConfigView.as_view()),
+    path("admin-portal/exam-workflow/grade-config/<int:record_id>/",exam_workflow_views.GradeConfigView.as_view()),
+    path("admin-portal/exam-workflow/process-results/",             exam_workflow_views.ResultProcessingView.as_view()),
+    path("admin-portal/exam-workflow/notifications/",               exam_workflow_views.ExamNotificationView.as_view()),
+    path("admin-portal/exam-workflow/notifications/<int:record_id>/",exam_workflow_views.ExamNotificationView.as_view()),
+    path("admin-portal/exam-workflow/notifications/send/",          exam_workflow_views.SendExamNotificationView.as_view()),
+    path("admin-portal/exam-workflow/audit-logs/",                  exam_workflow_views.ExamAuditLogView.as_view()),
+    path("admin-portal/exam-workflow/reports/",                     exam_workflow_views.ExamReportsView.as_view()),
+    path("admin-portal/exam-workflow/analytics/",                   exam_workflow_views.ExamAnalyticsView.as_view()),
+    path("admin-portal/exam-workflow/practical/",                   exam_workflow_views.PracticalExamView.as_view()),
+
+    # === ASSIGNMENT WORKFLOW (18 submodules) ===
+    path("admin-portal/assignment-workflow/categories/",                assignment_workflow_views.AssignmentCategoryView.as_view()),
+    path("admin-portal/assignment-workflow/manage/",                    assignment_workflow_views.AssignmentSchedulingView.as_view()),
+    path("admin-portal/assignment-workflow/manage/<int:record_id>/",    assignment_workflow_views.AssignmentSchedulingView.as_view()),
+    path("admin-portal/assignment-workflow/late-submissions/",          assignment_workflow_views.LateSubmissionView.as_view()),
+    path("admin-portal/assignment-workflow/resubmissions/",             assignment_workflow_views.ResubmissionView.as_view()),
+    path("admin-portal/assignment-workflow/resubmissions/<int:record_id>/", assignment_workflow_views.ResubmissionView.as_view()),
+    path("admin-portal/assignment-workflow/rubrics/",                   assignment_workflow_views.RubricManagementView.as_view()),
+    path("admin-portal/assignment-workflow/rubrics/<int:record_id>/",   assignment_workflow_views.RubricManagementView.as_view()),
+    path("admin-portal/assignment-workflow/reports/",                   assignment_workflow_views.AssignmentReportView.as_view()),
+    path("admin-portal/assignment-workflow/analytics/",                 assignment_workflow_views.AssignmentAnalyticsView.as_view()),
+    path("admin-portal/assignment-workflow/notifications/",             assignment_workflow_views.AssignmentNotificationView.as_view()),
+    path("admin-portal/assignment-workflow/notifications/<int:record_id>/", assignment_workflow_views.AssignmentNotificationView.as_view()),
+    path("admin-portal/assignment-workflow/settings/",                  assignment_workflow_views.AssignmentSettingsView.as_view()),
+    path("admin-portal/assignment-workflow/audit-logs/",                assignment_workflow_views.AssignmentAuditLogView.as_view()),
 
     # Timetable Management
     path("admin-portal/timetable/",             admin_views.TimetableAdminView.as_view()),
