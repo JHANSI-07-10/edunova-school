@@ -303,7 +303,7 @@ function TabAcademicCalendar({ toast }) {
     setSaving(true);
     try {
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/calendar/${editItem.id}/`, form);
+        await api.put(`/admin-portal/timetable/calendar/${editItem.id}/`, form);
         toast.show("Calendar updated.");
       } else {
         await api.post("/admin-portal/timetable/calendar/", form);
@@ -348,7 +348,7 @@ function TabAcademicCalendar({ toast }) {
     try {
       const payload = { ...eventForm, calendar: selectedCal };
       if (editEvent) {
-        await api.patch(`/admin-portal/timetable/calendar/events/${editEvent.id}/`, payload);
+        await api.put(`/admin-portal/timetable/calendar/events/${editEvent.id}/`, payload);
         toast.show("Event updated.");
       } else {
         await api.post("/admin-portal/timetable/calendar/events/", payload);
@@ -648,7 +648,7 @@ function TabSchoolTimings({ toast, academicYear }) {
     setSaving(true);
     try {
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/school-timings/${editItem.id}/`, form);
+        await api.put(`/admin-portal/timetable/school-timings/${editItem.id}/`, form);
         toast.show("Timing updated.");
       } else {
         await api.post("/admin-portal/timetable/school-timings/", form);
@@ -787,7 +787,7 @@ function TabPeriods({ toast, academicYear }) {
     try {
       const payload = { ...form, academic_year: academicYear };
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/periods/${editItem.id}/`, payload);
+        await api.put(`/admin-portal/timetable/periods/${editItem.id}/`, payload);
         toast.show("Period updated.");
       } else {
         await api.post("/admin-portal/timetable/periods/", payload);
@@ -831,7 +831,7 @@ function TabPeriods({ toast, academicYear }) {
 
   async function handleToggleActive(item) {
     try {
-      await api.patch(`/admin-portal/timetable/periods/${item.id}/`, { is_active: !item.is_active });
+      await api.put(`/admin-portal/timetable/periods/${item.id}/`, { is_active: !item.is_active });
       load();
     } catch (err) {
       toast.show("Failed to toggle.", "error");
@@ -953,7 +953,7 @@ function TabSubjectAllocation({ toast, meta }) {
     setSaving(true);
     try {
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/subject-allocations/${editItem.id}/`, form);
+        await api.put(`/admin-portal/timetable/subject-allocations/${editItem.id}/`, form);
         toast.show("Allocation updated.");
       } else {
         await api.post("/admin-portal/timetable/subject-allocations/", form);
@@ -1085,7 +1085,7 @@ function TabTeacherAllocation({ toast, meta }) {
     setSaving(true);
     try {
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/teacher-allocations/${editItem.id}/`, form);
+        await api.put(`/admin-portal/timetable/teacher-allocations/${editItem.id}/`, form);
         toast.show("Allocation updated.");
       } else {
         await api.post("/admin-portal/timetable/teacher-allocations/", form);
@@ -1218,7 +1218,7 @@ function TabClassroomAllocation({ toast, meta }) {
     setSaving(true);
     try {
       if (editItem) {
-        await api.patch(`/admin-portal/timetable/classroom-allocations/${editItem.id}/`, form);
+        await api.put(`/admin-portal/timetable/classroom-allocations/${editItem.id}/`, form);
         toast.show("Allocation updated.");
       } else {
         await api.post("/admin-portal/timetable/classroom-allocations/", form);
@@ -1522,7 +1522,7 @@ function PeriodModal({ meta, classId, academicYear, editEntry, onSave, onClose }
     setError("");
     try {
       if (isEdit) {
-        await api.patch(`/admin-portal/timetable/${editEntry.id}/`, form);
+        await api.put(`/admin-portal/timetable/${editEntry.id}/`, form);
       } else {
         await api.post("/admin-portal/timetable/", form);
       }
