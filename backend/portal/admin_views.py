@@ -2721,3 +2721,43 @@ class TimetableMetaView(AdminMixin, APIView):
             "academic_years": ["2024-25", "2025-26", "2026-27"],
             "days": ["Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"],
         })
+
+
+class AdminPublicContentView(AdminMixin, APIView):
+    def post(self, request):
+        # pyrefly: ignore [missing-import]
+        from apps.cms.models import NewsPost, Event
+        from django.utils.text import slugify
+        import uuid
+        
+        post_type = request.data.get("type")
+        title = request.data.get("title")
+        description = request.data.get("description")
+        date_val = request.data.get("date")
+        cover_image = request.FILES.get("cover_image")
+        
+        if not all([post_type, title, description, date_val]):
+            return Response({"detail": "Missing fields"}, status=400)
+            
+        slug = slugify(title) + "-" + str(uuid.uuid4())[:8]
+            
+        if post_type == "news":
+            NewsPost.objects.create(
+                title=title,
+                slug=slug,
+                content=description,
+                published_date=date_val,
+                cover_image=cover_image,
+                is_published=True
+            )
+        elif post_type == "event":
+            Event.objects.create(
+                title=title,
+                description=description,
+                event_date=date_val,
+                cover_image=cover_image
+            )
+        else:
+            return Response({"detail": "Invalid type"}, status=400)
+            
+        return Response({"detail": "Content published successfully."})

@@ -767,10 +767,34 @@ class MyContactsView(TeacherMixin, APIView):
 
 class NoticeListView(TeacherMixin, APIView):
     def get(self, request):
+        notices = []
         if table_exists("cms_newspost"):
-            data = rows("SELECT id, title, content, published_date AS created_at, NULL AS file_attachment_url, false AS is_pinned FROM cms_newspost WHERE is_published=true ORDER BY published_date DESC")
-            return Response(serialise(data))
-        return Response([])
+            notices.extend(rows("SELECT id, title, content, published_date AS created_at, NULL AS file_attachment_url, false AS is_pinned FROM cms_newspost WHERE is_published=true ORDER BY published_date DESC"))
+        if table_exists("portal_notification"):
+            my_notices = rows("SELECT id, title, message AS content, created_at, NULL AS file_attachment_url, false AS is_pinned FROM portal_notification WHERE sender_id=%s ORDER BY created_at DESC", [request.user.id])
+            notices.extend(my_notices)
+        notices.sort(key=lambda x: x["created_at"], reverse=True)
+        return Response(serialise(notices))
+
+    def post(self, request):
+        if not table_exists("portal_notification"):
+            return Response({"detail": "Portal schema has not been applied."}, status=400)
+        
+        target_class_id = request.data.get("class_id")
+        title = request.data.get("title")
+        message = request.data.get("message")
+        
+        if not target_class_id or not title or not message:
+            return Response({"detail": "Missing fields"}, status=400)
+            
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO portal_notification (sender_id, recipient_type, target_class_id, title, message) VALUES (%s, %s, %s, %s, %s) RETURNING id",
+                [request.user.id, 'Student', target_class_id, title, message]
+            )
+            nid = cursor.fetchone()[0]
+            
+        return Response({"id": nid, "detail": "Notice posted successfully."})
 
 
 class LeaveView(TeacherMixin, APIView):

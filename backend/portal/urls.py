@@ -1,4 +1,5 @@
 from django.urls import path
+# pyrefly: ignore [missing-import]
 from rest_framework_simplejwt.views import TokenRefreshView
 
 from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views, exam_workflow_views, assignment_workflow_views
@@ -109,6 +110,7 @@ urlpatterns = [
 
     # Admin portal
     path("admin-portal/dashboard/", admin_views.AdminDashboardView.as_view()),
+    path("admin-portal/public-content/", admin_views.AdminPublicContentView.as_view()),
     path("admin-portal/admissions/", admin_views.AdmissionListView.as_view()),
     path("admin-portal/admissions/<str:registration_number>/action/", admin_views.AdmissionActionView.as_view()),
     path("admin-portal/users/", admin_views.UserListView.as_view()),

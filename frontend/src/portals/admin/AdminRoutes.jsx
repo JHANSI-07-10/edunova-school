@@ -26,6 +26,7 @@ import ExamResults from "./pages/ExamResults";
 import Payroll from "./pages/Payroll";
 import RolesPermissions from "./pages/RolesPermissions";
 import LmsMonitor from "./pages/LmsMonitor";
+import NewsAndEvents from "./pages/NewsAndEvents";
 import Campuses from "./pages/Campuses";
 import Scholarships from "./pages/Scholarships";
 import Timetable from "./pages/Timetable";
@@ -52,6 +53,7 @@ export default function AdminRoutes() {
           <Route path="fees" element={<Fees />} />
           <Route path="scholarships" element={<Scholarships />} />
           <Route path="notices" element={<Notices />} />
+          <Route path="news-and-events" element={<NewsAndEvents />} />
           <Route path="leaves" element={<Leaves />} />
           <Route path="reports" element={<Reports />} />
           <Route path="audit-log" element={<AuditLog />} />

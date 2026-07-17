@@ -26,6 +26,7 @@ const NAV = [
   { to: "/admin/alumni", label: "Alumni Registry", icon: GraduationCap },
   { to: "/admin/medical-records", label: "Medical Records", icon: Stethoscope },
   { to: "/admin/notices", label: "Notices", icon: Megaphone },
+  { to: "/admin/news-and-events", label: "News & Events", icon: Megaphone },
   { to: "/admin/leaves", label: "Leave Approvals", icon: CalendarClock },
   { to: "/admin/reports", label: "Reports", icon: BarChart3 },
   { to: "/admin/audit-log", label: "Audit Log", icon: ShieldCheck },
