@@ -47,7 +47,7 @@ export default function Login() {
       setStep(2);
     } catch (err) {
       const detail = err?.response?.data?.detail;
-      setError("{detail || "Invalid credentials. Please check your username/password and try again."}{" "}");
+      setError(detail || "Invalid credentials. Please check your username/password and try again.");
     } finally {
       setLoading(false);
     }
