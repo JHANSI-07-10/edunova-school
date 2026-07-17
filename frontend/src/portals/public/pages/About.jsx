@@ -74,7 +74,7 @@ export default function About() {
       {/* Hero Section */}
       <section className="relative overflow-hidden text-white bg-primary">
         <img
-          src="/Campus.jpeg"
+          src="/images/Campus.jpeg"
           alt="EduNova Global Academy Campus"
           className="absolute inset-0 w-full h-full object-cover brightness-[0.4]"
         />
@@ -136,7 +136,7 @@ export default function About() {
         <FadeIn delay={100}>
           <div className="relative rounded-3xl overflow-hidden shadow-2xl">
             <img
-              src="/EduNova.jpeg"
+              src="/images/EduNova.jpeg"
               alt="EduNova Classroom"
               className="w-full h-[450px] object-cover"
             />

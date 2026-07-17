@@ -18,7 +18,11 @@ export default function AcademicPrograms() {
 
               <div className="relative rounded-3xl overflow-hidden shadow-2xl border border-white">
                 <img
+<<<<<<< HEAD
                   src="/classroom.jpeg"
+=======
+                  src="/images/student.jpeg"
+>>>>>>> beb8387c90331c772e86128d839d2953a596a3c5
                   alt="EduNova students learning in classroom"
                   className="w-full h-[400px] object-cover"
                 />

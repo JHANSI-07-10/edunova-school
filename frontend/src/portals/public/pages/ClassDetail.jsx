@@ -108,7 +108,7 @@ export default function ClassDetail() {
           />
         ) : (
           <img
-            src="/Campus.jpeg"
+            src="/images/Campus.jpeg"
             alt={`${cls.name} ${cls.section}`}
             className="absolute inset-0 w-full h-full object-cover"
           />

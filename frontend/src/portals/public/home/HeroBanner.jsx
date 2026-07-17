@@ -13,7 +13,7 @@ export default function HeroBanner() {
   return (
     <section className="relative overflow-hidden text-white min-h-[88vh] flex items-center bg-primary">
       <img
-        src="/campus-building-1.jpeg"
+        src="/images/campus-building-1.jpeg"
         alt="EduNova Global Academy campus"
         className="absolute inset-0 w-full h-full object-cover brightness-110 contrast-110 saturate-125"
       />

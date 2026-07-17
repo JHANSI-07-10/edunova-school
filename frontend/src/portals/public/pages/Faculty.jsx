@@ -56,7 +56,7 @@ export default function Faculty() {
       {/* Hero */}
       <section className="relative overflow-hidden text-white">
         <img
-          src="/student.jpeg"
+          src="/images/student.jpeg"
           alt="EduNova Faculty"
           className="absolute inset-0 w-full h-full object-cover"
         />
@@ -199,10 +199,10 @@ export default function Faculty() {
                 >
                   <div className="relative h-72 overflow-hidden">
                     <img
-                      src={member.photo_url || '/EduNova.jpeg'}
+                      src={member.photo_url || '/images/EduNova.jpeg'}
                       alt={`${member.first_name} ${member.last_name}`}
                       onError={(e) => {
-                        e.target.src = '/EduNova.jpeg'
+                        e.target.src = '/images/EduNova.jpeg'
                       }}
                       className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                     />
@@ -298,10 +298,10 @@ export default function Faculty() {
           >
             <div className="relative">
               <img
-                src={selectedMember.photo_url || '/EduNova.jpeg'}
+                src={selectedMember.photo_url || '/images/EduNova.jpeg'}
                 alt={`${selectedMember.first_name} ${selectedMember.last_name}`}
                 onError={(e) => {
-                  e.target.src = '/EduNova.jpeg'
+                  e.target.src = '/images/EduNova.jpeg'
                 }}
                 className="w-full h-64 object-cover"
               />
