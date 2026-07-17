@@ -195,15 +195,23 @@ export default function Admissions() {
       setErrorMsg('Please select a target class and enter a date of birth.')
       return
     }
-    const birthYear = new Date(form.date_of_birth).getFullYear()
-    const currentYear = new Date().getFullYear()
-    const age = currentYear - birthYear
+    const birthDate = new Date(form.date_of_birth)
+    const today = new Date()
+    let age = today.getFullYear() - birthDate.getFullYear()
+    const m = today.getMonth() - birthDate.getMonth()
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+      age--
+    }
+
     if (isNaN(age) || age < 1) {
       setIsEligible(false)
       setEligibilityReason('Please enter a valid date of birth.')
     } else if (age < 3) {
       setIsEligible(false)
       setEligibilityReason(`Applicants must be at least 3 years old. (Current age: ${age})`)
+    } else if (age > 20) {
+      setIsEligible(false)
+      setEligibilityReason(`Applicants cannot be older than 20 years. (Current age: ${age})`)
     } else {
       setIsEligible(true)
       setEligibilityReason(`Eligible! Age: ${age} years meets requirements for ${form.target_class}.`)
