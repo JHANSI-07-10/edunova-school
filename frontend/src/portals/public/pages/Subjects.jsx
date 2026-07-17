@@ -52,7 +52,7 @@ export default function Subjects() {
     <main className="bg-white">
       {/* Hero */}
       <section className="relative overflow-hidden text-white">
-        <img src="/student.jpeg" alt="Subjects" className="absolute inset-0 w-full h-full object-cover" />
+        <img src="/images/student.jpeg" alt="Subjects" className="absolute inset-0 w-full h-full object-cover" />
         <div className="absolute inset-0 bg-gradient-to-r from-primary/90 via-primary/70 to-primary/30" />
         <div className="absolute inset-0 bg-black/20" />
         <div className="relative z-10 section py-28">

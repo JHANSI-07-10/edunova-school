@@ -885,13 +885,10 @@ export default function ContactPage() {
                   const isExpanded = expandedCampusId === c.id
 
                   // Static local fallback images if imageUrl isn't set
-                  let fallbackImage = '/noida_campus.png'
-                  if (c.name.includes("Gurugram")) fallbackImage = '/gurugram_campus.png'
-                  if (c.name.includes("Jaipur")) fallbackImage = '/jaipur_campus.png'
-                  if (c.name.includes("Lucknow")) fallbackImage = '/exterior.jpeg'
-                  if (c.name.includes("Faridabad")) fallbackImage = '/building.jpeg'
-                  if (c.name.includes("Head Office") || c.name.includes("Dwarka")) fallbackImage = '/Campus.jpeg'
-
+                  let fallbackImage = '/images/campus-building-1.jpeg'
+                  if (c.name.includes("Lucknow")) fallbackImage = '/images/exterior.jpeg'
+                  if (c.name.includes("Faridabad")) fallbackImage = '/images/building.jpeg'
+                  if (c.name.includes("Head Office") || c.name.includes("Dwarka")) fallbackImage = '/images/Campus.jpeg'
                   return (
                     <div key={c.id} className="bg-white rounded-3xl overflow-hidden shadow-sm border border-slate-100 hover:shadow-md transition-all flex flex-col">
 

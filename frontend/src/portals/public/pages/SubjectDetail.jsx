@@ -104,7 +104,7 @@ export default function SubjectDetail() {
           />
         ) : (
           <img
-            src="/student.jpeg"
+            src="/images/student.jpeg"
             alt={subject.name}
             className="absolute inset-0 w-full h-full object-cover"
           />

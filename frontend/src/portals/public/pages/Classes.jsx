@@ -56,7 +56,7 @@ export default function Classes() {
       {/* Hero */}
       <section className="relative overflow-hidden text-white">
         <img
-          src="/Campus.jpeg"
+          src="/images/Campus.jpeg"
           alt="EduNova Classes"
           className="absolute inset-0 w-full h-full object-cover"
         />

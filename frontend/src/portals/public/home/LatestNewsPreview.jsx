@@ -26,7 +26,7 @@ export default function LatestNewsPreview() {
                 <div className="card h-full overflow-hidden hover:shadow-md transition-shadow">
                   <div className="-mx-6 -mt-6 mb-4 h-36 overflow-hidden">
                     <img
-                      src={getMediaUrl(n.cover_image) || ['/images/physics-3.jpeg', '/images/student-1.jpeg', '/building.jpeg'][i % 3]}
+                      src={getMediaUrl(n.cover_image) || ['/images/physics-3.jpeg', '/images/student-1.jpeg', '/images/building.jpeg'][i % 3]}
                       alt={n.title}
                       className="w-full h-full object-cover"
                     />

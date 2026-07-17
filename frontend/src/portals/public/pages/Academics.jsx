@@ -75,7 +75,7 @@ export default function Academics() {
       {/* Hero */}
       <section className="relative overflow-hidden text-white">
         <img
-          src="/student.jpeg"
+          src="/images/student.jpeg"
           alt="EduNova academic programs"
           className="absolute inset-0 w-full h-full object-cover"
         />

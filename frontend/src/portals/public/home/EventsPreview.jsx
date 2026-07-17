@@ -25,7 +25,7 @@ export default function EventsPreview() {
               <div className="card h-full overflow-hidden hover:shadow-md transition-shadow">
                 <div className="-mx-6 -mt-6 mb-4 h-36 overflow-hidden">
                   <img
-                    src={getMediaUrl(e.cover_image) || ['/images/physics-2.jpeg', '/images/library-1.jpeg', '/Campus.jpeg'][i % 3]}
+                    src={getMediaUrl(e.cover_image) || ['/images/physics-2.jpeg', '/images/library-1.jpeg', '/images/Campus.jpeg'][i % 3]}
                     alt={e.title}
                     className="w-full h-full object-cover"
                   />
