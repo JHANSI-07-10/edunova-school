@@ -212,6 +212,7 @@ ALTER TABLE public.portal_timetable ADD COLUMN IF NOT EXISTS created_at timestam
 ALTER TABLE public.portal_timetable ADD COLUMN IF NOT EXISTS updated_at timestamptz NOT NULL DEFAULT now();
 
 -- Drop existing unique constraint if it exists and re-create with our schema
+ALTER TABLE public.portal_timetable ADD COLUMN IF NOT EXISTS period_number smallint;
 ALTER TABLE public.portal_timetable DROP CONSTRAINT IF EXISTS portal_timetable_class_id_day_of_week_start_time_key;
 ALTER TABLE public.portal_timetable ADD CONSTRAINT portal_timetable_unique_entry
   UNIQUE NULLS NOT DISTINCT (class_id, day_of_week, start_time, academic_year, period_number);
