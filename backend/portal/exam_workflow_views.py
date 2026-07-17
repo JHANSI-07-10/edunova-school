@@ -1362,3 +1362,547 @@ class PracticalExamView(AdminMixin, APIView):
             cursor.execute(f"UPDATE portal_exam_schedule SET {', '.join(fields)} WHERE id = %s", vals)
         log_action(request.user, "practical_exam.update", "portal_exam_schedule", sched_id, d)
         return Response({"detail": "Practical exam updated."})
+
+
+# ---------------------------------------------------------------------------
+# 15. Exam Blueprint & Pattern Management
+# ---------------------------------------------------------------------------
+class ExamBlueprintView(AdminMixin, APIView):
+    """GET  ?exam_schedule_id= & ?subject_id= — list blueprints
+    POST — create blueprint entry
+    PUT  record_id — update blueprint entry
+    DELETE record_id — delete blueprint entry"""
+
+    def get(self, request):
+        if not table_exists("portal_exam_blueprint"):
+            return Response([])
+        exam_id = request.query_params.get("exam_schedule_id")
+        subject_id = request.query_params.get("subject_id")
+        sql = """
+            SELECT b.*, s.name AS subject_name
+            FROM portal_exam_blueprint b
+            LEFT JOIN portal_subject s ON s.id = b.subject_id
+            WHERE 1=1
+        """
+        params = []
+        if exam_id:
+            sql += " AND b.exam_schedule_id = %s"
+            params.append(exam_id)
+        if subject_id:
+            sql += " AND b.subject_id = %s"
+            params.append(subject_id)
+        sql += " ORDER BY b.id"
+        return Response(serialise(rows(sql, params)))
+
+    def post(self, request):
+        if not table_exists("portal_exam_blueprint"):
+            return Response({"detail": "Exam blueprint table not found."}, status=400)
+        d = request.data
+        required = ("exam_schedule_id", "subject_id", "question_type", "question_count",
+                     "marks_per_question", "total_marks", "difficulty", "chapter")
+        missing = [f for f in required if f not in d]
+        if missing:
+            return Response({"detail": f"Missing fields: {', '.join(missing)}"}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO portal_exam_blueprint
+                   (exam_schedule_id, subject_id, question_type, question_count,
+                    marks_per_question, total_marks, difficulty, chapter, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,now(),now())
+                   RETURNING id""",
+                [d["exam_schedule_id"], d["subject_id"], d["question_type"],
+                 d["question_count"], d["marks_per_question"], d["total_marks"],
+                 d["difficulty"], d["chapter"]],
+            )
+            bp_id = cursor.fetchone()[0]
+        log_action(request.user, "blueprint.create", "portal_exam_blueprint", bp_id, d)
+        return Response({"id": bp_id, "detail": "Blueprint entry created."}, status=201)
+
+    def put(self, request):
+        if not table_exists("portal_exam_blueprint"):
+            return Response({"detail": "Exam blueprint table not found."}, status=400)
+        d = request.data
+        record_id = d.get("record_id") or d.get("id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_exam_blueprint WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Blueprint entry not found."}, status=404)
+        fields, vals = [], []
+        for col in ("subject_id", "question_type", "question_count",
+                     "marks_per_question", "total_marks", "difficulty", "chapter"):
+            if col in d:
+                fields.append(f"{col} = %s")
+                vals.append(d[col])
+        fields.append("updated_at = now()")
+        if not [f for f in fields if f != "updated_at = now()"]:
+            return Response({"detail": "No fields to update."}, status=400)
+        vals.append(record_id)
+        with connection.cursor() as cursor:
+            cursor.execute(f"UPDATE portal_exam_blueprint SET {', '.join(fields)} WHERE id = %s", vals)
+        log_action(request.user, "blueprint.update", "portal_exam_blueprint", record_id, d)
+        return Response({"detail": "Blueprint entry updated."})
+
+    def delete(self, request):
+        if not table_exists("portal_exam_blueprint"):
+            return Response({"detail": "Exam blueprint table not found."}, status=400)
+        record_id = request.query_params.get("record_id") or request.data.get("record_id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_exam_blueprint WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Blueprint entry not found."}, status=404)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_exam_blueprint WHERE id=%s", [record_id])
+        log_action(request.user, "blueprint.delete", "portal_exam_blueprint", record_id)
+        return Response({"detail": "Blueprint entry deleted."})
+
+
+# ---------------------------------------------------------------------------
+# 16. Viva Examination Management
+# ---------------------------------------------------------------------------
+class VivaExamView(AdminMixin, APIView):
+    """GET  ?exam_schedule_id= & ?student_id= — list viva records
+    POST — create viva record
+    PUT  record_id — update viva record
+    DELETE record_id — delete viva record"""
+
+    def get(self, request):
+        if not table_exists("portal_viva_exam"):
+            return Response([])
+        exam_id = request.query_params.get("exam_schedule_id")
+        student_id = request.query_params.get("student_id")
+        sql = """
+            SELECT v.*,
+                   COALESCE(st.first_name || ' ' || st.last_name, st.username) AS student_name,
+                   COALESCE(ex.first_name || ' ' || ex.last_name, ex.username) AS examiner_name
+            FROM portal_viva_exam v
+            LEFT JOIN auth_user st ON st.id = v.student_id
+            LEFT JOIN auth_user ex ON ex.id = v.examiner_id
+            WHERE 1=1
+        """
+        params = []
+        if exam_id:
+            sql += " AND v.exam_schedule_id = %s"
+            params.append(exam_id)
+        if student_id:
+            sql += " AND v.student_id = %s"
+            params.append(student_id)
+        sql += " ORDER BY v.viva_date DESC"
+        return Response(serialise(rows(sql, params)))
+
+    def post(self, request):
+        if not table_exists("portal_viva_exam"):
+            return Response({"detail": "Viva exam table not found."}, status=400)
+        d = request.data
+        required = ("exam_schedule_id", "student_id", "examiner_id", "viva_date",
+                     "topic", "questions_asked", "marks_obtained", "max_marks", "remarks")
+        missing = [f for f in required if f not in d]
+        if missing:
+            return Response({"detail": f"Missing fields: {', '.join(missing)}"}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO portal_viva_exam
+                   (exam_schedule_id, student_id, examiner_id, viva_date, topic,
+                    questions_asked, marks_obtained, max_marks, remarks, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,now(),now())
+                   RETURNING id""",
+                [d["exam_schedule_id"], d["student_id"], d["examiner_id"],
+                 d["viva_date"], d["topic"], d["questions_asked"],
+                 d["marks_obtained"], d["max_marks"], d["remarks"]],
+            )
+            viva_id = cursor.fetchone()[0]
+        log_action(request.user, "viva_exam.create", "portal_viva_exam", viva_id, d)
+        return Response({"id": viva_id, "detail": "Viva record created."}, status=201)
+
+    def put(self, request):
+        if not table_exists("portal_viva_exam"):
+            return Response({"detail": "Viva exam table not found."}, status=400)
+        d = request.data
+        record_id = d.get("record_id") or d.get("id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_viva_exam WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Viva record not found."}, status=404)
+        fields, vals = [], []
+        for col in ("marks_obtained", "remarks", "questions_asked", "topic"):
+            if col in d:
+                fields.append(f"{col} = %s")
+                vals.append(d[col])
+        fields.append("updated_at = now()")
+        if not [f for f in fields if f != "updated_at = now()"]:
+            return Response({"detail": "No fields to update."}, status=400)
+        vals.append(record_id)
+        with connection.cursor() as cursor:
+            cursor.execute(f"UPDATE portal_viva_exam SET {', '.join(fields)} WHERE id = %s", vals)
+        log_action(request.user, "viva_exam.update", "portal_viva_exam", record_id, d)
+        return Response({"detail": "Viva record updated."})
+
+    def delete(self, request):
+        if not table_exists("portal_viva_exam"):
+            return Response({"detail": "Viva exam table not found."}, status=400)
+        record_id = request.query_params.get("record_id") or request.data.get("record_id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_viva_exam WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Viva record not found."}, status=404)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_viva_exam WHERE id=%s", [record_id])
+        log_action(request.user, "viva_exam.delete", "portal_viva_exam", record_id)
+        return Response({"detail": "Viva record deleted."})
+
+
+# ---------------------------------------------------------------------------
+# 17. Student Exam Attendance Tracking
+# ---------------------------------------------------------------------------
+class ExamAttendanceView(AdminMixin, APIView):
+    """GET  ?exam_schedule_id= — list attendance records
+    POST — mark single attendance
+    POST ?bulk=true — bulk mark attendance"""
+
+    def get(self, request):
+        if not table_exists("portal_exam_attendance"):
+            return Response([])
+        exam_id = request.query_params.get("exam_schedule_id")
+        sql = """
+            SELECT a.*,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name
+            FROM portal_exam_attendance a
+            LEFT JOIN auth_user u ON u.id = a.student_id
+            WHERE 1=1
+        """
+        params = []
+        if exam_id:
+            sql += " AND a.exam_schedule_id = %s"
+            params.append(exam_id)
+        sql += " ORDER BY a.id"
+        return Response(serialise(rows(sql, params)))
+
+    def post(self, request):
+        if not table_exists("portal_exam_attendance"):
+            return Response({"detail": "Exam attendance table not found."}, status=400)
+        bulk = request.query_params.get("bulk", "").lower() == "true"
+        if bulk:
+            return self._bulk_create(request)
+        return self._single_create(request)
+
+    def _single_create(self, request):
+        d = request.data
+        required = ("exam_schedule_id", "student_id", "attendance_status")
+        missing = [f for f in required if f not in d]
+        if missing:
+            return Response({"detail": f"Missing fields: {', '.join(missing)}"}, status=400)
+        valid_statuses = ("Present", "Absent", "Medical", "Malpractice", "Late Entry")
+        if d["attendance_status"] not in valid_statuses:
+            return Response(
+                {"detail": f"attendance_status must be one of: {', '.join(valid_statuses)}"},
+                status=400,
+            )
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO portal_exam_attendance
+                   (exam_schedule_id, student_id, attendance_status, check_in_time,
+                    remarks, marked_by, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,now(),now())
+                   RETURNING id""",
+                [d["exam_schedule_id"], d["student_id"], d["attendance_status"],
+                 d.get("check_in_time"), d.get("remarks"), d.get("marked_by")],
+            )
+            att_id = cursor.fetchone()[0]
+        log_action(request.user, "exam_attendance.create", "portal_exam_attendance", att_id, d)
+        return Response({"id": att_id, "detail": "Attendance marked."}, status=201)
+
+    def _bulk_create(self, request):
+        records = request.data.get("records") or request.data.get("data")
+        if not records or not isinstance(records, list):
+            return Response({"detail": "records must be a non-empty array."}, status=400)
+        exam_id = request.data.get("exam_schedule_id")
+        if not exam_id:
+            return Response({"detail": "exam_schedule_id is required for bulk."}, status=400)
+        valid_statuses = ("Present", "Absent", "Medical", "Malpractice", "Late Entry")
+        created_ids = []
+        with transaction.atomic():
+            with connection.cursor() as cursor:
+                for rec in records:
+                    sid = rec.get("student_id")
+                    status_val = rec.get("attendance_status")
+                    if not sid or not status_val:
+                        continue
+                    if status_val not in valid_statuses:
+                        continue
+                    cursor.execute(
+                        """INSERT INTO portal_exam_attendance
+                           (exam_schedule_id, student_id, attendance_status, remarks,
+                            marked_by, created_at, updated_at)
+                           VALUES (%s,%s,%s,%s,%s,now(),now())
+                           RETURNING id""",
+                        [exam_id, sid, status_val, rec.get("remarks"),
+                         request.data.get("marked_by")],
+                    )
+                    created_ids.append(cursor.fetchone()[0])
+        log_action(request.user, "exam_attendance.bulk_create", "portal_exam_attendance", None,
+                   {"count": len(created_ids), "exam_schedule_id": exam_id})
+        return Response({"detail": f"{len(created_ids)} attendance records created.",
+                         "ids": created_ids}, status=201)
+
+
+# ---------------------------------------------------------------------------
+# 18. Malpractice Incident Register
+# ---------------------------------------------------------------------------
+class MalpracticeRegisterView(AdminMixin, APIView):
+    """GET  ?exam_schedule_id= & ?status= — list malpractice incidents
+    POST — report malpractice
+    PUT  record_id — update incident status/action"""
+
+    def get(self, request):
+        if not table_exists("portal_malpractice_register"):
+            return Response([])
+        exam_id = request.query_params.get("exam_schedule_id")
+        status_val = request.query_params.get("status")
+        sql = """
+            SELECT m.*,
+                   COALESCE(st.first_name || ' ' || st.last_name, st.username) AS student_name,
+                   COALESCE(rb.first_name || ' ' || rb.last_name, rb.username) AS reported_by_name
+            FROM portal_malpractice_register m
+            LEFT JOIN auth_user st ON st.id = m.student_id
+            LEFT JOIN auth_user rb ON rb.id = m.reported_by
+            WHERE 1=1
+        """
+        params = []
+        if exam_id:
+            sql += " AND m.exam_schedule_id = %s"
+            params.append(exam_id)
+        if status_val:
+            sql += " AND m.status = %s"
+            params.append(status_val)
+        sql += " ORDER BY m.id DESC"
+        return Response(serialise(rows(sql, params)))
+
+    def post(self, request):
+        if not table_exists("portal_malpractice_register"):
+            return Response({"detail": "Malpractice register table not found."}, status=400)
+        d = request.data
+        required = ("exam_schedule_id", "student_id", "incident_description",
+                     "evidence", "reported_by", "action_taken", "status")
+        missing = [f for f in required if f not in d]
+        if missing:
+            return Response({"detail": f"Missing fields: {', '.join(missing)}"}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO portal_malpractice_register
+                   (exam_schedule_id, student_id, incident_description, evidence,
+                    reported_by, action_taken, status, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,now(),now())
+                   RETURNING id""",
+                [d["exam_schedule_id"], d["student_id"], d["incident_description"],
+                 d["evidence"], d["reported_by"], d["action_taken"], d["status"]],
+            )
+            mp_id = cursor.fetchone()[0]
+        log_action(request.user, "malpractice.create", "portal_malpractice_register", mp_id, d)
+        return Response({"id": mp_id, "detail": "Malpractice incident reported."}, status=201)
+
+    def put(self, request):
+        if not table_exists("portal_malpractice_register"):
+            return Response({"detail": "Malpractice register table not found."}, status=400)
+        d = request.data
+        record_id = d.get("record_id") or d.get("id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_malpractice_register WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Malpractice incident not found."}, status=404)
+        fields, vals = [], []
+        for col in ("status", "action_taken", "incident_description", "evidence"):
+            if col in d:
+                fields.append(f"{col} = %s")
+                vals.append(d[col])
+        fields.append("updated_at = now()")
+        if not [f for f in fields if f != "updated_at = now()"]:
+            return Response({"detail": "No fields to update."}, status=400)
+        vals.append(record_id)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE portal_malpractice_register SET {', '.join(fields)} WHERE id = %s", vals
+            )
+        log_action(request.user, "malpractice.update", "portal_malpractice_register", record_id, d)
+        return Response({"detail": "Malpractice incident updated."})
+
+
+# ---------------------------------------------------------------------------
+# 19. Improvement Exam Registration
+# ---------------------------------------------------------------------------
+class ImprovementExamView(AdminMixin, APIView):
+    """GET  — list improvement registrations
+    POST — register student for improvement
+    PUT  record_id — update status/marks/grade after exam
+    DELETE record_id — delete registration"""
+
+    def get(self, request):
+        if not table_exists("portal_improvement_exam"):
+            return Response([])
+        sql = """
+            SELECT i.*,
+                   COALESCE(u.first_name || ' ' || u.last_name, u.username) AS student_name,
+                   s.name AS subject_name
+            FROM portal_improvement_exam i
+            LEFT JOIN auth_user u ON u.id = i.student_id
+            LEFT JOIN portal_subject s ON s.id = i.subject_id
+            ORDER BY i.id DESC
+        """
+        return Response(serialise(rows(sql)))
+
+    def post(self, request):
+        if not table_exists("portal_improvement_exam"):
+            return Response({"detail": "Improvement exam table not found."}, status=400)
+        d = request.data
+        required = ("student_id", "subject_id", "original_result_id",
+                     "new_exam_schedule_id", "is_paid")
+        missing = [f for f in required if f not in d]
+        if missing:
+            return Response({"detail": f"Missing fields: {', '.join(missing)}"}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                """INSERT INTO portal_improvement_exam
+                   (student_id, subject_id, original_result_id, new_exam_schedule_id,
+                    is_paid, created_at, updated_at)
+                   VALUES (%s,%s,%s,%s,%s,now(),now())
+                   RETURNING id""",
+                [d["student_id"], d["subject_id"], d["original_result_id"],
+                 d["new_exam_schedule_id"], d["is_paid"]],
+            )
+            ie_id = cursor.fetchone()[0]
+        log_action(request.user, "improvement_exam.create", "portal_improvement_exam", ie_id, d)
+        return Response({"id": ie_id, "detail": "Improvement exam registration created."}, status=201)
+
+    def put(self, request):
+        if not table_exists("portal_improvement_exam"):
+            return Response({"detail": "Improvement exam table not found."}, status=400)
+        d = request.data
+        record_id = d.get("record_id") or d.get("id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_improvement_exam WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Improvement registration not found."}, status=404)
+        fields, vals = [], []
+        for col in ("status", "marks_obtained", "grade", "remarks"):
+            if col in d:
+                fields.append(f"{col} = %s")
+                vals.append(d[col])
+        fields.append("updated_at = now()")
+        if not [f for f in fields if f != "updated_at = now()"]:
+            return Response({"detail": "No fields to update."}, status=400)
+        vals.append(record_id)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                f"UPDATE portal_improvement_exam SET {', '.join(fields)} WHERE id = %s", vals
+            )
+        log_action(request.user, "improvement_exam.update", "portal_improvement_exam", record_id, d)
+        return Response({"detail": "Improvement registration updated."})
+
+    def delete(self, request):
+        if not table_exists("portal_improvement_exam"):
+            return Response({"detail": "Improvement exam table not found."}, status=400)
+        record_id = request.query_params.get("record_id") or request.data.get("record_id")
+        if not record_id:
+            return Response({"detail": "record_id is required."}, status=400)
+        existing = row("SELECT id FROM portal_improvement_exam WHERE id=%s", [record_id])
+        if not existing:
+            return Response({"detail": "Improvement registration not found."}, status=404)
+        with connection.cursor() as cursor:
+            cursor.execute("DELETE FROM portal_improvement_exam WHERE id=%s", [record_id])
+        log_action(request.user, "improvement_exam.delete", "portal_improvement_exam", record_id)
+        return Response({"detail": "Improvement registration deleted."})
+
+
+# ---------------------------------------------------------------------------
+# 20. CGPA / GPA Aggregation
+# ---------------------------------------------------------------------------
+class CGPACalculationView(AdminMixin, APIView):
+    """GET  ?student_id= & ?academic_year= — compute/display CGPA for a student
+    POST ?class_id= & ?academic_year= — batch compute CGPA for all students in a class"""
+
+    def get(self, request):
+        if not table_exists("portal_result"):
+            return Response({"detail": "Result table not found."}, status=400)
+        student_id = request.query_params.get("student_id")
+        academic_year = request.query_params.get("academic_year")
+        if not student_id:
+            return Response({"detail": "student_id is required."}, status=400)
+        student = row(
+            "SELECT id, COALESCE(first_name || ' ' || last_name, username) AS student_name "
+            "FROM auth_user WHERE id=%s",
+            [student_id],
+        )
+        if not student:
+            return Response({"detail": "Student not found."}, status=404)
+        sql = """
+            SELECT r.id, r.grade_point
+            FROM portal_result r
+            JOIN portal_exam_schedule es ON es.id = r.exam_schedule_id
+            WHERE r.student_id = %s
+        """
+        params = [student_id]
+        if academic_year:
+            sql += " AND es.academic_year = %s"
+            params.append(academic_year)
+        results = rows(sql, params)
+        total_subjects = len(results)
+        total_exams = len(set(r["exam_schedule_id"] for r in results if r.get("exam_schedule_id")))
+        grade_points = [float(r["grade_point"]) for r in results
+                        if r.get("grade_point") is not None]
+        total_gp = sum(grade_points)
+        cgpa = round(total_gp / len(grade_points), 2) if grade_points else 0
+        return Response(serialise({
+            "student_id": student_id,
+            "student_name": student["student_name"],
+            "academic_year": academic_year,
+            "total_subjects": total_subjects,
+            "total_exams": total_exams,
+            "total_grade_points": total_gp,
+            "cgpa": cgpa,
+        }))
+
+    def post(self, request):
+        if not table_exists("portal_result"):
+            return Response({"detail": "Result table not found."}, status=400)
+        class_id = request.query_params.get("class_id") or request.data.get("class_id")
+        academic_year = request.query_params.get("academic_year") or request.data.get("academic_year")
+        if not class_id or not academic_year:
+            return Response({"detail": "class_id and academic_year are required."}, status=400)
+        students = rows(
+            "SELECT id, COALESCE(first_name || ' ' || last_name, username) AS student_name "
+            "FROM auth_user WHERE id IN "
+            "(SELECT student_id FROM portal_student WHERE class_id=%s)",
+            [class_id],
+        )
+        if not students:
+            return Response({"detail": "No students found for this class."}, status=404)
+        updated_count = 0
+        with connection.cursor() as cursor:
+            for stu in students:
+                cursor.execute(
+                    """SELECT r.grade_point
+                       FROM portal_result r
+                       JOIN portal_exam_schedule es ON es.id = r.exam_schedule_id
+                       WHERE r.student_id = %s AND es.academic_year = %s""",
+                    [stu["id"], academic_year],
+                )
+                gp_rows = cursor.fetchall()
+                grade_points = [float(r[0]) for r in gp_rows if r[0] is not None]
+                cgpa = round(sum(grade_points) / len(grade_points), 2) if grade_points else 0
+                cursor.execute(
+                    """UPDATE portal_result SET cgpa = %s, updated_at = now()
+                       WHERE student_id = %s AND exam_schedule_id IN (
+                           SELECT id FROM portal_exam_schedule WHERE academic_year = %s
+                       )""",
+                    [cgpa, stu["id"], academic_year],
+                )
+                updated_count += 1
+        log_action(request.user, "cgpa.batch_compute", "portal_result", None,
+                   {"class_id": class_id, "academic_year": academic_year,
+                    "students_updated": updated_count})
+        return Response({"detail": f"CGPA computed for {updated_count} students.",
+                         "students_updated": updated_count})

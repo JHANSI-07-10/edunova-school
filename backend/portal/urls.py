@@ -240,6 +240,12 @@ urlpatterns = [
     path("admin-portal/exam-workflow/reports/",                     exam_workflow_views.ExamReportsView.as_view()),
     path("admin-portal/exam-workflow/analytics/",                   exam_workflow_views.ExamAnalyticsView.as_view()),
     path("admin-portal/exam-workflow/practical/",                   exam_workflow_views.PracticalExamView.as_view()),
+    path("admin-portal/exam-workflow/blueprints/",                 exam_workflow_views.ExamBlueprintView.as_view()),
+    path("admin-portal/exam-workflow/viva/",                       exam_workflow_views.VivaExamView.as_view()),
+    path("admin-portal/exam-workflow/attendance/",                 exam_workflow_views.ExamAttendanceView.as_view()),
+    path("admin-portal/exam-workflow/malpractice/",                exam_workflow_views.MalpracticeRegisterView.as_view()),
+    path("admin-portal/exam-workflow/improvement/",                exam_workflow_views.ImprovementExamView.as_view()),
+    path("admin-portal/exam-workflow/cgpa/",                       exam_workflow_views.CGPACalculationView.as_view()),
 
     # === ASSIGNMENT WORKFLOW (18 submodules) ===
     path("admin-portal/assignment-workflow/categories/",                assignment_workflow_views.AssignmentCategoryView.as_view()),
