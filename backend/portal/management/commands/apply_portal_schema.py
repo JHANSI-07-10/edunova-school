@@ -9,6 +9,7 @@ from django.db import connection
 SQL_FILES = [
     "portal_extension_auth_user.sql",
     "portal_extension_parent_admin.sql",
+    "portal_extension_admission_workflow.sql",
     "portal_extension_facilities.sql",
     "portal_extension_payroll.sql",
     "portal_extension_campus.sql",
@@ -17,6 +18,7 @@ SQL_FILES = [
     "portal_extension_hostel.sql",
     "portal_extension_examination.sql",
     "portal_extension_scholarship.sql",
+    "portal_extension_academic_website.sql",
 ]
 
 TRACKING_TABLE_SQL = """
