@@ -7,6 +7,7 @@ from django.db import connection, transaction
 from django.utils.crypto import get_random_string
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from rest_framework import status
 
 from apps.admissions.models import AdmissionEnquiry
 from .roles import IsAdmin, get_role, log_action
@@ -2755,6 +2756,7 @@ class AdminPublicContentView(AdminMixin, APIView):
                 title=title,
                 description=description,
                 event_date=date_val,
+                venue="",
                 cover_image=cover_image
             )
         else:

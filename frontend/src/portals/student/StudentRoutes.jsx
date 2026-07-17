@@ -11,6 +11,7 @@ import Dashboard from "./pages/Dashboard";
 import Downloads from "./pages/Downloads";
 import Events from "./pages/Events";
 import Exams from "./pages/Exams";
+import HallTickets from "./pages/HallTickets";
 import Fees from "./pages/Fees";
 import Scholarships from "./pages/Scholarships";
 import Homework from "./pages/Homework";
@@ -56,6 +57,7 @@ export default function StudentRoutes() {
           <Route path="downloads" element={<Downloads />} />
           <Route path="announcements" element={<Announcements />} />
           <Route path="events" element={<Events />} />
+          <Route path="hall-tickets" element={<HallTickets />} />
           <Route path="profile" element={<Profile />} />
           <Route path="support" element={<Support />} />
           <Route path="*" element={<PortalNotFound homePath="/student" />} />
