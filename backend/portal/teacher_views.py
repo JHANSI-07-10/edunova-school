@@ -433,6 +433,39 @@ class TeacherExamView(TeacherMixin, APIView):
             eid = cursor.fetchone()[0]
         return Response({"id": eid, "detail": "Exam scheduled."})
 
+    def patch(self, request):
+        if not table_exists("portal_exam_schedule"):
+            return Response({"detail": "Portal schema not applied."}, status=400)
+        eid = request.query_params.get("id") or request.data.get("id")
+        if not eid:
+            return Response({"detail": "id is required."}, status=400)
+        data = request.data
+        fields = []
+        vals = []
+        for fld in ("exam_name", "exam_type", "exam_date", "start_time", "duration_minutes", "max_marks"):
+            if fld in data:
+                fields.append(f"{fld}=%s")
+                vals.append(data[fld])
+        if not fields:
+            return Response({"detail": "No fields to update."}, status=400)
+        vals.extend([eid, request.user.id])
+        with connection.cursor() as cur:
+            cur.execute(
+                f"UPDATE portal_exam_schedule SET {', '.join(fields)} WHERE id=%s AND teacher_id=%s",
+                vals,
+            )
+        return Response({"detail": "Exam updated."})
+
+    def delete(self, request):
+        if not table_exists("portal_exam_schedule"):
+            return Response({"detail": "Portal schema not applied."}, status=400)
+        eid = request.query_params.get("id")
+        if not eid:
+            return Response({"detail": "id is required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_exam_schedule WHERE id=%s AND teacher_id=%s", [eid, request.user.id])
+        return Response({"detail": "Exam deleted."})
+
 
 class MarksEntryView(TeacherMixin, APIView):
     def get(self, request):

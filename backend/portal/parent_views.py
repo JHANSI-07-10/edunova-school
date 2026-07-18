@@ -813,3 +813,19 @@ class ParentChildTimetableView(ParentMixin, APIView):
         )
         return Response(serialise(data))
 
+
+class ParentReportCardView(ParentMixin, APIView):
+    """GET ?child_id=&exam_name= — parent views child's report card."""
+
+    def get(self, request):
+        from .exam_extras_views import _report_card_data
+        child_id = request.query_params.get("child_id")
+        exam_name = request.query_params.get("exam_name")
+        if not child_id or not exam_name:
+            return Response({"detail": "child_id and exam_name are required."}, status=400)
+        children = [c["id"] for c in _children(request.user.id)]
+        if int(child_id) not in children:
+            return Response({"detail": "Not your child."}, status=403)
+        data = _report_card_data(int(child_id), exam_name)
+        return Response(serialise(data))
+

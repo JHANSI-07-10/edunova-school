@@ -23,7 +23,7 @@ export default function Support() {
     try {
       // Post to the teacher messages endpoint — sends to user id 1 (admin/support)
       // Replace receiver id with your actual support staff user id
-      await api.post("/teacher/messages/", { receiver: 1, message_text: message });
+      await api.post("/student/messages/", { receiver: 1, message_text: message });
     } catch {
       // non-critical — show success regardless
     }

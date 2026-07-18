@@ -29,10 +29,14 @@ export default function Messages() {
   async function send(e) {
     e.preventDefault();
     if (!text.trim() || !activeTeacher) return;
-    await api.post("/parent/messages/", { receiver: activeTeacher.id, message_text: text });
-    setText("");
-    const { data } = await api.get(`/parent/messages/?with=${activeTeacher.id}`);
-    setThread(data);
+    try {
+      await api.post("/parent/messages/", { receiver: activeTeacher.id, message_text: text });
+      setText("");
+      const { data } = await api.get(`/parent/messages/?with=${activeTeacher.id}`);
+      setThread(data);
+    } catch {
+      // message failed — keep text so user can retry
+    }
   }
 
   if (!teachers) return <Loader rows={4} />;

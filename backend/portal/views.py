@@ -1226,3 +1226,54 @@ class PublicScholarshipsView(APIView):
             cursor.execute("DELETE FROM portal_scholarship WHERE id=%s", [sid])
         return Response({"detail": "Scholarship deleted."})
 
+
+class StudentMessageView(StudentOnlyMixin, APIView):
+    """Allow students to send and read support messages (to admin/support staff)."""
+
+    def get(self, request):
+        if not table_exists("portal_message"):
+            return Response([])
+        other = request.query_params.get("with")
+        if other:
+            data = rows(
+                """
+                SELECT m.id, m.sender_id AS sender, m.receiver_id AS receiver,
+                       m.message_text, m.created_at,
+                       su.username AS sender_name, ru.username AS receiver_name
+                FROM portal_message m
+                JOIN auth_user su ON su.id=m.sender_id JOIN auth_user ru ON ru.id=m.receiver_id
+                WHERE (m.sender_id=%s AND m.receiver_id=%s)
+                   OR (m.sender_id=%s AND m.receiver_id=%s)
+                ORDER BY m.created_at
+                """, [request.user.id, other, other, request.user.id]
+            )
+        else:
+            data = rows(
+                """
+                SELECT DISTINCT ON (CASE WHEN sender_id=%s THEN receiver_id ELSE sender_id END)
+                       m.id, m.sender_id AS sender, m.receiver_id AS receiver,
+                       m.message_text, m.created_at,
+                       su.username AS sender_name, ru.username AS receiver_name
+                FROM portal_message m
+                JOIN auth_user su ON su.id=m.sender_id JOIN auth_user ru ON ru.id=m.receiver_id
+                WHERE m.sender_id=%s OR m.receiver_id=%s
+                ORDER BY CASE WHEN sender_id=%s THEN receiver_id ELSE sender_id END, m.created_at DESC
+                """, [request.user.id, request.user.id, request.user.id, request.user.id]
+            )
+        return Response(serialise(data))
+
+    def post(self, request):
+        if not table_exists("portal_message"):
+            return Response({"detail": "Portal schema has not been applied."}, status=400)
+        receiver = request.data.get("receiver")
+        message_text = (request.data.get("message_text") or "").strip()
+        if not receiver or not message_text:
+            return Response({"detail": "receiver and message_text are required."}, status=400)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "INSERT INTO portal_message (sender_id, receiver_id, message_text) VALUES (%s,%s,%s) RETURNING id",
+                [request.user.id, receiver, message_text],
+            )
+            mid = cursor.fetchone()[0]
+        return Response({"id": mid, "detail": "Message sent."})
+

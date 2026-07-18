@@ -44,6 +44,7 @@ urlpatterns = [
     path("student/report-card/", exam_extras_views.StudentReportCardView.as_view()),
     path("student/scholarships/", scholarship_views.ScholarshipStudentApplicationView.as_view()),
     path("student/scholarships/renew/", scholarship_views.ScholarshipRenewalView.as_view()),
+    path("student/messages/", views.StudentMessageView.as_view()),
     path("lms/forum-topics/", lms_extras_views.ForumTopicListView.as_view()),
     path("lms/forum-topics/<int:topic_id>/", lms_extras_views.ForumTopicDetailView.as_view()),
     path("lms/forum-topics/<int:topic_id>/reply/", lms_extras_views.ForumPostView.as_view()),
@@ -107,6 +108,7 @@ urlpatterns = [
     path("parent/ptm/", parent_views.PtmBookingView.as_view()),
     path("parent/feedback/", parent_views.FeedbackView.as_view()),
     path("parent/lms/progress/", parent_views.ParentLmsProgressView.as_view()),
+    path("parent/report-card/", parent_views.ParentReportCardView.as_view()),
 
     # Admin portal
     path("admin-portal/dashboard/", admin_views.AdminDashboardView.as_view()),
