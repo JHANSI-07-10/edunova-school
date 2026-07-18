@@ -77,11 +77,53 @@ class AdmissionEnquiry(models.Model):
     gender = models.CharField(max_length=20, blank=True)
     target_class = models.CharField(max_length=50, help_text="Class applied for, e.g. 'Grade 6'")
     
-    # Phase 1: Parent details
-    parent_name = models.CharField(max_length=150)
-    parent_phone = models.CharField(max_length=20)
-    parent_email = models.EmailField()
+    # Phase 1: Father details
+    father_name = models.CharField(max_length=150, blank=True)
+    father_occupation = models.CharField(max_length=150, blank=True)
+    father_company = models.CharField(max_length=150, blank=True)
+    father_income = models.DecimalField(max_digits=12, decimal_places=2, null=True, blank=True)
+    father_phone = models.CharField(max_length=20, blank=True)
+    father_email = models.EmailField(blank=True)
+
+    # Phase 1: Mother details
+    mother_name = models.CharField(max_length=150, blank=True)
+    mother_occupation = models.CharField(max_length=150, blank=True)
+    mother_company = models.CharField(max_length=150, blank=True)
+    mother_phone = models.CharField(max_length=20, blank=True)
+    mother_email = models.EmailField(blank=True)
+
+    # Phase 1: Guardian details
+    guardian_name = models.CharField(max_length=150, blank=True)
+    guardian_relationship = models.CharField(max_length=100, blank=True)
+    guardian_phone = models.CharField(max_length=20, blank=True)
+    guardian_address = models.TextField(blank=True)
+
+    # Phase 1: Address details
     address = models.TextField(blank=True)
+    pincode = models.CharField(max_length=20, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=100, blank=True)
+    country = models.CharField(max_length=100, blank=True)
+
+    # Phase 1: Emergency & Medical
+    emergency_contact_name = models.CharField(max_length=150, blank=True)
+    emergency_contact_phone = models.CharField(max_length=20, blank=True)
+    blood_group = models.CharField(max_length=10, blank=True)
+    has_medical_conditions = models.BooleanField(default=False)
+    medical_details = models.TextField(blank=True)
+
+    # Phase 1: Previous School
+    prev_school_name = models.CharField(max_length=200, blank=True)
+    prev_school_grade = models.CharField(max_length=50, blank=True)
+
+    # Phase 5: Documents
+    doc_birth_certificate = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_aadhaar_card = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_passport_photo = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_parent_id = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_address_proof = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_previous_marks = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
+    doc_transfer_certificate = models.FileField(upload_to="admissions/documents/", blank=True, null=True)
     
     # Phase 1: Enquiry source tracking
     source_of_enquiry = models.CharField(max_length=50, choices=SOURCE_CHOICES, default="Website")

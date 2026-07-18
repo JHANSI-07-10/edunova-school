@@ -1384,3 +1384,41 @@ class AdmissionDashboardStatsView(AdmissionWorkflowMixin, APIView):
             "interview_pending": interview_pending,
             "waitlisted": waitlisted,
         }))
+
+
+import csv
+from django.http import HttpResponse
+
+class AdmissionReportView(AdmissionWorkflowMixin, APIView):
+    """GET: Export all admission enquiries to CSV."""
+    def get(self, request):
+        qs = AdmissionEnquiry.objects.all().order_by("-submitted_at")
+        
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = 'attachment; filename="admissions_report.csv"'
+        
+        writer = csv.writer(response)
+        writer.writerow([
+            "Registration Number", "Applicant Name", "Target Class", "Status",
+            "Submitted At", "Father Name", "Father Phone", "Mother Name", "Mother Phone",
+            "City", "State", "Prev School", "Scholarship Applied"
+        ])
+        
+        for app in qs:
+            writer.writerow([
+                app.registration_number,
+                app.applicant_name,
+                app.target_class,
+                app.status,
+                app.submitted_at.strftime("%Y-%m-%d %H:%M:%S") if app.submitted_at else "",
+                app.father_name,
+                app.father_phone,
+                app.mother_name,
+                app.mother_phone,
+                app.city,
+                app.state,
+                app.prev_school_name,
+                "Yes" if app.scholarship_applied else "No"
+            ])
+            
+        return response

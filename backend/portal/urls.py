@@ -329,6 +329,7 @@ urlpatterns = [
 
     # Phase 1: Admission Enquiry Management
     path("admin-portal/admissions/enquiries/", admission_workflow_views.AdmissionEnquiryAdminView.as_view(), name="admission-enquiries"),
+    path("admin-portal/admissions/report/", admission_workflow_views.AdmissionReportView.as_view(), name="admission-report"),
 
     # Phase 2: Counselling
     path("admin-portal/admissions/<str:registration_number>/counselling/", admission_workflow_views.AdmissionCounsellingView.as_view(), name="admission-counselling"),

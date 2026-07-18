@@ -7,7 +7,7 @@ import {
   FileText, CheckCircle2, XCircle, Clock, Users, Calendar,
   CreditCard, GraduationCap, Bus, Home, BookOpen, Bell,
   BarChart3, Filter, Eye, ArrowRight, ShieldCheck, AlertTriangle,
-  Upload, Trash2,
+  Upload, Trash2, Download,
 } from "lucide-react";
 
 const STATUS_TONES = {
@@ -128,10 +128,16 @@ export default function Admissions() {
           <h2 className="font-heading font-semibold text-lg">Admission Workflow</h2>
           <p className="text-xs text-ink-secondary">Complete 18-phase admission pipeline management.</p>
         </div>
-        <button onClick={() => setShowForm(true)}
-          className="flex items-center gap-2 bg-academic-blue text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-academic-blue/90">
-          <Plus size={16} /> Register Admission
-        </button>
+        <div className="flex items-center gap-2">
+          <a href={`${import.meta.env.VITE_API_URL}/admin-portal/admissions/report/`} target="_blank" rel="noopener noreferrer"
+             className="flex items-center gap-2 border border-slate-200 text-slate-700 rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-slate-50">
+            <Download size={16} /> Download Report
+          </a>
+          <button onClick={() => setShowForm(true)}
+            className="flex items-center gap-2 bg-academic-blue text-white rounded-xl px-4 py-2.5 text-sm font-medium hover:bg-academic-blue/90">
+            <Plus size={16} /> Register Admission
+          </button>
+        </div>
       </div>
 
       {/* Tabs */}
@@ -343,20 +349,40 @@ function ApplicationDetailModal({ detail, onClose, onAction }) {
 
 function OverviewPanel({ detail }) {
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-4 text-sm">
-        <div><p className="text-xs text-ink-secondary">Applicant</p><p className="font-semibold">{detail.applicant_name}</p></div>
-        <div><p className="text-xs text-ink-secondary">Target Class</p><p className="font-semibold">{detail.target_class}</p></div>
-        <div><p className="text-xs text-ink-secondary">Gender</p><p className="font-semibold">{detail.gender}</p></div>
-        <div><p className="text-xs text-ink-secondary">Date of Birth</p><p className="font-semibold">{detail.date_of_birth}</p></div>
-        <div><p className="text-xs text-ink-secondary">Parent Name</p><p className="font-semibold">{detail.parent_name}</p></div>
-        <div><p className="text-xs text-ink-secondary">Parent Phone</p><p className="font-semibold">{detail.parent_phone}</p></div>
-        <div className="col-span-2"><p className="text-xs text-ink-secondary">Email</p><p className="font-semibold">{detail.parent_email}</p></div>
-        <div className="col-span-2"><p className="text-xs text-ink-secondary">Address</p><p className="font-semibold">{detail.address}</p></div>
-        <div><p className="text-xs text-ink-secondary">Curriculum</p><p className="font-semibold">{detail.curriculum || 'CBSE'}</p></div>
-        <div><p className="text-xs text-ink-secondary">Source</p><p className="font-semibold">{detail.source_of_enquiry || 'Website'}</p></div>
-        <div><p className="text-xs text-ink-secondary">Scholarship</p><p className="font-semibold">{detail.scholarship_applied ? 'Applied' : 'No'}</p></div>
-        <div><p className="text-xs text-ink-secondary">Status</p><Badge tone={STATUS_TONES[detail.status]}>{STATUS_LABELS[detail.status]}</Badge></div>
+    <div className="space-y-6">
+      <div>
+        <h4 className="font-semibold text-sm mb-3">Applicant Info</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          <div><p className="text-xs text-ink-secondary">Applicant</p><p className="font-semibold">{detail.applicant_name}</p></div>
+          <div><p className="text-xs text-ink-secondary">Target Class</p><p className="font-semibold">{detail.target_class}</p></div>
+          <div><p className="text-xs text-ink-secondary">Gender</p><p className="font-semibold">{detail.gender}</p></div>
+          <div><p className="text-xs text-ink-secondary">Date of Birth</p><p className="font-semibold">{detail.date_of_birth}</p></div>
+          <div><p className="text-xs text-ink-secondary">Curriculum</p><p className="font-semibold">{detail.curriculum || 'CBSE'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Status</p><Badge tone={STATUS_TONES[detail.status]}>{STATUS_LABELS[detail.status]}</Badge></div>
+        </div>
+      </div>
+
+      <hr className="border-slate-100" />
+      <div>
+        <h4 className="font-semibold text-sm mb-3">Parent / Guardian Details</h4>
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 text-sm">
+          <div><p className="text-xs text-ink-secondary">Father Name</p><p className="font-semibold">{detail.father_name || '-'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Father Phone</p><p className="font-semibold">{detail.father_phone || '-'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Mother Name</p><p className="font-semibold">{detail.mother_name || '-'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Mother Phone</p><p className="font-semibold">{detail.mother_phone || '-'}</p></div>
+          <div className="col-span-2"><p className="text-xs text-ink-secondary">Address</p><p className="font-semibold">{detail.address} {detail.city} {detail.state} {detail.pincode}</p></div>
+        </div>
+      </div>
+
+      <hr className="border-slate-100" />
+      <div>
+        <h4 className="font-semibold text-sm mb-3">Medical & Previous School</h4>
+        <div className="grid grid-cols-2 gap-4 text-sm">
+          <div><p className="text-xs text-ink-secondary">Medical Conditions</p><p className="font-semibold">{detail.has_medical_conditions ? 'Yes' : 'No'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Blood Group</p><p className="font-semibold">{detail.blood_group || '-'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Prev School</p><p className="font-semibold">{detail.prev_school_name || '-'}</p></div>
+          <div><p className="text-xs text-ink-secondary">Prev Grade</p><p className="font-semibold">{detail.prev_school_grade || '-'}</p></div>
+        </div>
       </div>
     </div>
   );
@@ -381,30 +407,38 @@ function CounsellingPanel({ regNo, detail, postAction, loading }) {
 }
 
 function DocumentsPanel({ regNo, detail, postAction, loading }) {
-  const docs = detail.documents || [];
+  const docFields = [
+    { key: 'doc_birth_certificate', label: 'Birth Certificate' },
+    { key: 'doc_aadhaar_card', label: 'Aadhaar Card' },
+    { key: 'doc_passport_photo', label: 'Passport Photo' },
+    { key: 'doc_parent_id', label: 'Parent ID Proof' },
+    { key: 'doc_address_proof', label: 'Address Proof' },
+    { key: 'doc_previous_marks', label: 'Previous Marks Card' },
+    { key: 'doc_transfer_certificate', label: 'Transfer Certificate' },
+  ];
+  
+  const uploadedDocs = docFields.filter(d => detail[d.key]);
+
   return (
     <div className="space-y-4">
-      <h4 className="font-semibold text-sm">Phase 5: Document Upload & Verification</h4>
-      {docs.length === 0 ? (
+      <h4 className="font-semibold text-sm">Phase 5: Submitted Documents</h4>
+      {uploadedDocs.length === 0 ? (
         <p className="text-sm text-ink-secondary">No documents uploaded yet.</p>
       ) : (
         <div className="space-y-2">
-          {docs.map((d) => (
-            <div key={d.id} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
+          {uploadedDocs.map((d) => (
+            <div key={d.key} className="flex items-center justify-between p-3 bg-slate-50 rounded-xl">
               <div className="flex items-center gap-2">
                 <FileText size={16} className="text-academic-blue" />
                 <div>
-                  <p className="text-xs font-semibold">{d.document_type.replace(/_/g, ' ')}</p>
-                  <p className="text-[11px] text-ink-secondary">{d.document_name}</p>
+                  <p className="text-xs font-semibold">{d.label}</p>
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                {d.is_verified ? (
-                  <Badge tone="green">Verified</Badge>
-                ) : (
-                  <button disabled={loading} onClick={() => postAction(`documents/${d.id}/`, { is_verified: true }, "Document verified.")}
-                    className="text-xs bg-emerald-50 text-emerald-700 px-2 py-1 rounded-lg">Verify</button>
-                )}
+                <a href={detail[d.key]} target="_blank" rel="noopener noreferrer"
+                  className="text-xs flex items-center gap-1 bg-academic-blue text-white px-3 py-1.5 rounded-lg hover:bg-academic-blue/90">
+                  <Download size={14} /> Download
+                </a>
               </div>
             </div>
           ))}
