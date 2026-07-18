@@ -53,12 +53,18 @@ class AdmissionWorkflowMixin:
     def _send_email_notification(self, enquiry, notification_type, title, message):
         """Send email notification (best-effort, logs failure)."""
         try:
-            from portal.services.email_service import send_status_email
-            send_status_email(
-                to_email=enquiry.parent_email,
+            from portal.services.email_service import send_account_status_email
+            # Send a generic notification email with title/body as subject/message.
+            # The email_service sends account status emails, but for admission
+            # notifications we use the Django email backend directly.
+            from django.core.mail import send_mail
+            from django.conf import settings as _settings
+            send_mail(
                 subject=title,
-                body=message,
-                template_name="account_status",
+                message=message,
+                from_email=getattr(_settings, "DEFAULT_FROM_EMAIL", "noreply@edunova.com"),
+                recipient_list=[enquiry.parent_email],
+                fail_silently=True,
             )
             self._notify(enquiry, "Parent", notification_type, title, message, "email")
         except Exception:

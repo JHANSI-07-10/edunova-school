@@ -7,9 +7,6 @@ from datetime import timedelta
 from pathlib import Path
 import dj_database_url
 from decouple import config
-print("=" * 50)
-print("DATABASE_URL:", config("DATABASE_URL", default="NOT FOUND"))
-print("=" * 50)
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 SECRET_KEY = config("DJANGO_SECRET_KEY", default="dev-secret-key-change-in-production")
@@ -164,9 +161,9 @@ SIMPLE_JWT = {
 }
 
 CORS_ALLOW_ALL_ORIGINS = DEBUG  # allows any localhost port in dev; False in production (DEBUG=False)
-CORS_ALLOWED_ORIGINS = [] if DEBUG else config(
+CORS_ALLOWED_ORIGINS = [] if not config("CORS_ALLOWED_ORIGINS", default="") else config(
     "CORS_ALLOWED_ORIGINS",
-    default="http://localhost:5173,http://127.0.0.1:5173",
+    default="",
 ).split(",")
 CORS_ALLOW_CREDENTIALS = True
 

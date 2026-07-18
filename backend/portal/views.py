@@ -1,5 +1,4 @@
 from datetime import date, datetime
-from functools import lru_cache
 from uuid import uuid4
 
 from django.db import connection
@@ -11,8 +10,15 @@ from rest_framework import status
 from .roles import IsStudent
 
 
-@lru_cache(maxsize=128)
-def table_exists(table_name):
+# Simple in-memory table existence cache (reset on server restart).
+# Avoids lru_cache which never invalidates — if a table is created after
+# startup, the stale False would persist until the process restarts.
+_TABLE_EXISTS_CACHE: dict[str, bool] = {}
+
+
+def table_exists(table_name: str) -> bool:
+    if table_name in _TABLE_EXISTS_CACHE:
+        return _TABLE_EXISTS_CACHE[table_name]
     try:
         with connection.cursor() as cursor:
             cursor.execute(
@@ -24,7 +30,9 @@ def table_exists(table_name):
                 """,
                 [table_name],
             )
-            return cursor.fetchone()[0]
+            result = cursor.fetchone()[0]
+            _TABLE_EXISTS_CACHE[table_name] = result
+            return result
     except Exception:
         return False
 

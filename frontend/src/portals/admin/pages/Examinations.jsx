@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { Plus, Search, BookOpen, GraduationCap, X, UserCheck, BarChart2 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import api from "../lib/api";
+import { isNonEmptyString } from "../../../utils/validation";
 
 export default function Examinations() {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ export default function Examinations() {
   const [invigilatorForm, setInvigilatorForm] = useState({ 
     exam_schedule_id: "", teacher_id: "", room_name: "", exam_date: "", start_time: "", end_time: ""
   });
+  const [formError, setFormError] = useState("");
+  const [submitting, setSubmitting] = useState(false);
 
   const loadData = async () => {
     try {
@@ -39,28 +42,36 @@ export default function Examinations() {
 
   const handleCreateType = async (e) => {
     e.preventDefault();
+    setFormError("");
+    if (!isNonEmptyString(typeForm.name)) { setFormError("Exam type name is required."); return; }
+    setSubmitting(true);
     try {
       await api.post("/admin-portal/exam-workflow/types/", typeForm);
       setTypeForm({ name: "", description: "" });
       setIsTypeModalOpen(false);
       loadData();
     } catch (err) {
-      alert("Failed to create Exam Type");
-    }
+      setFormError(err?.response?.data?.detail || "Failed to create Exam Type.");
+    } finally { setSubmitting(false); }
   };
 
   const handleAssignInvigilator = async (e) => {
     e.preventDefault();
+    setFormError("");
+    if (!isNonEmptyString(invigilatorForm.teacher_id)) { setFormError("Please select a teacher."); return; }
+    if (!isNonEmptyString(invigilatorForm.room_name)) { setFormError("Room name is required."); return; }
+    if (!invigilatorForm.start_time || !invigilatorForm.end_time) { setFormError("Start and end times are required."); return; }
+    if (invigilatorForm.start_time >= invigilatorForm.end_time) { setFormError("End time must be after start time."); return; }
+    setSubmitting(true);
     try {
       await api.post("/admin-portal/exam-workflow/invigilators/", invigilatorForm);
       setInvigilatorForm({ exam_schedule_id: "", teacher_id: "", room_name: "", exam_date: "", start_time: "", end_time: "" });
       setIsInvigilatorModalOpen(false);
+      setFormError("");
       loadData();
-      alert("Invigilator assigned successfully!");
     } catch (err) {
-      console.error(err);
-      alert("Failed to assign invigilator. There might be a schedule conflict.");
-    }
+      setFormError(err?.response?.data?.detail || "Failed to assign invigilator. There might be a schedule conflict.");
+    } finally { setSubmitting(false); }
   };
 
   const openInvigilatorModal = (exam) => {
@@ -212,12 +223,13 @@ export default function Examinations() {
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-bold text-lg font-heading">Add Exam Type</h3>
-              <button onClick={() => setIsTypeModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setIsTypeModalOpen(false); setFormError(""); }} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6">
               <form onSubmit={handleCreateType} className="space-y-4">
+                {formError && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{formError}</p>}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Name</label>
                   <input required value={typeForm.name} onChange={(e) => setTypeForm({...typeForm, name: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-academic-blue text-sm" placeholder="e.g. Unit Test" />
@@ -226,7 +238,7 @@ export default function Examinations() {
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Description</label>
                   <textarea value={typeForm.description} onChange={(e) => setTypeForm({...typeForm, description: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-academic-blue text-sm" placeholder="Optional description..." rows={3} />
                 </div>
-                <button type="submit" className="w-full bg-academic-blue text-white py-2.5 rounded-xl font-medium">Create Type</button>
+                <button type="submit" disabled={submitting} className="w-full bg-academic-blue text-white py-2.5 rounded-xl font-medium disabled:opacity-50">{submitting ? "Creating..." : "Create Type"}</button>
               </form>
             </div>
           </div>
@@ -238,12 +250,13 @@ export default function Examinations() {
           <div className="bg-white rounded-2xl max-w-md w-full overflow-hidden shadow-xl">
             <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
               <h3 className="font-bold text-lg font-heading">Assign Invigilator</h3>
-              <button onClick={() => setIsInvigilatorModalOpen(false)} className="text-gray-400 hover:text-gray-600">
+              <button onClick={() => { setIsInvigilatorModalOpen(false); setFormError(""); }} className="text-gray-400 hover:text-gray-600">
                 <X size={20} />
               </button>
             </div>
             <div className="p-6">
               <form onSubmit={handleAssignInvigilator} className="space-y-4">
+                {formError && <p className="text-sm text-red-600 bg-red-50 rounded-lg px-3 py-2">{formError}</p>}
                 <div>
                   <label className="block text-sm font-semibold text-gray-700 mb-1">Teacher</label>
                   <select required value={invigilatorForm.teacher_id} onChange={(e) => setInvigilatorForm({...invigilatorForm, teacher_id: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-academic-blue text-sm">
@@ -265,7 +278,7 @@ export default function Examinations() {
                     <input required type="time" value={invigilatorForm.end_time} onChange={(e) => setInvigilatorForm({...invigilatorForm, end_time: e.target.value})} className="w-full px-3 py-2 border border-gray-200 rounded-xl outline-none focus:border-academic-blue text-sm" />
                   </div>
                 </div>
-                <button type="submit" className="w-full bg-academic-blue text-white py-2.5 rounded-xl font-medium">Assign Duty</button>
+                <button type="submit" disabled={submitting} className="w-full bg-academic-blue text-white py-2.5 rounded-xl font-medium disabled:opacity-50">{submitting ? "Assigning..." : "Assign Duty"}</button>
               </form>
             </div>
           </div>

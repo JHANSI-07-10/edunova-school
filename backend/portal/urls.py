@@ -377,27 +377,6 @@ urlpatterns = [
     # Phase 18: Reports & Analytics
     path("admin-portal/admissions/reports/", admission_workflow_views.AdmissionReportsView.as_view(), name="admission-reports"),
 
-    # Phase 19: Timetable Management
-    path("admin-portal/timetable/calendar/", timetable_workflow_views.AcademicCalendarView.as_view(), name="timetable-calendar"),
-    path("admin-portal/timetable/calendar/<int:record_id>/", timetable_workflow_views.AcademicCalendarDetailView.as_view(), name="timetable-calendar-detail"),
-    path("admin-portal/timetable/calendar/events/", timetable_workflow_views.CalendarEventView.as_view(), name="timetable-calendar-events"),
-    path("admin-portal/timetable/calendar/events/<int:record_id>/", timetable_workflow_views.CalendarEventDetailView.as_view(), name="timetable-calendar-event-detail"),
-    path("admin-portal/timetable/working-days/", timetable_workflow_views.WorkingDayView.as_view(), name="timetable-working-days"),
-    path("admin-portal/timetable/school-timings/", timetable_workflow_views.SchoolTimingView.as_view(), name="timetable-school-timings"),
-    path("admin-portal/timetable/periods/", timetable_workflow_views.PeriodManagementView.as_view(), name="timetable-periods"),
-    path("admin-portal/timetable/periods/generate/", timetable_workflow_views.GenerateDefaultPeriodsView.as_view(), name="timetable-periods-generate"),
-    path("admin-portal/timetable/subject-allocations/", timetable_workflow_views.SubjectAllocationView.as_view(), name="timetable-subject-allocations"),
-    path("admin-portal/timetable/teacher-allocations/", timetable_workflow_views.TeacherAllocationView.as_view(), name="timetable-teacher-allocations"),
-    path("admin-portal/timetable/classroom-allocations/", timetable_workflow_views.ClassroomAllocationView.as_view(), name="timetable-classroom-allocations"),
-    path("admin-portal/timetable/substitutes/", timetable_workflow_views.SubstituteTeacherView.as_view(), name="timetable-substitutes"),
-    path("admin-portal/timetable/approvals/", timetable_workflow_views.TimetableApprovalView.as_view(), name="timetable-approvals"),
-    path("admin-portal/timetable/notifications/", timetable_workflow_views.TimetableNotificationView.as_view(), name="timetable-notifications"),
-    path("admin-portal/timetable/notifications/send/", timetable_workflow_views.SendTimetableNotificationView.as_view(), name="timetable-notifications-send"),
-    path("admin-portal/timetable/audit-logs/", timetable_workflow_views.TimetableAuditLogView.as_view(), name="timetable-audit-logs"),
-    path("admin-portal/timetable/reports/", timetable_workflow_views.TimetableReportsView.as_view(), name="timetable-reports"),
-    path("admin-portal/timetable/analytics/", timetable_workflow_views.TimetableAnalyticsView.as_view(), name="timetable-analytics"),
-    path("admin-portal/timetable/workflow-config/", timetable_workflow_views.TimetableWorkflowConfigView.as_view(), name="timetable-workflow-config"),
-
     # =========================================================================
     # ACADEMIC WEBSITE — Public endpoints (no auth required)
     # =========================================================================
