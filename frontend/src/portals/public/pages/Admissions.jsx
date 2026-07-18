@@ -328,7 +328,7 @@ export default function Admissions() {
                       </h3>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-ink-secondary">Select target class</label>
+                          <label className="text-xs font-medium text-ink-secondary">Select target class <span className="text-red-400">*</span></label>
                           <select value={form.target_class} onChange={update('target_class')}
                             className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm outline-none">
                             <option value="">Select target class</option>
@@ -336,7 +336,7 @@ export default function Admissions() {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-ink-secondary">Applicant date of birth</label>
+                          <label className="text-xs font-medium text-ink-secondary">Applicant date of birth <span className="text-red-400">*</span></label>
                           <input type="date" max={new Date().toISOString().split('T')[0]} value={form.date_of_birth}
                             onChange={update('date_of_birth')}
                             className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2 text-sm outline-none" />
@@ -472,13 +472,11 @@ export default function Admissions() {
                     <div className="space-y-4">
                       <h3 className="font-subheading font-bold text-primary text-sm">Address Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormTextarea label="Permanent Address" required error={validationErrors.address}
-                          rows={2} value={form.permanent_address || form.address} onChange={update('permanent_address')} className="sm:col-span-2" />
-                        <FormTextarea label="Communication Address" rows={2} value={form.communication_address} onChange={update('communication_address')} className="sm:col-span-2" />
+                        <FormTextarea label="Address" required error={validationErrors.address}
+                          rows={2} value={form.address} onChange={update('address')} className="sm:col-span-2" />
                         <FormInput label="Pin Code" value={form.pin_code} onChange={update('pin_code')} />
                         <FormInput label="State" value={form.state} onChange={update('state')} />
-                        <FormInput label="District" value={form.district} onChange={update('district')} />
-                        <input type="hidden" value={form.address} onChange={update('address')} />
+                        <FormInput label="City/District" value={form.city} onChange={update('city')} />
                       </div>
 
                       <hr className="border-gray-100" />
