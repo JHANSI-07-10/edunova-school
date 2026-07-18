@@ -219,9 +219,9 @@ export default function Admissions() {
       if (!form.date_of_birth) errs.date_of_birth = 'Required'
     }
     if (s === 3) {
-      if (!isNonEmptyString(form.parent_name)) errs.parent_name = 'Required'
-      if (!isValidPhone(form.parent_phone)) errs.parent_phone = 'Valid phone required'
-      if (!isValidEmail(form.parent_email)) errs.parent_email = 'Valid email required'
+      if (!isNonEmptyString(form.father_name)) errs.father_name = 'Required'
+      if (!isValidPhone(form.father_phone)) errs.father_phone = 'Valid phone required'
+      if (!isNonEmptyString(form.mother_name)) errs.mother_name = 'Required'
     }
     if (s === 4) {
       if (!isNonEmptyString(form.address)) errs.address = 'Required'
@@ -425,15 +425,15 @@ export default function Admissions() {
                         <FormInput label="Occupation" value={form.father_occupation} onChange={update('father_occupation')} />
                         <FormInput label="Company" value={form.father_company} onChange={update('father_company')} />
                         <FormInput label="Annual Income" type="number" value={form.father_income} onChange={update('father_income')} />
-                        <FormInput label="Phone" required error={validationErrors.parent_phone}
-                          placeholder="Father's phone" value={form.father_phone || form.parent_phone} onChange={update('father_phone')} />
+                        <FormInput label="Phone" required error={validationErrors.father_phone}
+                          placeholder="Father's phone" value={form.father_phone} onChange={update('father_phone')} />
                         <FormInput label="Email" type="email" value={form.father_email} onChange={update('father_email')} />
                       </div>
 
                       <hr className="border-gray-100" />
                       <h3 className="font-subheading font-bold text-primary text-sm">Mother Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormInput label="Mother Name" required error={validationErrors.parent_name}
+                        <FormInput label="Mother Name" required error={validationErrors.mother_name}
                           placeholder="Mother's full name" value={form.mother_name} onChange={update('mother_name')} className="sm:col-span-2" />
                         <FormInput label="Occupation" value={form.mother_occupation} onChange={update('mother_occupation')} />
                         <FormInput label="Company" value={form.mother_company} onChange={update('mother_company')} />
