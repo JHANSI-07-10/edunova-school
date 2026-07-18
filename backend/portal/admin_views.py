@@ -91,10 +91,19 @@ class AdminDashboardView(AdminMixin, APIView):
 # -> Confirmed/Rejected), including credential generation on Confirmed.
 # ---------------------------------------------------------------------------
 NEXT_STATUS = {
-    "Registered": "Verification",
-    "Verification": "Screening",
-    "Screening": "Fee_Pending",
-    "Fee_Pending": "Confirmed",
+    "Enquiry": "Registered",
+    "Registered": "Counselling_Pending",
+    "Counselling_Pending": "Counselling_Done",
+    "Counselling_Done": "Verification",
+    "Verification": "Eligibility_Check",
+    "Eligibility_Check": "Screening",
+    "Screening": "Interview_Pending",
+    "Interview_Pending": "Interview_Done",
+    "Interview_Done": "Seat_Available",
+    "Seat_Available": "Fee_Pending",
+    "Seat_Waitlisted": "Seat_Available",
+    "Fee_Pending": "Approved",
+    "Approved": "Confirmed"
 }
 
 
