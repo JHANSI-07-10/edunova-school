@@ -227,7 +227,10 @@ export default function Admissions() {
       if (!isNonEmptyString(form.address)) errs.address = 'Required'
     }
     if (s === 5) {
-      const requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
+      let requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
+      if (isNonEmptyString(form.prev_school_name)) {
+        requiredDocs.push('previous_marks', 'transfer_certificate')
+      }
       requiredDocs.forEach(doc => {
         if (!selectedFiles[doc]) {
           errs[`doc_${doc}`] = 'Required'
@@ -566,8 +569,8 @@ export default function Admissions() {
                         { id: 'passport_photo', label: 'Passport Photo', required: true },
                         { id: 'parent_id', label: 'Parent ID Proof', required: true },
                         { id: 'address_proof', label: 'Address Proof', required: true },
-                        { id: 'previous_marks', label: 'Previous Marks Memo', required: false },
-                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: false }
+                        { id: 'previous_marks', label: 'Previous Marks Memo', required: !!form.prev_school_name },
+                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: !!form.prev_school_name }
                       ].map((doc) => (
                         <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                           <FileText size={18} className="text-academic-blue shrink-0" />
