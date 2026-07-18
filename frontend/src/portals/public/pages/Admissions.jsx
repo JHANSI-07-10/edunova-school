@@ -54,16 +54,16 @@ const EMPTY_FORM = {
   guardian_address: '',
   permanent_address: '',
   communication_address: '',
-  pin_code: '',
+  pincode: '',
   state: '',
-  district: '',
-  previous_school: '',
+  city: '',
+  prev_school_name: '',
   board: '',
-  previous_class: '',
+  prev_school_grade: '',
   percentage: '',
   reason_for_leaving: '',
   allergies: '',
-  medical_conditions: '',
+  medical_details: '',
   emergency_contact_name: '',
   emergency_contact_phone: '',
   emergency_contact_relation: '',
@@ -225,6 +225,14 @@ export default function Admissions() {
     }
     if (s === 4) {
       if (!isNonEmptyString(form.address)) errs.address = 'Required'
+    }
+    if (s === 5) {
+      const requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
+      requiredDocs.forEach(doc => {
+        if (!selectedFiles[doc]) {
+          errs[`doc_${doc}`] = 'Required'
+        }
+      })
     }
     setValidationErrors(errs)
     return Object.keys(errs).length === 0
@@ -474,7 +482,7 @@ export default function Admissions() {
                       <div className="grid sm:grid-cols-2 gap-4">
                         <FormTextarea label="Address" required error={validationErrors.address}
                           rows={2} value={form.address} onChange={update('address')} className="sm:col-span-2" />
-                        <FormInput label="Pin Code" value={form.pin_code} onChange={update('pin_code')} />
+                        <FormInput label="Pin Code" value={form.pincode} onChange={update('pincode')} />
                         <FormInput label="State" value={form.state} onChange={update('state')} />
                         <FormInput label="City/District" value={form.city} onChange={update('city')} />
                       </div>
@@ -482,12 +490,12 @@ export default function Admissions() {
                       <hr className="border-gray-100" />
                       <h3 className="font-subheading font-bold text-primary text-sm">Academic Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormInput label="Previous School" value={form.previous_school} onChange={update('previous_school')} className="sm:col-span-2" />
+                        <FormInput label="Previous School" value={form.prev_school_name} onChange={update('prev_school_name')} className="sm:col-span-2" />
                         <FormSelect label="Board" value={form.board} onChange={update('board')}>
                           <option value="">Select board</option>
                           {BOARDS.map((b) => (<option key={b} value={b}>{b}</option>))}
                         </FormSelect>
-                        <FormSelect label="Previous Class" value={form.previous_class} onChange={update('previous_class')}>
+                        <FormSelect label="Previous Class" value={form.prev_school_grade} onChange={update('prev_school_grade')}>
                           <option value="">Select class</option>
                           {CLASSES.map((c) => (<option key={c} value={c}>{c}</option>))}
                         </FormSelect>
@@ -500,7 +508,7 @@ export default function Admissions() {
                       <h3 className="font-subheading font-bold text-primary text-sm">Medical Information</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <FormTextarea label="Allergies" rows={2} placeholder="List any known allergies" value={form.allergies} onChange={update('allergies')} className="sm:col-span-2" />
-                        <FormTextarea label="Medical Conditions" rows={2} placeholder="Any ongoing medical conditions" value={form.medical_conditions} onChange={update('medical_conditions')} className="sm:col-span-2" />
+                        <FormTextarea label="Medical Conditions" rows={2} placeholder="Any ongoing medical conditions" value={form.medical_details} onChange={update('medical_details')} className="sm:col-span-2" />
                       </div>
 
                       <hr className="border-gray-100" />
@@ -552,20 +560,30 @@ export default function Admissions() {
                       <p className="text-sm text-text-secondary">Upload digital copies of required documents (PDF/JPG/PNG, max 5MB each).</p>
                     </div>
                     <div className="space-y-3">
-                      {['Birth_Certificate', 'Aadhaar', 'Passport_Photo', 'Parent_ID', 'Address_Proof', 'Marks_Memo', 'Transfer_Certificate'].map((docType) => (
-                        <div key={docType} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                      {[
+                        { id: 'birth_certificate', label: 'Birth Certificate', required: true },
+                        { id: 'aadhaar_card', label: 'Aadhaar Card', required: true },
+                        { id: 'passport_photo', label: 'Passport Photo', required: true },
+                        { id: 'parent_id', label: 'Parent ID Proof', required: true },
+                        { id: 'address_proof', label: 'Address Proof', required: true },
+                        { id: 'previous_marks', label: 'Previous Marks Memo', required: false },
+                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: false }
+                      ].map((doc) => (
+                        <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                           <FileText size={18} className="text-academic-blue shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-semibold text-slate-700">{docType.replace(/_/g, ' ')}</p>
-                            {selectedFiles[docType] ? (
-                              <p className="text-[11px] text-emerald-600 truncate">{selectedFiles[docType].name}</p>
+                            <p className="text-xs font-semibold text-slate-700">
+                              {doc.label} {doc.required && <span className="text-red-400">*</span>}
+                            </p>
+                            {selectedFiles[doc.id] ? (
+                              <p className="text-[11px] text-emerald-600 truncate">{selectedFiles[doc.id].name}</p>
                             ) : (
-                              <p className="text-[11px] text-slate-400">Not uploaded</p>
+                              <p className="text-[11px] text-slate-400">Not uploaded {validationErrors[`doc_${doc.id}`] && <span className="text-red-500 font-bold ml-2">Required</span>}</p>
                             )}
                           </div>
                           <label className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-semibold cursor-pointer hover:bg-slate-50">
-                            {selectedFiles[docType] ? 'Change' : 'Choose'}
-                            <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange(docType)} className="hidden" />
+                            {selectedFiles[doc.id] ? 'Change' : 'Choose'}
+                            <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange(doc.id)} className="hidden" />
                           </label>
                         </div>
                       ))}
@@ -574,7 +592,7 @@ export default function Admissions() {
                       <button onClick={() => setStep(4)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
                         <ChevronLeft size={16} /> Back
                       </button>
-                      <button onClick={() => setStep(6)} className="btn-primary flex items-center gap-2">
+                      <button onClick={() => { if (validateStep(5)) setStep(6) }} className="btn-primary flex items-center gap-2">
                         Review Application <ChevronRight size={16} />
                       </button>
                     </div>
@@ -635,7 +653,7 @@ export default function Admissions() {
                       <p className="font-numbers text-3xl font-bold text-primary">{result.registration_number}</p>
                     </div>
                     <div className="text-sm text-text-secondary leading-relaxed space-y-2">
-                      <p>A confirmation email has been sent to <strong>{result.parent_email}</strong>.</p>
+                      <p>A confirmation email has been sent to <strong>{result.father_email || result.mother_email}</strong>.</p>
                       <p>Your application is now <strong>{result.status}</strong>. The admissions team will review it shortly.</p>
                     </div>
                     <button className="btn-outline mt-6" onClick={() => { setStep(1); setResult(null); setStatus('idle'); setForm(EMPTY_FORM); setSelectedFiles({}) }}>
