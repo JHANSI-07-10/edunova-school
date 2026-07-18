@@ -73,6 +73,29 @@ class EventSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
+class JobPostingSerializer(serializers.ModelSerializer):
+    department_name = serializers.CharField(source="department.name", read_only=True)
+
+    class Meta:
+        model = JobPosting
+        fields = "__all__"
+
+
+class JobApplicationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = JobApplication
+        fields = "__all__"
+
+
+class InterviewScheduleSerializer(serializers.ModelSerializer):
+    application_name = serializers.CharField(source="application.applicant_name", read_only=True)
+    job_title = serializers.CharField(source="application.job_posting.title", read_only=True)
+
+    class Meta:
+        model = InterviewSchedule
+        fields = "__all__"
+
+
 class GalleryImageSerializer(serializers.ModelSerializer):
     album_name = serializers.CharField(source="album.name", read_only=True)
 

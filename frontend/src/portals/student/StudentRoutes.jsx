@@ -19,6 +19,9 @@ import Hostel from "./pages/Hostel";
 import MedicalRecords from "./pages/MedicalRecords";
 import Library from "./pages/Library";
 import Lms from "./pages/Lms";
+import LmsDashboard from "./pages/LmsDashboard";
+import LiveClasses from "./pages/LiveClasses";
+import RecordedClasses from "./pages/RecordedClasses";
 import Login from "./pages/Login";
 import Profile from "./pages/Profile";
 import Results from "./pages/Results";
@@ -45,6 +48,9 @@ export default function StudentRoutes() {
           <Route path="homework" element={<Homework />} />
           <Route path="assignments" element={<Assignments />} />
           <Route path="lms" element={<Lms />} />
+          <Route path="lms/dashboard" element={<LmsDashboard />} />
+          <Route path="lms/live-classes" element={<LiveClasses />} />
+          <Route path="lms/recorded-classes" element={<RecordedClasses />} />
           <Route path="exams" element={<Exams />} />
           <Route path="results" element={<Results />} />
           <Route path="fees" element={<Fees />} />

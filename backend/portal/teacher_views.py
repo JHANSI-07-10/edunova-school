@@ -4,7 +4,7 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 
 from .views import table_exists, rows, row, serialise, EXAM_NAME_CHOICES
-from .roles import IsTeacher
+from .roles import IsTeacher, log_action
 
 
 class TeacherMixin:
@@ -364,38 +364,8 @@ class AssignmentSubmissionsView(TeacherMixin, APIView):
         return Response({"detail": "Submission graded."})
 
 
-class QuestionBankView(TeacherMixin, APIView):
-    def get(self, request, question_id=None):
-        if not table_exists("portal_question_bank"):
-            return Response([])
-        return Response(serialise(rows(
-            """
-            SELECT q.id, q.difficulty_level, q.question_text, q.answer_schema, s.id AS subject_id, s.name AS subject_name
-            FROM portal_question_bank q JOIN portal_subject s ON s.id=q.subject_id
-            WHERE q.teacher_id=%s ORDER BY q.id DESC
-            """, [request.user.id]
-        )))
 
-    def post(self, request, question_id=None):
-        if not table_exists("portal_question_bank"):
-            return Response({"detail": "Portal schema has not been applied."}, status=400)
-        import json
-        answer_schema = request.data.get("answer_schema", "{}")
-        if isinstance(answer_schema, dict):
-            answer_schema = json.dumps(answer_schema)
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "INSERT INTO portal_question_bank (subject_id, teacher_id, difficulty_level, question_text, answer_schema) VALUES (%s,%s,%s,%s,%s::jsonb) RETURNING id",
-                [request.data.get("subject_id"), request.user.id, request.data.get("difficulty_level", "Medium"), request.data.get("question_text"), answer_schema],
-            )
-            qid = cursor.fetchone()[0]
-        return Response({"id": qid, "detail": "Question added."})
 
-    def delete(self, request, question_id):
-        if table_exists("portal_question_bank"):
-            with connection.cursor() as cursor:
-                cursor.execute("DELETE FROM portal_question_bank WHERE id=%s AND teacher_id=%s", [question_id, request.user.id])
-        return Response({"detail": "Question removed."})
 
 
 class TeacherExamView(TeacherMixin, APIView):
@@ -730,6 +700,17 @@ class QuestionPaperView(TeacherMixin, APIView):
             )
         log_action(request.user, "exams.paper.update", "portal_question_paper", pid, dict(d))
         return Response({"detail": "Question paper updated."})
+
+    def delete(self, request):
+        if not table_exists("portal_question_paper"):
+            return Response({"detail": "Portal schema not applied."}, status=400)
+        pid = request.query_params.get("id")
+        if not pid:
+            return Response({"detail": "id is required."}, status=400)
+        with connection.cursor() as cur:
+            cur.execute("DELETE FROM portal_question_paper WHERE id=%s", [pid])
+        log_action(request.user, "exams.paper.delete", "portal_question_paper", pid, {})
+        return Response({"detail": "Question paper deleted."})
 
 
 # =============================================================================

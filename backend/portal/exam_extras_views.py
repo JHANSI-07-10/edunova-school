@@ -263,21 +263,25 @@ class RevaluationRequestView(APIView):
         if not table_exists("portal_revaluation_request"):
             return Response({"detail": "Portal schema not applied."}, status=400)
         d = request.data
+        role = request.user.groups.first().name if request.user.groups.exists() else "Student"
         result_id = d.get("result_id")
         reason = (d.get("reason") or "").strip()
         if not result_id or not reason:
             return Response({"detail": "result_id and reason are required."}, status=400)
-        
+
+        # For parents, use child_id as the student_id
+        student_id = d.get("child_id") if role == "Parent" else request.user.id
+
         # Check if already requested
         existing = row("SELECT id FROM portal_revaluation_request WHERE result_id = %s", [result_id])
         if existing:
             return Response({"detail": "A revaluation request already exists for this result."}, status=400)
-            
+
         with connection.cursor() as cur:
             cur.execute(
                 "INSERT INTO portal_revaluation_request (result_id, student_id, reason, status) "
                 "VALUES (%s,%s,%s,'Pending') RETURNING id",
-                [result_id, request.user.id, reason]
+                [result_id, student_id, reason]
             )
             new_id = cur.fetchone()[0]
         log_action(request.user, "exams.revaluation.create", "portal_revaluation_request", new_id, {"result_id": result_id})
@@ -444,12 +448,18 @@ class AcademicCertificateView(APIView):
         if not table_exists("portal_academic_certificate"):
             return Response({"detail": "Portal schema not applied."}, status=400)
         d = request.data
-        sid = d.get("student_id")
+        role = request.user.groups.first().name if request.user.groups.exists() else "Student"
         cert_type = d.get("certificate_type")
         file_url = d.get("file_url", "")
-        
+
+        # Resolve student_id: student uses own ID, parent uses child_id
+        if role == "Parent":
+            sid = d.get("child_id")
+        else:
+            sid = d.get("student_id") or request.user.id
+
         if not sid or not cert_type:
-            return Response({"detail": "student_id and certificate_type are required."}, status=400)
+            return Response({"detail": "student_id/child_id and certificate_type are required."}, status=400)
             
         vcode = f"CERT-{_uuid.uuid4().hex[:12].upper()}"
         with connection.cursor() as cur:

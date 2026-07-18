@@ -11,6 +11,7 @@ import Classes from "./pages/Classes";
 import Dashboard from "./pages/Dashboard";
 import Documents from "./pages/Documents";
 import Lms from "./pages/Lms";
+import LiveClasses from "./pages/LiveClasses";
 import Exams from "./pages/Exams";
 import Invigilation from "./pages/Invigilation";
 import Homework from "./pages/Homework";
@@ -48,6 +49,7 @@ export default function TeacherRoutes() {
           <Route path="performance" element={<Performance />} />
           <Route path="messages" element={<Messages />} />
           <Route path="lms" element={<Lms />} />
+          <Route path="lms/live-classes" element={<LiveClasses />} />
           <Route path="documents" element={<Documents />} />
           <Route path="timetable" element={<Timetable />} />
           <Route path="notices" element={<Notices />} />
