@@ -91,10 +91,19 @@ class AdminDashboardView(AdminMixin, APIView):
 # -> Confirmed/Rejected), including credential generation on Confirmed.
 # ---------------------------------------------------------------------------
 NEXT_STATUS = {
-    "Registered": "Verification",
-    "Verification": "Screening",
-    "Screening": "Fee_Pending",
-    "Fee_Pending": "Confirmed",
+    "Enquiry": "Registered",
+    "Registered": "Counselling_Pending",
+    "Counselling_Pending": "Counselling_Done",
+    "Counselling_Done": "Verification",
+    "Verification": "Eligibility_Check",
+    "Eligibility_Check": "Screening",
+    "Screening": "Interview_Pending",
+    "Interview_Pending": "Interview_Done",
+    "Interview_Done": "Seat_Available",
+    "Seat_Available": "Fee_Pending",
+    "Seat_Waitlisted": "Seat_Available",
+    "Fee_Pending": "Approved",
+    "Approved": "Confirmed"
 }
 
 
@@ -2763,3 +2772,78 @@ class AdminPublicContentView(AdminMixin, APIView):
             return Response({"detail": "Invalid type"}, status=400)
             
         return Response({"detail": "Content published successfully."})
+
+from apps.cms.models import JobApplication, InterviewSchedule
+
+class AdminRecruitmentView(AdminMixin, APIView):
+    def get(self, request):
+        applications = rows(
+            "
+            SELECT a.id, a.applicant_name, a.email, a.phone, a.status, a.applied_at, 
+                   a.resume_file, p.title as job_title
+            FROM cms_jobapplication a
+            JOIN cms_jobposting p ON p.id = a.job_posting_id
+            ORDER BY a.applied_at DESC
+            "
+        )
+        return Response(serialise(applications))
+
+    def patch(self, request):
+        app_id = request.data.get("id")
+        status = request.data.get("status")
+        with connection.cursor() as cursor:
+            cursor.execute("UPDATE cms_jobapplication SET status=%s WHERE id=%s", [status, app_id])
+        log_action(request.user, "recruitment.update", "cms_jobapplication", app_id, {"status": status})
+        return Response({"detail": "Application status updated."})
+
+
+class AdminInterviewView(AdminMixin, APIView):
+    def get(self, request):
+        interviews = rows(
+            "
+            SELECT i.id, i.interview_date, i.interviewer_name, i.location_or_link, i.status, i.feedback,
+                   a.applicant_name, p.title as job_title, a.id as application_id
+            FROM cms_interviewschedule i
+            JOIN cms_jobapplication a ON a.id = i.application_id
+            JOIN cms_jobposting p ON p.id = a.job_posting_id
+            ORDER BY i.interview_date DESC
+            "
+        )
+        return Response(serialise(interviews))
+
+    def post(self, request):
+        data = request.data
+        app_id = data.get("application_id")
+        interview_date = data.get("interview_date")
+        interviewer_name = data.get("interviewer_name")
+        location_or_link = data.get("location_or_link", "")
+        
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "
+                INSERT INTO cms_interviewschedule (application_id, interview_date, interviewer_name, location_or_link, status, created_at, feedback)
+                VALUES (%s, %s, %s, %s, 'Scheduled', now(), '') RETURNING id
+                ",
+                [app_id, interview_date, interviewer_name, location_or_link]
+            )
+            iid = cursor.fetchone()[0]
+            cursor.execute("UPDATE cms_jobapplication SET status='Interview' WHERE id=%s", [app_id])
+            
+        log_action(request.user, "interview.schedule", "cms_interviewschedule", iid, data)
+        return Response({"detail": "Interview scheduled."})
+
+    def patch(self, request):
+        data = request.data
+        iid = data.get("id")
+        status = data.get("status")
+        feedback = data.get("feedback")
+        
+        with connection.cursor() as cursor:
+            if status:
+                cursor.execute("UPDATE cms_interviewschedule SET status=%s WHERE id=%s", [status, iid])
+            if feedback is not None:
+                cursor.execute("UPDATE cms_interviewschedule SET feedback=%s WHERE id=%s", [feedback, iid])
+                
+        log_action(request.user, "interview.update", "cms_interviewschedule", iid, data)
+        return Response({"detail": "Interview updated."})
+

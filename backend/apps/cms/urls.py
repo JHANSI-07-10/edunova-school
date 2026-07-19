@@ -1,3 +1,4 @@
+from django.urls import path, include
 from rest_framework.routers import DefaultRouter
 from . import views
 
@@ -23,4 +24,7 @@ router.register("jobs", views.JobPostingViewSet, basename="jobs")
 router.register("scholarships", views.ScholarshipInfoViewSet, basename="scholarships")
 router.register("contact", views.ContactSubmissionViewSet, basename="contact")
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('', include(router.urls)),
+    path('jobs/apply/', views.JobApplicationCreateView.as_view(), name='job-apply'),
+]

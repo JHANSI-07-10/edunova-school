@@ -781,10 +781,18 @@ function AdmissionReports() {
 // ---------------------------------------------------------------------------
 function ManualAdmissionForm({ onClose, onSaved }) {
   const [form, setForm] = useState({
-    applicant_name: "", date_of_birth: "", gender: "Male",
-    target_class: "Class 1", parent_name: "", parent_phone: "",
-    parent_email: "", address: "", source_of_enquiry: "Walk-in",
-    preferred_branch: "", curriculum: "CBSE", scholarship_applied: false,
+    applicant_name: "",
+    date_of_birth: "",
+    gender: "Male",
+    target_class: "Class 1",
+    curriculum: "CBSE",
+    father_name: "",
+    father_phone: "",
+    father_email: "",
+    address: "",
+    source_of_enquiry: "Walk-in",
+    preferred_branch: "",
+    scholarship_applied: false,
   });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
@@ -795,9 +803,9 @@ function ManualAdmissionForm({ onClose, onSaved }) {
     const errs = {};
     if (!isNonEmptyString(form.applicant_name)) errs.applicant_name = "Required";
     if (!form.date_of_birth) errs.date_of_birth = "Required";
-    if (!isNonEmptyString(form.parent_name)) errs.parent_name = "Required";
-    if (!isValidPhone(form.parent_phone)) errs.parent_phone = "Valid phone required";
-    if (!isValidEmail(form.parent_email)) errs.parent_email = "Valid email required";
+    if (!isNonEmptyString(form.father_name)) errs.father_name = "Required";
+    if (!isValidPhone(form.father_phone)) errs.father_phone = "Valid phone required";
+    if (!isValidEmail(form.father_email)) errs.father_email = "Valid email required";
     if (Object.keys(errs).length > 0) { setValidationErrors(errs); return; }
     setValidationErrors({});
     setBusy(true); setError("");
@@ -842,16 +850,16 @@ function ManualAdmissionForm({ onClose, onSaved }) {
             <option value="CBSE">CBSE</option><option value="Cambridge">Cambridge</option><option value="IB">IB</option><option value="State_Board">State Board</option>
           </select>
           <hr className="border-slate-100" />
-          <input required placeholder="Parent name (*)" value={form.parent_name}
-            onChange={(e) => setForm({ ...form, parent_name: e.target.value })}
-            className={`w-full rounded-xl border px-3 py-2 ${validationErrors.parent_name ? "border-danger" : "border-slate-200"}`} />
+          <input required placeholder="Parent name (*)" value={form.father_name}
+            onChange={(e) => setForm({ ...form, father_name: e.target.value })}
+            className={`w-full rounded-xl border px-3 py-2 ${validationErrors.father_name ? "border-danger" : "border-slate-200"}`} />
           <div className="grid grid-cols-2 gap-3">
-            <input required placeholder="Phone (*)" value={form.parent_phone}
-              onChange={(e) => setForm({ ...form, parent_phone: e.target.value })}
-              className={`w-full rounded-xl border px-3 py-2 ${validationErrors.parent_phone ? "border-danger" : "border-slate-200"}`} />
-            <input required type="email" placeholder="Email (*)" value={form.parent_email}
-              onChange={(e) => setForm({ ...form, parent_email: e.target.value })}
-              className={`w-full rounded-xl border px-3 py-2 ${validationErrors.parent_email ? "border-danger" : "border-slate-200"}`} />
+            <input required placeholder="Phone (*)" value={form.father_phone}
+              onChange={(e) => setForm({ ...form, father_phone: e.target.value })}
+              className={`w-full rounded-xl border px-3 py-2 ${validationErrors.father_phone ? "border-danger" : "border-slate-200"}`} />
+            <input required type="email" placeholder="Email (*)" value={form.father_email}
+              onChange={(e) => setForm({ ...form, father_email: e.target.value })}
+              className={`w-full rounded-xl border px-3 py-2 ${validationErrors.father_email ? "border-danger" : "border-slate-200"}`} />
           </div>
           <textarea required rows={2} placeholder="Address (*)" value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}

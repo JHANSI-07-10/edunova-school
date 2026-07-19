@@ -9,6 +9,7 @@ import api from "../lib/api";
 import { isNonEmptyString, isPositiveNumber } from "../../../utils/validation";
 import CourseForum from "../../student/components/CourseForum";
 
+const chr = (n) => String.fromCharCode(n);
 
 const RESOURCE_TYPES = [
   { value: "PDF", label: "📄 PDF Notes", desc: "Upload syllabus notes or slides" },
@@ -1252,5 +1253,4 @@ function LessonResourcesList({ lessonId }) {
   );
 }
 
-// Utility char conversion
-const chr = (n) => String.fromCharCode(n);
+

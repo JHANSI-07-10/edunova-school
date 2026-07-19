@@ -1,9 +1,10 @@
-from rest_framework import viewsets, mixins
+from rest_framework import viewsets, mixins, generics
+from rest_framework.permissions import AllowAny
 from .models import (
     SchoolSettings, Campus, AcademicProgram, Department, LeadershipMember,
     SchoolStat, WhyChooseItem, TechnologyPartner, CMSPage, NewsPost, Event,
     GalleryAlbum, GalleryImage, Achievement, Testimonial, FAQ, Document,
-    JobPosting, ContactSubmission, ScholarshipInfo,
+    JobPosting, JobApplication, InterviewSchedule, ContactSubmission, ScholarshipInfo,
 )
 from . import serializers as ser
 
@@ -107,7 +108,14 @@ class JobPostingViewSet(viewsets.ReadOnlyModelViewSet):
     serializer_class = ser.JobPostingSerializer
 
 
+class JobApplicationCreateView(generics.CreateAPIView):
+    queryset = JobApplication.objects.all()
+    serializer_class = ser.JobApplicationSerializer
+    permission_classes = [AllowAny]
+
+
 class ScholarshipInfoViewSet(viewsets.ReadOnlyModelViewSet):
+
     queryset = ScholarshipInfo.objects.all()
     serializer_class = ser.ScholarshipInfoSerializer
 

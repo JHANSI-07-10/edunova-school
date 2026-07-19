@@ -10,6 +10,7 @@ import api from "../lib/api";
 import {
   Badge, Card, EmptyState, Loader, SectionTitle, StatCard, Toast,
 } from "../components/Common";
+import { isValidDateRange, isNonEmptyString } from "../../../utils/validation";
 
 // ─── helpers ───────────────────────────────────────────────────────────────
 const INR = (n) => `₹${Number(n || 0).toLocaleString("en-IN")}`;
@@ -108,6 +109,9 @@ function OverviewTab({ showToast }) {
 
   async function createAcademicYear(e) {
     e.preventDefault();
+    if (!isNonEmptyString(ayForm.name)) { showToast("Academic year name is required.", "error"); return; }
+    if (!ayForm.start_date || !ayForm.end_date) { showToast("Start and end dates are required.", "error"); return; }
+    if (!isValidDateRange(ayForm.start_date, ayForm.end_date)) { showToast("End date must be after start date.", "error"); return; }
     try {
       await api.post("/admin-portal/academic-years/", ayForm);
       showToast("Academic year created.");
@@ -281,6 +285,13 @@ function StructuresTab({ showToast }) {
 
   async function submit(e) {
     e.preventDefault();
+    if (!form.class_id) { showToast("Please select a class.", "error"); return; }
+    if (!isNonEmptyString(form.term_name)) { showToast("Term name is required.", "error"); return; }
+    const feeFields = ["tuition_fee","admission_fee","transport_fee","hostel_fee","library_fee","exam_fee","misc_fee"];
+    for (const k of feeFields) {
+      const v = parseFloat(form[k]);
+      if (isNaN(v) || v < 0) { showToast(`Invalid amount for ${k.replace(/_/g, " ")}.`, "error"); return; }
+    }
     try {
       if (editing) {
         await api.patch("/admin-portal/fee-structures/", { ...form, id: editing.id });
@@ -641,6 +652,13 @@ function ConcessionsTab({ showToast }) {
 
   async function submit(e) {
     e.preventDefault();
+    if (!form.student_id) { showToast("Please select a student.", "error"); return; }
+    if (!form.fee_structure_id) { showToast("Please select a fee structure.", "error"); return; }
+    const discountAmt = parseFloat(form.discount_amount);
+    const discountPct = parseFloat(form.discount_percent);
+    if (discountAmt < 0 || isNaN(discountAmt)) { showToast("Discount amount must be non-negative.", "error"); return; }
+    if (discountPct < 0 || discountPct > 100 || isNaN(discountPct)) { showToast("Discount percent must be between 0 and 100.", "error"); return; }
+    if (discountAmt === 0 && discountPct === 0) { showToast("Please enter a discount amount or percentage.", "error"); return; }
     try {
       await api.post("/admin-portal/fee-concessions/", form);
       showToast("Concession applied.");

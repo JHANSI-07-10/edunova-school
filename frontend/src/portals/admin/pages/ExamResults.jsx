@@ -1964,7 +1964,7 @@ function NotificationsTab({ onError }) {
 
   async function handleSend(id) {
     try {
-      await api.post(`/admin-portal/exam-workflow/notifications/${id}/send/`);
+      await api.post("/admin-portal/exam-workflow/notifications/send/", { id });
       onError("Notification sent.");
       loadAll();
     } catch (err) {

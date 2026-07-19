@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import api from "../lib/api";
 import { Card, EmptyState, Loader, SectionTitle, Toast } from "../components/Common";
+import { isNonEmptyString } from "../../../utils/validation";
 import {
   BookOpen,
   Layers,
@@ -54,15 +55,20 @@ function TabClassesSubjects({ classes, subjects, loadClasses, loadSubjects, setT
   const [editingClass, setEditingClass] = useState(null);
   const [editingSubject, setEditingSubject] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [submitting, setSubmitting] = useState(false);
 
   async function addClass(e) {
     e.preventDefault();
+    if (!isNonEmptyString(classForm.name)) { setToast({ message: "Class name is required.", tone: "error" }); return; }
+    if (!isNonEmptyString(classForm.section)) { setToast({ message: "Section is required.", tone: "error" }); return; }
+    setSubmitting(true);
     try {
       await api.post("/admin-portal/classes/", classForm);
       setClassForm({ name: "", section: "", curriculum: "CBSE", room_number: "" });
       loadClasses();
       setToast({ message: "Class created.", tone: "success" });
     } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not create class.", tone: "error" }); }
+    finally { setSubmitting(false); }
   }
 
   async function saveEditClass() {
@@ -86,12 +92,16 @@ function TabClassesSubjects({ classes, subjects, loadClasses, loadSubjects, setT
 
   async function addSubject(e) {
     e.preventDefault();
+    if (!isNonEmptyString(subjectForm.name)) { setToast({ message: "Subject name is required.", tone: "error" }); return; }
+    if (!isNonEmptyString(subjectForm.subject_code)) { setToast({ message: "Subject code is required.", tone: "error" }); return; }
+    setSubmitting(true);
     try {
       await api.post("/admin-portal/subjects/", subjectForm);
       setSubjectForm({ name: "", subject_code: "", type: "Theory" });
       loadSubjects();
       setToast({ message: "Subject created.", tone: "success" });
     } catch (err) { setToast({ message: err?.response?.data?.detail || "Could not create subject.", tone: "error" }); }
+    finally { setSubmitting(false); }
   }
 
   async function saveEditSubject() {
@@ -141,8 +151,8 @@ function TabClassesSubjects({ classes, subjects, loadClasses, loadSubjects, setT
               <input placeholder="Room number" value={classForm.room_number}
                 onChange={(e) => setClassForm({ ...classForm, room_number: e.target.value })}
                 className="rounded-xl border border-slate-200 px-3 py-2 text-sm focus-ring outline-none" />
-              <button className="col-span-2 bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90">
-                Add Class
+              <button disabled={submitting} className="col-span-2 bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90 disabled:opacity-50">
+                {submitting ? "Adding..." : "Add Class"}
               </button>
             </form>
           </Card>
@@ -208,8 +218,8 @@ function TabClassesSubjects({ classes, subjects, loadClasses, loadSubjects, setT
                 className="col-span-2 rounded-xl border border-slate-200 px-3 py-2.5 text-sm focus-ring outline-none">
                 {["Theory", "Practical", "Lab", "Skill_Development"].map((t) => <option key={t}>{t}</option>)}
               </select>
-              <button className="col-span-2 bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90">
-                Add Subject
+              <button disabled={submitting} className="col-span-2 bg-academic-blue text-white rounded-xl py-2.5 font-medium hover:bg-academic-blue/90 disabled:opacity-50">
+                {submitting ? "Adding..." : "Add Subject"}
               </button>
             </form>
           </Card>

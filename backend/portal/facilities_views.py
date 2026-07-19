@@ -252,7 +252,12 @@ class StudentHostelView(StudentOnlyMixin, APIView):
             [request.user.id],
         )
         if not alloc:
-            return Response({"allocation": None})
+            available_hostels = []
+            if table_exists("portal_hostel"):
+                available_hostels = serialise(rows(
+                    "SELECT id, name, type FROM portal_hostel WHERE is_active IS NOT false ORDER BY name"
+                ))
+            return Response({"allocation": None, "available_hostels": available_hostels})
 
         # Roommates
         roommates = rows(

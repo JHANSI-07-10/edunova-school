@@ -275,6 +275,52 @@ class JobPosting(models.Model):
         return self.title
 
 
+class JobApplication(models.Model):
+    STATUS_CHOICES = [
+        ("Pending", "Pending"),
+        ("Reviewed", "Reviewed"),
+        ("Interview", "Interview"),
+        ("Rejected", "Rejected"),
+        ("Hired", "Hired"),
+    ]
+    job_posting = models.ForeignKey(JobPosting, on_delete=models.CASCADE, related_name="applications")
+    applicant_name = models.CharField(max_length=150)
+    email = models.EmailField()
+    phone = models.CharField(max_length=20)
+    cover_letter = models.TextField(blank=True)
+    resume_file = models.FileField(upload_to="resumes/", blank=True, null=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Pending")
+    applied_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-applied_at"]
+
+    def __str__(self):
+        return f"{self.applicant_name} - {self.job_posting.title}"
+
+
+class InterviewSchedule(models.Model):
+    STATUS_CHOICES = [
+        ("Scheduled", "Scheduled"),
+        ("Completed", "Completed"),
+        ("Cancelled", "Cancelled"),
+    ]
+    application = models.ForeignKey(JobApplication, on_delete=models.CASCADE, related_name="interviews")
+    interview_date = models.DateTimeField()
+    interviewer_name = models.CharField(max_length=150)
+    location_or_link = models.CharField(max_length=255, blank=True)
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default="Scheduled")
+    feedback = models.TextField(blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-interview_date"]
+
+    def __str__(self):
+        return f"Interview for {self.application.applicant_name} at {self.interview_date}"
+
+
+
 class ContactSubmission(models.Model):
     """Public Contact page form submissions."""
     name = models.CharField(max_length=150)

@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import api from "../lib/api";
 import { Card, EmptyState, Loader, SectionTitle, Toast, Badge } from "../components/Common";
 import { MapPin, Phone, Mail, Globe, Clock, Plus, Edit2, Trash2, Calendar, Check, X, ShieldAlert } from "lucide-react";
+import { isValidEmail, isValidPhone, isNonEmptyString } from "../../../utils/validation";
 
 export default function Campuses() {
   const [campuses, setCampuses] = useState(null);
@@ -12,6 +13,8 @@ export default function Campuses() {
   const [editingCampus, setEditingCampus] = useState(null); // null for new, campus object for edit
   const [showForm, setShowForm] = useState(false);
   const [toast, setToast] = useState("");
+  const [submitting, setSubmitting] = useState(false);
+  const [formErrors, setFormErrors] = useState({});
   
   const [form, setForm] = useState({
     name: "",
@@ -56,6 +59,20 @@ export default function Campuses() {
   // Save (Create/Update) Location
   async function handleSubmit(e) {
     e.preventDefault();
+    const errors = {};
+    if (!isNonEmptyString(form.name)) errors.name = "Campus name is required.";
+    if (!isValidEmail(form.email)) errors.email = "Valid email is required.";
+    if (!isValidPhone(form.phone)) errors.phone = "Valid phone number is required.";
+    if (!isNonEmptyString(form.city)) errors.city = "City is required.";
+    if (!isNonEmptyString(form.state)) errors.state = "State is required.";
+    if (!isNonEmptyString(form.postal_code)) errors.postal_code = "Postal code is required.";
+    if (form.latitude && isNaN(parseFloat(form.latitude))) errors.latitude = "Must be a valid number.";
+    if (form.longitude && isNaN(parseFloat(form.longitude))) errors.longitude = "Must be a valid number.";
+    if (form.student_count && (isNaN(parseInt(form.student_count)) || parseInt(form.student_count) < 0)) errors.student_count = "Must be a non-negative number.";
+    if (form.faculty_count && (isNaN(parseInt(form.faculty_count)) || parseInt(form.faculty_count) < 0)) errors.faculty_count = "Must be a non-negative number.";
+    if (Object.keys(errors).length > 0) { setFormErrors(errors); return; }
+    setFormErrors({});
+    setSubmitting(true);
     const payload = {
       ...form,
       latitude: parseFloat(form.latitude),
@@ -78,6 +95,8 @@ export default function Campuses() {
       loadLocations();
     } catch (err) {
       setToast("Error saving campus location.");
+    } finally {
+      setSubmitting(false);
     }
   }
 
@@ -206,18 +225,21 @@ export default function Campuses() {
               <form onSubmit={handleSubmit} className="space-y-5">
                 <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Campus Name * (*)</label>
-                    <input required placeholder="e.g. Noida Campus (*)" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className="rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue" />
+                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Campus Name *</label>
+                    <input required placeholder="e.g. Noida Campus" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} className={`rounded-xl border px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue ${formErrors.name ? "border-red-400" : "border-slate-200"}`} />
+                    {formErrors.name && <p className="text-[10px] text-red-500">{formErrors.name}</p>}
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Email Address * (*)</label>
-                    <input required type="email" placeholder="e.g. noida@edunovaacademy.edu.in (*)" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className="rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue" />
+                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Email Address *</label>
+                    <input required type="email" placeholder="e.g. noida@edunovaacademy.edu.in" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} className={`rounded-xl border px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue ${formErrors.email ? "border-red-400" : "border-slate-200"}`} />
+                    {formErrors.email && <p className="text-[10px] text-red-500">{formErrors.email}</p>}
                   </div>
 
                   <div className="flex flex-col gap-1">
-                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Phone Number * (*)</label>
-                    <input required placeholder="e.g. +91-120-6543210 (*)" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className="rounded-xl border border-slate-200 px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue" />
+                    <label className="text-[10px] uppercase font-bold text-slate-500 tracking-wider">Phone Number *</label>
+                    <input required placeholder="e.g. +91-120-6543210" value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} className={`rounded-xl border px-3.5 py-2 text-sm focus:outline-none focus:border-academic-blue ${formErrors.phone ? "border-red-400" : "border-slate-200"}`} />
+                    {formErrors.phone && <p className="text-[10px] text-red-500">{formErrors.phone}</p>}
                   </div>
 
                   <div className="flex flex-col gap-1">
@@ -292,8 +314,8 @@ export default function Campuses() {
                 </div>
 
                 <div className="flex gap-3">
-                  <button type="submit" className="bg-academic-blue text-white rounded-xl px-6 py-2.5 text-sm font-semibold shadow-sm hover:bg-slate-800 transition-colors">
-                    {editingCampus ? "Update Location" : "Create Location"}
+                  <button type="submit" disabled={submitting} className="bg-academic-blue text-white rounded-xl px-6 py-2.5 text-sm font-semibold shadow-sm hover:bg-slate-800 transition-colors disabled:opacity-50">
+                    {submitting ? "Saving..." : editingCampus ? "Update Location" : "Create Location"}
                   </button>
                   <button type="button" onClick={resetForm} className="bg-slate-100 text-slate-700 rounded-xl px-6 py-2.5 text-sm font-semibold hover:bg-slate-200 transition-colors">
                     Cancel

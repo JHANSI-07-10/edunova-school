@@ -232,7 +232,10 @@ export default function Admissions() {
       if (!isNonEmptyString(form.address)) errs.address = 'Required'
     }
     if (s === 5) {
-      const requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
+      let requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
+      if (isNonEmptyString(form.prev_school_name)) {
+        requiredDocs.push('previous_marks', 'transfer_certificate')
+      }
       requiredDocs.forEach(doc => {
         if (!selectedFiles[doc]) {
           errs[`doc_${doc}`] = 'Required'
@@ -556,125 +559,119 @@ export default function Admissions() {
                 )
 }
 
-{/* STEP 5: DOCUMENT UPLOAD */ }
-{
-  step === 5 && (
-    <div className="space-y-6">
-      <div>
-        <p className="font-subheading font-semibold text-secondary uppercase text-sm mb-1">Step 5 of 6</p>
-        <h2 className="font-heading text-2xl font-bold text-text-primary mb-3">Upload Documents</h2>
-        <p className="text-sm text-text-secondary">Upload digital copies of required documents (PDF/JPG/PNG, max 5MB each).</p>
-      </div>
-      <div className="space-y-3">
-        {[
-          { id: 'birth_certificate', label: 'Birth Certificate', required: true },
-          { id: 'aadhaar_card', label: 'Aadhaar Card', required: true },
-          { id: 'passport_photo', label: 'Passport Photo', required: true },
-          { id: 'parent_id', label: 'Parent ID Proof', required: true },
-          { id: 'address_proof', label: 'Address Proof', required: true },
-          { id: 'previous_marks', label: 'Previous Marks Memo', required: false },
-          { id: 'transfer_certificate', label: 'Transfer Certificate', required: false }
-        ].map((doc) => (
-          <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
-            <FileText size={18} className="text-academic-blue shrink-0" />
-            <div className="flex-1 min-w-0">
-              <p className="text-xs font-semibold text-slate-700">
-                {doc.label} {doc.required && <span className="text-red-400">*</span>}
-              </p>
-              {selectedFiles[doc.id] ? (
-                <p className="text-[11px] text-emerald-600 truncate">{selectedFiles[doc.id].name}</p>
-              ) : (
-                <p className="text-[11px] text-slate-400">Not uploaded {validationErrors[`doc_${doc.id}`] && <span className="text-red-500 font-bold ml-2">Required</span>}</p>
-              )}
-            </div>
-            <label className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-semibold cursor-pointer hover:bg-slate-50">
-              {selectedFiles[doc.id] ? 'Change' : 'Choose'}
-              <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange(doc.id)} className="hidden" />
-            </label>
-          </div>
-        ))}
-      </div>
-      <div className="flex justify-between pt-4 border-t border-slate-100">
-        <button onClick={() => setStep(4)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
-          <ChevronLeft size={16} /> Back
-        </button>
-        <button onClick={() => { if (validateStep(5)) setStep(6) }} className="btn-primary flex items-center gap-2">
-          Review Application <ChevronRight size={16} />
-        </button>
-      </div>
-    </div>
-  )
-}
+                {/* STEP 5: DOCUMENT UPLOAD */}
+                {step === 5 && (
+                  <div className="space-y-6">
+                    <div>
+                      <p className="font-subheading font-semibold text-secondary uppercase text-sm mb-1">Step 5 of 6</p>
+                      <h2 className="font-heading text-2xl font-bold text-text-primary mb-3">Upload Documents</h2>
+                      <p className="text-sm text-text-secondary">Upload digital copies of required documents (PDF/JPG/PNG, max 5MB each).</p>
+                    </div>
+                    <div className="space-y-3">
+                      {[
+                        { id: 'birth_certificate', label: 'Birth Certificate', required: true },
+                        { id: 'aadhaar_card', label: 'Aadhaar Card', required: true },
+                        { id: 'passport_photo', label: 'Passport Photo', required: true },
+                        { id: 'parent_id', label: 'Parent ID Proof', required: true },
+                        { id: 'address_proof', label: 'Address Proof', required: true },
+                        { id: 'previous_marks', label: 'Previous Marks Memo', required: !!form.prev_school_name },
+                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: !!form.prev_school_name }
+                      ].map((doc) => (
+                        <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
+                          <FileText size={18} className="text-academic-blue shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-semibold text-slate-700">
+                              {doc.label} {doc.required && <span className="text-red-400">*</span>}
+                            </p>
+                            {selectedFiles[doc.id] ? (
+                              <p className="text-[11px] text-emerald-600 truncate">{selectedFiles[doc.id].name}</p>
+                            ) : (
+                              <p className="text-[11px] text-slate-400">Not uploaded {validationErrors[`doc_${doc.id}`] && <span className="text-red-500 font-bold ml-2">Required</span>}</p>
+                            )}
+                          </div>
+                          <label className="shrink-0 bg-white border border-slate-200 rounded-lg px-3 py-1.5 text-[11px] font-semibold cursor-pointer hover:bg-slate-50">
+                            {selectedFiles[doc.id] ? 'Change' : 'Choose'}
+                            <input type="file" accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange(doc.id)} className="hidden" />
+                          </label>
+                        </div>
+                      ))}
+                    </div>
+                    <div className="flex justify-between pt-4 border-t border-slate-100">
+                      <button onClick={() => setStep(4)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
+                        <ChevronLeft size={16} /> Back
+                      </button>
+                      <button onClick={() => { if (validateStep(5)) setStep(6) }} className="btn-primary flex items-center gap-2">
+                        Review Application <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-{/* STEP 6: REVIEW */ }
-{
-  step === 6 && (
-    <div className="space-y-6">
-      <div>
-        <p className="font-subheading font-semibold text-secondary uppercase text-sm mb-1">Step 6 of 6</p>
-        <h2 className="font-heading text-2xl font-bold text-text-primary mb-3">Review Your Application</h2>
-      </div>
-      <div className="border border-slate-100 rounded-2xl p-5 space-y-4">
-        <div className="grid grid-cols-2 gap-4 text-sm">
-          <div><p className="text-xs text-ink-secondary">Applicant Name</p><p className="font-semibold">{form.applicant_name}</p></div>
-          <div><p className="text-xs text-ink-secondary">Target Class</p><p className="font-semibold">{form.target_class}</p></div>
-          <div><p className="text-xs text-ink-secondary">Gender</p><p className="font-semibold">{form.gender}</p></div>
-          <div><p className="text-xs text-ink-secondary">Date of Birth</p><p className="font-semibold">{form.date_of_birth}</p></div>
-          <div><p className="text-xs text-ink-secondary">Blood Group</p><p className="font-semibold">{form.blood_group || 'N/A'}</p></div>
-          <div><p className="text-xs text-ink-secondary">Curriculum</p><p className="font-semibold">{form.curriculum}</p></div>
-          <div className="col-span-2"><p className="text-xs text-ink-secondary">Father Name</p><p className="font-semibold">{form.father_name || form.parent_name}</p></div>
-          <div className="col-span-2"><p className="text-xs text-ink-secondary">Mother Name</p><p className="font-semibold">{form.mother_name}</p></div>
-          <div><p className="text-xs text-ink-secondary">Parent Phone</p><p className="font-semibold">{form.parent_phone}</p></div>
-          <div><p className="text-xs text-ink-secondary">Parent Email</p><p className="font-semibold">{form.parent_email}</p></div>
-          <div className="col-span-2"><p className="text-xs text-ink-secondary">Address</p><p className="font-semibold leading-relaxed">{form.address || form.permanent_address}</p></div>
-          <div><p className="text-xs text-ink-secondary">Previous School</p><p className="font-semibold">{form.previous_school || 'N/A'}</p></div>
-          <div><p className="text-xs text-ink-secondary">Board</p><p className="font-semibold">{form.board || 'N/A'}</p></div>
-          <div className="col-span-2"><p className="text-xs text-ink-secondary">Uploaded Documents</p>
-            <p className="font-semibold text-emerald-700">{Object.keys(selectedFiles).filter(k => selectedFiles[k]).length} files</p>
-          </div>
-        </div>
-      </div>
-      {errorMsg && (
-        <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-4">{errorMsg}</div>
-      )}
-      <div className="flex justify-between pt-4 border-t border-slate-100">
-        <button onClick={() => setStep(5)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
-          <ChevronLeft size={16} /> Back
-        </button>
-        <button disabled={status === 'submitting'} onClick={handleSubmit}
-          className="btn-primary flex items-center gap-2 disabled:opacity-50">
-          {status === 'submitting' ? 'Submitting...' : 'Submit Application'}
-        </button>
-      </div>
-    </div>
-  )
-}
+                {/* STEP 6: REVIEW */}
+                {step === 6 && (
+                  <div className="space-y-6">
+                    <div>
+                      <p className="font-subheading font-semibold text-secondary uppercase text-sm mb-1">Step 6 of 6</p>
+                      <h2 className="font-heading text-2xl font-bold text-text-primary mb-3">Review Your Application</h2>
+                    </div>
+                    <div className="border border-slate-100 rounded-2xl p-5 space-y-4">
+                      <div className="grid grid-cols-2 gap-4 text-sm">
+                        <div><p className="text-xs text-ink-secondary">Applicant Name</p><p className="font-semibold">{form.applicant_name}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Target Class</p><p className="font-semibold">{form.target_class}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Gender</p><p className="font-semibold">{form.gender}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Date of Birth</p><p className="font-semibold">{form.date_of_birth}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Blood Group</p><p className="font-semibold">{form.blood_group || 'N/A'}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Curriculum</p><p className="font-semibold">{form.curriculum}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-ink-secondary">Father Name</p><p className="font-semibold">{form.father_name || form.parent_name}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-ink-secondary">Mother Name</p><p className="font-semibold">{form.mother_name}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Parent Phone</p><p className="font-semibold">{form.parent_phone}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Parent Email</p><p className="font-semibold">{form.parent_email}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-ink-secondary">Address</p><p className="font-semibold leading-relaxed">{form.address || form.permanent_address}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Previous School</p><p className="font-semibold">{form.previous_school || 'N/A'}</p></div>
+                        <div><p className="text-xs text-ink-secondary">Board</p><p className="font-semibold">{form.board || 'N/A'}</p></div>
+                        <div className="col-span-2"><p className="text-xs text-ink-secondary">Uploaded Documents</p>
+                          <p className="font-semibold text-emerald-700">{Object.keys(selectedFiles).filter(k => selectedFiles[k]).length} files</p>
+                        </div>
+                      </div>
+                    </div>
+                    {errorMsg && (
+                      <div className="bg-rose-50 border border-rose-200 text-rose-800 text-xs rounded-xl p-4">{errorMsg}</div>
+                    )}
+                    <div className="flex justify-between pt-4 border-t border-slate-100">
+                      <button onClick={() => setStep(5)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
+                        <ChevronLeft size={16} /> Back
+                      </button>
+                      <button disabled={status === 'submitting'} onClick={handleSubmit}
+                        className="btn-primary flex items-center gap-2 disabled:opacity-50">
+                        {status === 'submitting' ? 'Submitting...' : 'Submit Application'}
+                      </button>
+                    </div>
+                  </div>
+                )}
 
-{/* STEP 7: SUCCESS */ }
-{
-  step === 7 && result && (
-    <div className="rounded-3xl border border-secondary bg-secondary/5 p-6 space-y-4">
-      <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center">
-        <CheckCircle2 size={30} className="text-secondary" />
-      </div>
-      <h2 className="font-heading text-2xl font-bold text-secondary">Application Submitted Successfully</h2>
-      <div>
-        <p className="text-text-primary text-sm mb-1">Your Registration Number is:</p>
-        <p className="font-numbers text-3xl font-bold text-primary">{result.registration_number}</p>
-      </div>
-      <div className="text-sm text-text-secondary leading-relaxed space-y-2">
-        <p>A confirmation email has been sent to <strong>{result.father_email || result.mother_email}</strong>.</p>
-        <p>Your application is now <strong>{result.status}</strong>. The admissions team will review it shortly.</p>
-      </div>
-      <button className="btn-outline mt-6" onClick={() => { setStep(1); setResult(null); setStatus('idle'); setForm(EMPTY_FORM); setSelectedFiles({}) }}>
-        Submit Another Application
-      </button>
-    </div>
-  )
-}
-              </div >
-            </FadeIn >
-          </div >
+                {/* STEP 7: SUCCESS */}
+                {step === 7 && result && (
+                  <div className="rounded-3xl border border-secondary bg-secondary/5 p-6 space-y-4">
+                    <div className="w-14 h-14 rounded-2xl bg-secondary/10 flex items-center justify-center">
+                      <CheckCircle2 size={30} className="text-secondary" />
+                    </div>
+                    <h2 className="font-heading text-2xl font-bold text-secondary">Application Submitted Successfully</h2>
+                    <div>
+                      <p className="text-text-primary text-sm mb-1">Your Registration Number is:</p>
+                      <p className="font-numbers text-3xl font-bold text-primary">{result.registration_number}</p>
+                    </div>
+                    <div className="text-sm text-text-secondary leading-relaxed space-y-2">
+                      <p>A confirmation email has been sent to <strong>{result.father_email || result.mother_email}</strong>.</p>
+                      <p>Your application is now <strong>{result.status}</strong>. The admissions team will review it shortly.</p>
+                    </div>
+                    <button className="btn-outline mt-6" onClick={() => { setStep(1); setResult(null); setStatus('idle'); setForm(EMPTY_FORM); setSelectedFiles({}) }}>
+                      Submit Another Application
+                    </button>
+                  </div>
+                )}
+              </div>
+            </FadeIn>
+          </div>
 
   {/* Right Sidebar */ }
   < FadeIn delay = { 100} >

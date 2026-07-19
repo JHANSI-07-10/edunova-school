@@ -2,7 +2,7 @@ from django.urls import path
 # pyrefly: ignore [missing-import]
 from rest_framework_simplejwt.views import TokenRefreshView
 
-from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views, exam_workflow_views, assignment_workflow_views
+from . import auth_views, teacher_views, views, parent_views, admin_views, facilities_views, exam_extras_views, lms_extras_views, lms_module_views, scholarship_views, admission_workflow_views, academic_website_views, admin_academic_views, timetable_workflow_views, exam_workflow_views, assignment_workflow_views
 
 urlpatterns = [
     # Auth (credentials -> OTP -> JWT), shared by every portal
@@ -44,6 +44,7 @@ urlpatterns = [
     path("student/report-card/", exam_extras_views.StudentReportCardView.as_view()),
     path("student/scholarships/", scholarship_views.ScholarshipStudentApplicationView.as_view()),
     path("student/scholarships/renew/", scholarship_views.ScholarshipRenewalView.as_view()),
+    path("student/messages/", views.StudentMessageView.as_view()),
     path("lms/forum-topics/", lms_extras_views.ForumTopicListView.as_view()),
     path("lms/forum-topics/<int:topic_id>/", lms_extras_views.ForumTopicDetailView.as_view()),
     path("lms/forum-topics/<int:topic_id>/reply/", lms_extras_views.ForumPostView.as_view()),
@@ -51,6 +52,25 @@ urlpatterns = [
     path("lms/mark-complete/", lms_extras_views.MarkContentCompleteView.as_view()),
     path("lms/analytics/", lms_extras_views.CourseAnalyticsView.as_view()),
     path("student/ai-tutor/", lms_extras_views.StudentAITutorView.as_view()),
+    # --- LMS Module: Dashboard ---
+    path("student/lms/dashboard/", lms_module_views.LmsDashboardView.as_view()),
+    # --- LMS Module: Homework ---
+    path("student/lms/homework/", lms_module_views.StudentHomeworkView.as_view()),
+    path("student/lms/homework/submit/", lms_module_views.LmsHomeworkSubmitView.as_view()),
+    # --- LMS Module: Live Classes ---
+    path("lms/live-classes/", lms_module_views.LiveClassListView.as_view()),
+    path("lms/live-classes/attendance/", lms_module_views.LiveClassAttendanceView.as_view()),
+    # --- LMS Module: Recorded Classes ---
+    path("lms/recorded-classes/", lms_module_views.RecordedClassListView.as_view()),
+    path("lms/recorded-classes/progress/", lms_module_views.RecordedClassProgressView.as_view()),
+    # --- LMS Module: Quiz Attempts ---
+    path("lms/quiz-attempts/", lms_module_views.LmsQuizAttemptView.as_view()),
+    # --- LMS Module: Certificates ---
+    path("lms/certificates/", lms_module_views.CourseCertificateView.as_view()),
+    # --- LMS Module: Announcements ---
+    path("lms/announcements/", lms_module_views.CourseAnnouncementView.as_view()),
+    # --- LMS Module: Learning Analytics ---
+    path("lms/analytics/learning/", lms_module_views.LearningAnalyticsView.as_view()),
 
     # Teacher portal — mirrors the "Teacher Portal — Detailed Flowchart"
     path("teacher/profile/", teacher_views.TeacherProfileView.as_view()),
@@ -85,6 +105,23 @@ urlpatterns = [
     path("teacher/lms/lessons/", teacher_views.TeacherLmsLessonsView.as_view()),
     path("teacher/lms/resources/", teacher_views.TeacherLmsResourcesView.as_view()),
     path("teacher/lms/ai-usage/", lms_extras_views.TeacherAIUsageView.as_view()),
+    # --- LMS Module: Teacher Live Classes ---
+    path("teacher/lms/live-classes/", lms_module_views.LiveClassListView.as_view()),
+    # --- LMS Module: Teacher Recorded Classes ---
+    path("teacher/lms/recorded-classes/", lms_module_views.RecordedClassListView.as_view()),
+    # --- LMS Module: Teacher Homework ---
+    path("teacher/lms/homework/", lms_module_views.LmsHomeworkView.as_view()),
+    path("teacher/lms/homework/submissions/", lms_module_views.LmsHomeworkSubmitView.as_view()),
+    # --- LMS Module: Teacher Question Bank ---
+    path("teacher/lms/questions/", lms_module_views.LmsQuestionView.as_view()),
+    # --- LMS Module: Teacher Announcements ---
+    path("teacher/lms/announcements/", lms_module_views.CourseAnnouncementView.as_view()),
+    # --- LMS Module: Teacher Certificates ---
+    path("teacher/lms/certificates/", lms_module_views.CourseCertificateView.as_view()),
+    # --- LMS Module: Teacher Quiz Attempts ---
+    path("teacher/lms/quiz-attempts/", lms_module_views.LmsQuizAttemptView.as_view()),
+    # --- LMS Module: Teacher Analytics ---
+    path("teacher/lms/analytics/", lms_module_views.LearningAnalyticsView.as_view()),
 
     # Parent portal
     path("parent/profile/", parent_views.ParentProfileView.as_view()),
@@ -107,6 +144,13 @@ urlpatterns = [
     path("parent/ptm/", parent_views.PtmBookingView.as_view()),
     path("parent/feedback/", parent_views.FeedbackView.as_view()),
     path("parent/lms/progress/", parent_views.ParentLmsProgressView.as_view()),
+    # --- LMS Module: Parent Certificates ---
+    path("parent/lms/certificates/", lms_module_views.CourseCertificateView.as_view()),
+    # --- LMS Module: Parent Announcements ---
+    path("parent/lms/announcements/", lms_module_views.CourseAnnouncementView.as_view()),
+    # --- LMS Module: Parent Analytics ---
+    path("parent/lms/analytics/", lms_module_views.LearningAnalyticsView.as_view()),
+    path("parent/report-card/", parent_views.ParentReportCardView.as_view()),
 
     # Admin portal
     path("admin-portal/dashboard/", admin_views.AdminDashboardView.as_view()),
@@ -168,11 +212,31 @@ urlpatterns = [
     path("admin-portal/notices/", admin_views.NoticeBroadcastView.as_view()),
     path("admin-portal/leaves/", admin_views.LeaveApprovalListView.as_view()),
     path("admin-portal/leaves/<int:leave_id>/decide/", admin_views.LeaveApprovalListView.as_view()),
+    path("admin-portal/recruitment/", admin_views.AdminRecruitmentView.as_view()),
+    path("admin-portal/interviews/", admin_views.AdminInterviewView.as_view()),
     path("admin-portal/reports/", admin_views.ReportsView.as_view()),
     path("admin-portal/audit-log/", admin_views.AuditLogListView.as_view()),
     path("admin-portal/backup/export/", admin_views.BackupExportView.as_view()),
     path("admin-portal/lms/analytics/", admin_views.AdminLmsAnalyticsView.as_view()),
     path("admin-portal/lms/ai-usage/", lms_extras_views.AdminAIUsageView.as_view()),
+    # --- LMS Module: Admin Enhanced Analytics ---
+    path("admin-portal/lms/analytics/enhanced/", lms_module_views.AdminLmsAnalyticsEnhancedView.as_view()),
+    # --- LMS Module: Admin Settings ---
+    path("admin-portal/lms/settings/", lms_module_views.LmsSettingsView.as_view()),
+    # --- LMS Module: Admin Live Classes ---
+    path("admin-portal/lms/live-classes/", lms_module_views.LiveClassListView.as_view()),
+    # --- LMS Module: Admin Recorded Classes ---
+    path("admin-portal/lms/recorded-classes/", lms_module_views.RecordedClassListView.as_view()),
+    # --- LMS Module: Admin Homework ---
+    path("admin-portal/lms/homework/", lms_module_views.LmsHomeworkView.as_view()),
+    # --- LMS Module: Admin Question Bank ---
+    path("admin-portal/lms/questions/", lms_module_views.LmsQuestionView.as_view()),
+    # --- LMS Module: Admin Certificates ---
+    path("admin-portal/lms/certificates/", lms_module_views.CourseCertificateView.as_view()),
+    # --- LMS Module: Admin Announcements ---
+    path("admin-portal/lms/announcements/", lms_module_views.CourseAnnouncementView.as_view()),
+    # --- LMS Module: Admin Quiz Attempts ---
+    path("admin-portal/lms/quiz-attempts/", lms_module_views.LmsQuizAttemptView.as_view()),
 
     # Hostel module
     path("admin-portal/hostels/", facilities_views.HostelView.as_view()),
@@ -376,27 +440,6 @@ urlpatterns = [
 
     # Phase 18: Reports & Analytics
     path("admin-portal/admissions/reports/", admission_workflow_views.AdmissionReportsView.as_view(), name="admission-reports"),
-
-    # Phase 19: Timetable Management
-    path("admin-portal/timetable/calendar/", timetable_workflow_views.AcademicCalendarView.as_view(), name="timetable-calendar"),
-    path("admin-portal/timetable/calendar/<int:record_id>/", timetable_workflow_views.AcademicCalendarDetailView.as_view(), name="timetable-calendar-detail"),
-    path("admin-portal/timetable/calendar/events/", timetable_workflow_views.CalendarEventView.as_view(), name="timetable-calendar-events"),
-    path("admin-portal/timetable/calendar/events/<int:record_id>/", timetable_workflow_views.CalendarEventDetailView.as_view(), name="timetable-calendar-event-detail"),
-    path("admin-portal/timetable/working-days/", timetable_workflow_views.WorkingDayView.as_view(), name="timetable-working-days"),
-    path("admin-portal/timetable/school-timings/", timetable_workflow_views.SchoolTimingView.as_view(), name="timetable-school-timings"),
-    path("admin-portal/timetable/periods/", timetable_workflow_views.PeriodManagementView.as_view(), name="timetable-periods"),
-    path("admin-portal/timetable/periods/generate/", timetable_workflow_views.GenerateDefaultPeriodsView.as_view(), name="timetable-periods-generate"),
-    path("admin-portal/timetable/subject-allocations/", timetable_workflow_views.SubjectAllocationView.as_view(), name="timetable-subject-allocations"),
-    path("admin-portal/timetable/teacher-allocations/", timetable_workflow_views.TeacherAllocationView.as_view(), name="timetable-teacher-allocations"),
-    path("admin-portal/timetable/classroom-allocations/", timetable_workflow_views.ClassroomAllocationView.as_view(), name="timetable-classroom-allocations"),
-    path("admin-portal/timetable/substitutes/", timetable_workflow_views.SubstituteTeacherView.as_view(), name="timetable-substitutes"),
-    path("admin-portal/timetable/approvals/", timetable_workflow_views.TimetableApprovalView.as_view(), name="timetable-approvals"),
-    path("admin-portal/timetable/notifications/", timetable_workflow_views.TimetableNotificationView.as_view(), name="timetable-notifications"),
-    path("admin-portal/timetable/notifications/send/", timetable_workflow_views.SendTimetableNotificationView.as_view(), name="timetable-notifications-send"),
-    path("admin-portal/timetable/audit-logs/", timetable_workflow_views.TimetableAuditLogView.as_view(), name="timetable-audit-logs"),
-    path("admin-portal/timetable/reports/", timetable_workflow_views.TimetableReportsView.as_view(), name="timetable-reports"),
-    path("admin-portal/timetable/analytics/", timetable_workflow_views.TimetableAnalyticsView.as_view(), name="timetable-analytics"),
-    path("admin-portal/timetable/workflow-config/", timetable_workflow_views.TimetableWorkflowConfigView.as_view(), name="timetable-workflow-config"),
 
     # =========================================================================
     # ACADEMIC WEBSITE — Public endpoints (no auth required)

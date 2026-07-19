@@ -1875,7 +1875,7 @@ class CGPACalculationView(AdminMixin, APIView):
         students = rows(
             "SELECT id, COALESCE(first_name || ' ' || last_name, username) AS student_name "
             "FROM auth_user WHERE id IN "
-            "(SELECT student_id FROM portal_student WHERE class_id=%s)",
+            "(SELECT student_id FROM portal_student_enrollment WHERE class_id=%s)",
             [class_id],
         )
         if not students:

@@ -1,7 +1,7 @@
 import {
   LayoutDashboard, UserPlus, Users, School, BookOpen, Wallet, Bus,
   LibraryBig, Megaphone, CalendarClock, BarChart3, ShieldCheck, LogOut, X, Database,
-  BedDouble, Boxes, ScanFace, GraduationCap, Stethoscope, Trophy, Banknote, KeyRound, MapPin, CalendarDays,
+  BedDouble, Boxes, ScanFace, GraduationCap, Stethoscope, Trophy, Banknote, KeyRound, MapPin, CalendarDays, Briefcase,
 } from "lucide-react";
 import { NavLink } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
@@ -11,6 +11,7 @@ const NAV = [
   { to: "/admin/admissions", label: "Admissions", icon: UserPlus },
   { to: "/admin/users", label: "Users & Roles", icon: Users },
   { to: "/admin/roles-permissions", label: "Roles & Permissions", icon: KeyRound },
+  { to: "/admin/recruitment", label: "Recruitment", icon: Briefcase },
   { to: "/admin/classes", label: "Classes & Subjects", icon: School },
   { to: "/admin/timetable", label: "Timetable", icon: CalendarDays },
   { to: "/admin/lms", label: "LMS Monitor", icon: BookOpen },
