@@ -2763,11 +2763,3 @@ class AdminPublicContentView(AdminMixin, APIView):
             return Response({"detail": "Invalid type"}, status=400)
             
         return Response({"detail": "Content published successfully."})
-                event_date=date_val,
-                venue="",
-                cover_image=cover_image
-            )
-        else:
-            return Response({"detail": "Invalid type"}, status=400)
-            
-        return Response({"detail": "Content published successfully."})

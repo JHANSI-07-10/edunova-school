@@ -482,16 +482,10 @@ export default function Admissions() {
                     <div className="space-y-4">
                       <h3 className="font-subheading font-bold text-primary text-sm">Address Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-<<<<<<< HEAD
                         <FormTextarea label="Permanent Address" required error={validationErrors.address}
                           rows={2} value={form.permanent_address || form.address} onChange={update('permanent_address')} className="sm:col-span-2" />
                         <FormTextarea label="Communication Address" rows={2} value={form.communication_address} onChange={update('communication_address')} className="sm:col-span-2" />
                         <FormInput label="Pin Code" value={form.pin_code} onChange={update('pin_code')} />
-=======
-                        <FormTextarea label="Address" required error={validationErrors.address}
-                          rows={2} value={form.address} onChange={update('address')} className="sm:col-span-2" />
-                        <FormInput label="Pin Code" value={form.pincode} onChange={update('pincode')} />
->>>>>>> 3e15e805c252a4807a3ffd79bfe73adad0e3c274
                         <FormInput label="State" value={form.state} onChange={update('state')} />
                         <FormInput label="District" value={form.district} onChange={update('district')} />
                         <input type="hidden" value={form.address} onChange={update('address')} />
