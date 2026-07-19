@@ -7,13 +7,7 @@ class AdmissionEnquirySerializer(serializers.ModelSerializer):
 
     class Meta:
         model = AdmissionEnquiry
-        fields = [
-            "id", "registration_number", "applicant_name", "date_of_birth",
-            "gender", "target_class", "parent_name", "parent_phone",
-            "parent_email", "address", "source_of_enquiry", "preferred_branch",
-            "curriculum", "scholarship_applied", "id_proof_document",
-            "status", "submitted_at",
-        ]
+        fields = "__all__"
         read_only_fields = ["id", "registration_number", "status", "submitted_at"]
 
 

@@ -141,7 +141,9 @@ export default function Login() {
                 <button disabled={loading} className="w-full bg-bg-dark text-white rounded-xl py-2.5 font-medium hover:bg-bg-dark/90 transition-colors disabled:opacity-60">
                   {loading ? "Checking…" : "Continue"}
                 </button>
-
+                <div className="flex justify-center text-sm mt-4">
+                  <button type="button" onClick={() => navigate('/login')} className="text-ink-secondary hover:underline">← Back to role selection</button>
+                </div>
               </form>
             ) : (
               <form onSubmit={handleOtp} className="space-y-4">

@@ -157,7 +157,9 @@ export default function Login() {
                   >
                     {loading ? "Checking…" : "Continue"}
                   </button>
-                  
+                  <div className="flex justify-center text-sm mt-4">
+                    <button type="button" onClick={() => navigate('/login')} className="text-ink-secondary hover:underline">← Back to role selection</button>
+                  </div>
                 </form>
               ) : (
                 <form onSubmit={handleOtp} className="space-y-4">
