@@ -3,7 +3,7 @@ from .models import (
     SchoolSettings, Campus, AcademicProgram, Department, LeadershipMember,
     SchoolStat, WhyChooseItem, TechnologyPartner, CMSPage, NewsPost, Event,
     GalleryAlbum, GalleryImage, Achievement, Testimonial, FAQ, Document,
-    JobPosting, ContactSubmission, ScholarshipInfo,
+    JobPosting, JobApplication, InterviewSchedule, ContactSubmission, ScholarshipInfo,
 )
 
 

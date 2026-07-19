@@ -868,7 +868,7 @@ class TeacherAdmissionsReviewView(TeacherMixin, APIView):
         qs = AdmissionEnquiry.objects.filter(status__in=["Verification", "Screening"]).order_by("-submitted_at")
         data = list(qs.values(
             "registration_number", "applicant_name", "date_of_birth", "gender", "target_class",
-            "parent_name", "parent_phone", "parent_email", "scholarship_applied", "status",
+            "father_name", "father_phone", "father_email", "scholarship_applied", "status",
             "rejection_reason", "submitted_at"
         ))
         return Response(serialise(data))

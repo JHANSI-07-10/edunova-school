@@ -2778,13 +2778,13 @@ from apps.cms.models import JobApplication, InterviewSchedule
 class AdminRecruitmentView(AdminMixin, APIView):
     def get(self, request):
         applications = rows(
-            "
+            """
             SELECT a.id, a.applicant_name, a.email, a.phone, a.status, a.applied_at, 
                    a.resume_file, p.title as job_title
             FROM cms_jobapplication a
             JOIN cms_jobposting p ON p.id = a.job_posting_id
             ORDER BY a.applied_at DESC
-            "
+            """
         )
         return Response(serialise(applications))
 
@@ -2800,14 +2800,14 @@ class AdminRecruitmentView(AdminMixin, APIView):
 class AdminInterviewView(AdminMixin, APIView):
     def get(self, request):
         interviews = rows(
-            "
+            """
             SELECT i.id, i.interview_date, i.interviewer_name, i.location_or_link, i.status, i.feedback,
                    a.applicant_name, p.title as job_title, a.id as application_id
             FROM cms_interviewschedule i
             JOIN cms_jobapplication a ON a.id = i.application_id
             JOIN cms_jobposting p ON p.id = a.job_posting_id
             ORDER BY i.interview_date DESC
-            "
+            """
         )
         return Response(serialise(interviews))
 
@@ -2820,10 +2820,10 @@ class AdminInterviewView(AdminMixin, APIView):
         
         with connection.cursor() as cursor:
             cursor.execute(
-                "
+                """
                 INSERT INTO cms_interviewschedule (application_id, interview_date, interviewer_name, location_or_link, status, created_at, feedback)
                 VALUES (%s, %s, %s, %s, 'Scheduled', now(), '') RETURNING id
-                ",
+                """,
                 [app_id, interview_date, interviewer_name, location_or_link]
             )
             iid = cursor.fetchone()[0]

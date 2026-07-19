@@ -104,14 +104,14 @@ class AdmissionEnquiryAdminView(AdmissionWorkflowMixin, APIView):
             from django.db.models import Q
             qs = qs.filter(
                 Q(applicant_name__icontains=search) |
-                Q(parent_name__icontains=search) |
+                Q(father_name__icontains=search) |
                 Q(registration_number__icontains=search) |
-                Q(parent_email__icontains=search)
+                Q(father_email__icontains=search)
             )
         
         data = list(qs.values(
             "registration_number", "applicant_name", "date_of_birth", "gender",
-            "target_class", "parent_name", "parent_phone", "parent_email",
+            "target_class", "father_name", "father_phone", "father_email",
             "address", "source_of_enquiry", "preferred_branch", "curriculum",
             "scholarship_applied", "status", "counselling_status",
             "is_eligible", "interview_required", "interview_result",
