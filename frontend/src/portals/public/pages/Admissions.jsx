@@ -175,6 +175,7 @@ export default function Admissions() {
   const [eligibilityReason, setEligibilityReason] = useState('')
 
   const update = (field) => (e) => {
+    if (field === 'date_of_birth' && eligibilityChecked && isEligible) return
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     
     let updates = { [field]: value }
