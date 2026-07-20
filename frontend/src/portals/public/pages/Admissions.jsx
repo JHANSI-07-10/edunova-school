@@ -309,13 +309,17 @@ export default function Admissions() {
     } catch (err) {
       setStatus('error')
       const apiErrors = err?.response?.data
-      setErrorMsg(
-        apiErrors
-          ? Object.entries(apiErrors)
-              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-              .join(' / ')
-          : 'Something went wrong. Please try again.'
-      )
+      if (typeof apiErrors === 'string') {
+        setErrorMsg(apiErrors.includes('<html') ? 'Server Error: Please try again later.' : apiErrors)
+      } else {
+        setErrorMsg(
+          apiErrors
+            ? Object.entries(apiErrors)
+                .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                .join(' / ')
+            : 'Something went wrong. Please try again.'
+        )
+      }
     }
   }
 
