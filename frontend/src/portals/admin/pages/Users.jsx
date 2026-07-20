@@ -184,6 +184,9 @@ export default function Users() {
     const errs = {};
     if (!isNonEmptyString(form.first_name)) errs.first_name = "First name is required.";
     if (!isValidEmail(form.email)) errs.email = "Please enter a valid email address.";
+    if (form.role === "Student") {
+      if (!isValidEmail(form.parent_email)) errs.parent_email = "Valid parent email is required.";
+    }
     if (Object.keys(errs).length > 0) { setValidationErrors(errs); return; }
     setValidationErrors({});
     try {
@@ -384,14 +387,16 @@ export default function Users() {
                     />
                   </div>
                   <div className="flex flex-col gap-1">
-                    <label className="text-xs font-semibold text-slate-500 uppercase">Parent Email (Links Accounts)</label>
+                    <label className="text-xs font-semibold text-slate-500 uppercase">Parent Email (*)</label>
                     <input
+                      required
                       type="email"
-                      placeholder="parent@email.com"
+                      placeholder="parent@email.com (*)"
                       value={form.parent_email}
                       onChange={(e) => setForm({ ...form, parent_email: e.target.value })}
-                      className="rounded-xl border border-slate-200 px-3 py-2 text-sm outline-none focus-ring"
+                      className={`rounded-xl border px-3 py-2 text-sm outline-none focus-ring ${validationErrors.parent_email ? "border-danger" : "border-slate-200"}`}
                     />
+                    {validationErrors.parent_email && <p className="text-xs text-danger">{validationErrors.parent_email}</p>}
                   </div>
                   <div className="flex flex-col gap-1">
                     <label className="text-xs font-semibold text-slate-500 uppercase">Parent Phone</label>

@@ -232,6 +232,10 @@ class AdmissionListView(AdminMixin, APIView):
         from django.utils.crypto import get_random_string
         reg_num = f"REG-{get_random_string(8).upper()}"
         
+        parent_email = d.get("father_email") or d.get("parent_email")
+        if not parent_email:
+            return Response({"detail": "Parent email is required."}, status=400)
+
         # Ensure model is imported locally
         from apps.admissions.models import AdmissionEnquiry
         enquiry = AdmissionEnquiry.objects.create(
@@ -240,9 +244,9 @@ class AdmissionListView(AdminMixin, APIView):
             date_of_birth=d.get("date_of_birth"),
             gender=d.get("gender", "Male"),
             target_class=d.get("target_class"),
-            father_name=d.get("parent_name"),
-            father_phone=d.get("parent_phone"),
-            father_email=d.get("parent_email"),
+            father_name=d.get("father_name") or d.get("parent_name"),
+            father_phone=d.get("father_phone") or d.get("parent_phone"),
+            father_email=parent_email,
             address=d.get("address", ""),
             scholarship_applied=d.get("scholarship_applied", False),
             status="Registered"
@@ -338,6 +342,8 @@ class UserListView(AdminMixin, APIView):
         role = d.get("role")
         if role not in ("Student", "Teacher", "Parent", "Admin", "Employee"):
             return Response({"detail": "role must be one of Student/Teacher/Parent/Admin/Employee."}, status=400)
+        if role == "Student" and not d.get("parent_email"):
+            return Response({"detail": "Parent email is required for Student users."}, status=400)
         if User.objects.filter(email__iexact=d.get("email", "")).exists():
             return Response({"detail": "A user with this email already exists."}, status=400)
         temp_password = get_random_string(10)
