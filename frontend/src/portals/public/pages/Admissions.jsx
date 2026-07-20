@@ -245,7 +245,11 @@ export default function Admissions() {
       if (form.father_company && !isTextOnly(form.father_company)) errs.father_company = 'Valid text required'
       if (form.father_income && !isNumberOnly(form.father_income)) errs.father_income = 'Valid number required'
       if (!isExact10Digits(form.father_phone)) errs.father_phone = 'Valid 10-digit phone required'
-      if (form.father_email && !isGmail(form.father_email)) errs.father_email = 'Valid gmail required'
+      if (!form.father_email) {
+        errs.father_email = 'Required'
+      } else if (!isGmail(form.father_email)) {
+        errs.father_email = 'Valid gmail required'
+      }
       
       if (!isNonEmptyString(form.mother_name) || !isTextOnly(form.mother_name)) errs.mother_name = 'Valid text required'
       if (form.mother_occupation && !isTextOnly(form.mother_occupation)) errs.mother_occupation = 'Valid text required'
@@ -480,7 +484,7 @@ export default function Admissions() {
                         <FormInput label="Annual Income" error={validationErrors.father_income} type="number" value={form.father_income} onChange={update('father_income')} />
                         <FormInput label="Phone" required error={validationErrors.father_phone}
                           placeholder="Father's phone" value={form.father_phone} onChange={update('father_phone')} />
-                        <FormInput label="Email" type="email" error={validationErrors.father_email} value={form.father_email} onChange={update('father_email')} />
+                        <FormInput label="Email" required type="email" error={validationErrors.father_email} value={form.father_email} onChange={update('father_email')} />
                       </div>
 
                       <hr className="border-gray-100" />
