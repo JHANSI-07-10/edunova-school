@@ -18,7 +18,7 @@ class AdmissionEnquirySerializer(serializers.ModelSerializer):
         # Auto-fill empty strings for non-nullable char/text/email fields to prevent Postgres NOT NULL constraint errors
         for field in self.Meta.model._meta.fields:
             if isinstance(field, (models.CharField, models.TextField, models.EmailField)):
-                if not field.null and field.name not in validated_data:
+                if not field.null and not field.has_default() and field.name not in validated_data:
                     validated_data[field.name] = ""
         return super().create(validated_data)
 
