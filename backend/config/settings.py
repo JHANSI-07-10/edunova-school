@@ -47,6 +47,7 @@ INSTALLED_APPS = [
 ]
 
 MIDDLEWARE = [
+    "portal.middleware.ExceptionLoggingMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
@@ -160,7 +161,7 @@ SIMPLE_JWT = {
     "USER_ID_CLAIM": "user_id",
 }
 
-CORS_ALLOW_ALL_ORIGINS = DEBUG  # allows any localhost port in dev; False in production (DEBUG=False)
+CORS_ALLOW_ALL_ORIGINS = True  # Allows cross-origin API requests in all environments
 CORS_ALLOWED_ORIGINS = [] if not config("CORS_ALLOWED_ORIGINS", default="") else config(
     "CORS_ALLOWED_ORIGINS",
     default="",

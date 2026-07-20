@@ -308,13 +308,21 @@ export default function Admissions() {
     } catch (err) {
       setStatus('error')
       const apiErrors = err?.response?.data
-      setErrorMsg(
-        apiErrors
-          ? Object.entries(apiErrors)
-              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-              .join(' / ')
-          : 'Something went wrong. Please try again.'
-      )
+      let message = 'Something went wrong. Please try again.'
+      if (apiErrors) {
+        if (typeof apiErrors === 'string') {
+          if (apiErrors.trim().startsWith('<')) {
+            message = 'Server error (500). Please contact administration or check server logs.'
+          } else {
+            message = apiErrors
+          }
+        } else if (typeof apiErrors === 'object') {
+          message = Object.entries(apiErrors)
+            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+            .join(' / ')
+        }
+      }
+      setErrorMsg(message)
     }
   }
 
