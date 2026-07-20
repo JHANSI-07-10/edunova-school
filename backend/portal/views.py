@@ -809,17 +809,25 @@ class StudentLeaveView(StudentOnlyMixin, APIView):
     def post(self, request):
         if not table_exists("portal_leave"):
             return Response({"detail": "Portal schema has not been applied."}, status=400)
+        
+        leave_type = request.data.get("leave_type")
+        start_date = request.data.get("start_date")
+        end_date = request.data.get("end_date")
+        reason = request.data.get("reason")
+        
+        if not all([leave_type, start_date, end_date, reason]):
+            return Response({"detail": "Missing required fields."}, status=400)
+
         with connection.cursor() as cursor:
             cursor.execute(
                 """
                 INSERT INTO portal_leave (user_id, leave_type, start_date, end_date, reason, submitted_by)
                 VALUES (%s,%s,%s,%s,%s,%s) RETURNING id
                 """,
-                [request.user.id, request.data.get("leave_type"), request.data.get("start_date"),
-                 request.data.get("end_date"), request.data.get("reason"), request.user.id],
+                [request.user.id, leave_type, start_date, end_date, reason, request.user.id],
             )
             lid = cursor.fetchone()[0]
-        return Response({"id": lid, "detail": "Leave request submitted."})
+        return Response({"id": lid, "detail": "Leave request submitted."}, status=201)
 
 
 class FileUploadView(APIView):

@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import api from "../lib/api";
-import { isNonEmptyString, isValidEmail, isValidPhone } from "../../../utils/validation";
+import { isNonEmptyString, isValidEmail, isValidPhone, isTextOnly, isExact10Digits, isGmail } from "../../../utils/validation";
 import { Badge, Card, EmptyState, Loader, Toast } from "../components/Common";
 import {
   Plus, X, UserPlus, ChevronDown, ChevronRight, Search,
@@ -801,11 +801,13 @@ function ManualAdmissionForm({ onClose, onSaved }) {
   async function submit(e) {
     e.preventDefault();
     const errs = {};
-    if (!isNonEmptyString(form.applicant_name)) errs.applicant_name = "Required";
+    if (!isNonEmptyString(form.applicant_name) || !isTextOnly(form.applicant_name)) errs.applicant_name = "Valid text required";
     if (!form.date_of_birth) errs.date_of_birth = "Required";
-    if (!isNonEmptyString(form.father_name)) errs.father_name = "Required";
-    if (!isValidPhone(form.father_phone)) errs.father_phone = "Valid phone required";
-    if (!isValidEmail(form.father_email)) errs.father_email = "Valid email required";
+    if (!isNonEmptyString(form.father_name) || !isTextOnly(form.father_name)) errs.father_name = "Valid text required";
+    if (!isExact10Digits(form.father_phone)) errs.father_phone = "Valid 10-digit phone required";
+    if (!isGmail(form.father_email)) errs.father_email = "Valid gmail required";
+    if (!isNonEmptyString(form.address)) errs.address = "Required";
+    if (form.preferred_branch && !isTextOnly(form.preferred_branch)) errs.preferred_branch = "Valid text required";
     if (Object.keys(errs).length > 0) { setValidationErrors(errs); return; }
     setValidationErrors({});
     setBusy(true); setError("");
@@ -863,7 +865,7 @@ function ManualAdmissionForm({ onClose, onSaved }) {
           </div>
           <textarea required rows={2} placeholder="Address (*)" value={form.address}
             onChange={(e) => setForm({ ...form, address: e.target.value })}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2 resize-none" />
+            className={`w-full rounded-xl border px-3 py-2 resize-none ${validationErrors.address ? "border-danger" : "border-slate-200"}`} />
           <select value={form.source_of_enquiry} onChange={(e) => setForm({ ...form, source_of_enquiry: e.target.value })}
             className="w-full rounded-xl border border-slate-200 px-3 py-2">
             <option value="Walk-in">Walk-in</option><option value="Phone">Phone</option><option value="Email">Email</option>
@@ -871,7 +873,7 @@ function ManualAdmissionForm({ onClose, onSaved }) {
           </select>
           <input placeholder="Preferred branch" value={form.preferred_branch}
             onChange={(e) => setForm({ ...form, preferred_branch: e.target.value })}
-            className="w-full rounded-xl border border-slate-200 px-3 py-2" />
+            className={`w-full rounded-xl border px-3 py-2 ${validationErrors.preferred_branch ? "border-danger" : "border-slate-200"}`} />
           <label className="flex items-center gap-2 text-sm">
             <input type="checkbox" checked={form.scholarship_applied}
               onChange={(e) => setForm({ ...form, scholarship_applied: e.target.checked })} className="w-4 h-4" />

@@ -222,7 +222,7 @@ class AdmissionListView(AdminMixin, APIView):
             qs = qs.filter(status=status_filter)
         data = list(qs.values(
             "registration_number", "applicant_name", "date_of_birth", "gender", "target_class",
-            "parent_name", "parent_phone", "parent_email", "scholarship_applied", "status",
+            "father_name", "father_phone", "father_email", "scholarship_applied", "status",
             "rejection_reason", "submitted_at",
         ))
         return Response(serialise(data))
@@ -240,9 +240,9 @@ class AdmissionListView(AdminMixin, APIView):
             date_of_birth=d.get("date_of_birth"),
             gender=d.get("gender", "Male"),
             target_class=d.get("target_class"),
-            parent_name=d.get("parent_name"),
-            parent_phone=d.get("parent_phone"),
-            parent_email=d.get("parent_email"),
+            father_name=d.get("parent_name"),
+            father_phone=d.get("parent_phone"),
+            father_email=d.get("parent_email"),
             address=d.get("address", ""),
             scholarship_applied=d.get("scholarship_applied", False),
             status="Registered"
@@ -2843,7 +2843,6 @@ class AdminInterviewView(AdminMixin, APIView):
                 cursor.execute("UPDATE cms_interviewschedule SET status=%s WHERE id=%s", [status, iid])
             if feedback is not None:
                 cursor.execute("UPDATE cms_interviewschedule SET feedback=%s WHERE id=%s", [feedback, iid])
-                
+
         log_action(request.user, "interview.update", "cms_interviewschedule", iid, data)
         return Response({"detail": "Interview updated."})
-

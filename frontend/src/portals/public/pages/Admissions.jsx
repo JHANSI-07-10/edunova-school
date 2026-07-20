@@ -17,7 +17,7 @@ import { admissionsApi } from '../../../api/admissionsApi'
 import AdmissionProcessSteps from '../home/AdmissionProcessSteps'
 import ScholarshipsBanner from '../home/ScholarshipsBanner'
 import FadeIn from '../../../components/FadeIn'
-import { isValidEmail, isValidPhone, isNonEmptyString } from '../../../utils/validation'
+import { isValidEmail, isValidPhone, isNonEmptyString, isTextOnly, isExact10Digits, isGmail, isNumberOnly, isExact12Digits, isExact6Digits, isValidPercentage } from '../../../utils/validation'
 
 const EMPTY_FORM = {
   applicant_name: '',
@@ -117,8 +117,9 @@ function FormInput({ label, required, error, className = '', ...props }) {
       </label>
       <input
         {...props}
-        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
-          }`}
+        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors ${
+          error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
+        }`}
       />
       {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
     </div>
@@ -133,8 +134,9 @@ function FormSelect({ label, required, error, children, className = '', ...props
       </label>
       <select
         {...props}
-        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
-          }`}
+        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none transition-colors ${
+          error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
+        }`}
       >
         {children}
       </select>
@@ -151,8 +153,9 @@ function FormTextarea({ label, required, error, className = '', ...props }) {
       </label>
       <textarea
         {...props}
-        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none resize-none transition-colors ${error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
-          }`}
+        className={`w-full rounded-xl border px-3 py-2.5 text-sm outline-none resize-none transition-colors ${
+          error ? 'border-red-400 bg-red-50' : 'border-slate-200 focus:border-academic-blue'
+        }`}
       />
       {error && <p className="text-[11px] text-red-500 mt-1">{error}</p>}
     </div>
@@ -192,23 +195,15 @@ export default function Admissions() {
       setErrorMsg('Please select a target class and enter a date of birth.')
       return
     }
-    const birthDate = new Date(form.date_of_birth)
-    const today = new Date()
-    let age = today.getFullYear() - birthDate.getFullYear()
-    const m = today.getMonth() - birthDate.getMonth()
-    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
-      age--
-    }
-
+    const birthYear = new Date(form.date_of_birth).getFullYear()
+    const currentYear = new Date().getFullYear()
+    const age = currentYear - birthYear
     if (isNaN(age) || age < 1) {
       setIsEligible(false)
       setEligibilityReason('Please enter a valid date of birth.')
     } else if (age < 3) {
       setIsEligible(false)
       setEligibilityReason(`Applicants must be at least 3 years old. (Current age: ${age})`)
-    } else if (age > 20) {
-      setIsEligible(false)
-      setEligibilityReason(`Applicants cannot be older than 20 years. (Current age: ${age})`)
     } else {
       setIsEligible(true)
       setEligibilityReason(`Eligible! Age: ${age} years meets requirements for ${form.target_class}.`)
@@ -219,18 +214,41 @@ export default function Admissions() {
   const validateStep = (s) => {
     const errs = {}
     if (s === 2) {
-      if (!isNonEmptyString(form.applicant_name)) errs.applicant_name = 'Required'
+      if (!isNonEmptyString(form.applicant_name) || !isTextOnly(form.applicant_name)) errs.applicant_name = 'Valid text required'
       if (!form.gender) errs.gender = 'Required'
       if (!form.date_of_birth) errs.date_of_birth = 'Required'
+      if (form.aadhaar_number && !isExact12Digits(form.aadhaar_number)) errs.aadhaar_number = 'Valid 12-digit number required'
+      if (form.nationality && !isTextOnly(form.nationality)) errs.nationality = 'Valid text required'
+      if (form.religion && !isTextOnly(form.religion)) errs.religion = 'Valid text required'
     }
     if (s === 3) {
-      if (!isNonEmptyString(form.father_name)) errs.father_name = 'Required'
-      if (!isNonEmptyString(form.mother_name)) errs.mother_name = 'Required'
-      if (!isValidPhone(form.father_phone)) errs.father_phone = 'Valid phone required'
-      if (!isValidEmail(form.father_email) && form.father_email) errs.father_email = 'Valid email required'
+      if (!isNonEmptyString(form.father_name) || !isTextOnly(form.father_name)) errs.father_name = 'Valid text required'
+      if (form.father_occupation && !isTextOnly(form.father_occupation)) errs.father_occupation = 'Valid text required'
+      if (form.father_company && !isTextOnly(form.father_company)) errs.father_company = 'Valid text required'
+      if (form.father_income && !isNumberOnly(form.father_income)) errs.father_income = 'Valid number required'
+      if (!isExact10Digits(form.father_phone)) errs.father_phone = 'Valid 10-digit phone required'
+      if (form.father_email && !isGmail(form.father_email)) errs.father_email = 'Valid gmail required'
+      
+      if (!isNonEmptyString(form.mother_name) || !isTextOnly(form.mother_name)) errs.mother_name = 'Valid text required'
+      if (form.mother_occupation && !isTextOnly(form.mother_occupation)) errs.mother_occupation = 'Valid text required'
+      if (form.mother_company && !isTextOnly(form.mother_company)) errs.mother_company = 'Valid text required'
+      if (form.mother_phone && !isExact10Digits(form.mother_phone)) errs.mother_phone = 'Valid 10-digit phone required'
+      if (form.mother_email && !isGmail(form.mother_email)) errs.mother_email = 'Valid gmail required'
+      
+      if (form.guardian_name && !isTextOnly(form.guardian_name)) errs.guardian_name = 'Valid text required'
+      if (form.guardian_relationship && !isTextOnly(form.guardian_relationship)) errs.guardian_relationship = 'Valid text required'
+      if (form.guardian_phone && !isExact10Digits(form.guardian_phone)) errs.guardian_phone = 'Valid 10-digit phone required'
     }
     if (s === 4) {
       if (!isNonEmptyString(form.address)) errs.address = 'Required'
+      if (form.pincode && !isExact6Digits(form.pincode)) errs.pincode = 'Valid 6-digit pincode required'
+      if (form.state && !isTextOnly(form.state)) errs.state = 'Valid text required'
+      if (form.city && !isTextOnly(form.city)) errs.city = 'Valid text required'
+      if (form.percentage && !isValidPercentage(form.percentage)) errs.percentage = 'Valid percentage required'
+      if (form.emergency_contact_name && !isTextOnly(form.emergency_contact_name)) errs.emergency_contact_name = 'Valid text required'
+      if (form.emergency_contact_phone && !isExact10Digits(form.emergency_contact_phone)) errs.emergency_contact_phone = 'Valid 10-digit phone required'
+      if (form.emergency_contact_relation && !isTextOnly(form.emergency_contact_relation)) errs.emergency_contact_relation = 'Valid text required'
+      if (form.preferred_branch && !isTextOnly(form.preferred_branch)) errs.preferred_branch = 'Valid text required'
     }
     if (s === 5) {
       let requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
@@ -271,8 +289,8 @@ export default function Admissions() {
       setErrorMsg(
         apiErrors
           ? Object.entries(apiErrors)
-            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-            .join(' / ')
+              .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+              .join(' / ')
           : 'Something went wrong. Please try again.'
       )
     }
@@ -318,12 +336,14 @@ export default function Admissions() {
                 <div className="flex items-center justify-between mb-8 border-b border-slate-100 pb-4 overflow-x-auto gap-1">
                   {STEPS.map((s) => (
                     <div key={s.num} className="flex items-center gap-1 shrink-0">
-                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${step >= s.num ? 'bg-academic-blue text-white shadow-md' : 'bg-slate-100 text-slate-400'
-                        }`}>
+                      <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all ${
+                        step >= s.num ? 'bg-academic-blue text-white shadow-md' : 'bg-slate-100 text-slate-400'
+                      }`}>
                         {s.num}
                       </div>
-                      <span className={`text-[10px] font-medium hidden sm:inline ${step === s.num ? 'text-academic-blue font-semibold' : 'text-slate-400'
-                        }`}>
+                      <span className={`text-[10px] font-medium hidden sm:inline ${
+                        step === s.num ? 'text-academic-blue font-semibold' : 'text-slate-400'
+                      }`}>
                         {s.label}
                       </span>
                     </div>
@@ -343,7 +363,7 @@ export default function Admissions() {
                       </h3>
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-ink-secondary">Select target class</label>
+                          <label className="text-xs font-medium text-ink-secondary">Select target class <span className="text-red-400">*</span></label>
                           <select value={form.target_class} onChange={update('target_class')}
                             className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm outline-none">
                             <option value="">Select target class</option>
@@ -351,7 +371,7 @@ export default function Admissions() {
                           </select>
                         </div>
                         <div className="space-y-1">
-                          <label className="text-xs font-medium text-ink-secondary">Applicant date of birth</label>
+                          <label className="text-xs font-medium text-ink-secondary">Applicant date of birth <span className="text-red-400">*</span></label>
                           <input type="date" max={new Date().toISOString().split('T')[0]} value={form.date_of_birth}
                             onChange={update('date_of_birth')}
                             className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2 text-sm outline-none" />
@@ -362,8 +382,9 @@ export default function Admissions() {
                         Check Eligibility
                       </button>
                       {eligibilityChecked && (
-                        <div className={`p-4 rounded-xl border text-sm transition-all ${isEligible ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
-                          }`}>
+                        <div className={`p-4 rounded-xl border text-sm transition-all ${
+                          isEligible ? 'bg-emerald-50 border-emerald-200 text-emerald-800' : 'bg-rose-50 border-rose-200 text-rose-800'
+                        }`}>
                           <p className="font-semibold mb-1">{isEligible ? 'Eligible to Apply' : 'Requirements Not Met'}</p>
                           <p className="text-xs opacity-90 leading-relaxed">{eligibilityReason}</p>
                         </div>
@@ -400,9 +421,9 @@ export default function Admissions() {
                         <option value="">Select blood group</option>
                         {BLOOD_GROUPS.map((bg) => (<option key={bg} value={bg}>{bg}</option>))}
                       </FormSelect>
-                      <FormInput label="Aadhaar Number" placeholder="XXXX-XXXX-XXXX" value={form.aadhaar_number} onChange={update('aadhaar_number')} />
-                      <FormInput label="Nationality" value={form.nationality} onChange={update('nationality')} />
-                      <FormInput label="Religion" value={form.religion} onChange={update('religion')} />
+                      <FormInput label="Aadhaar Number" error={validationErrors.aadhaar_number} placeholder="XXXX-XXXX-XXXX" value={form.aadhaar_number} onChange={update('aadhaar_number')} />
+                      <FormInput label="Nationality" error={validationErrors.nationality} value={form.nationality} onChange={update('nationality')} />
+                      <FormInput label="Religion" error={validationErrors.religion} value={form.religion} onChange={update('religion')} />
                       <FormSelect label="Category" value={form.category} onChange={update('category')}>
                         {CATEGORIES.map((c) => (<option key={c} value={c}>{c}</option>))}
                       </FormSelect>
@@ -436,12 +457,12 @@ export default function Admissions() {
                       <div className="grid sm:grid-cols-2 gap-4">
                         <FormInput label="Father Name" required error={validationErrors.father_name}
                           placeholder="Father's full name" value={form.father_name} onChange={update('father_name')} className="sm:col-span-2" />
-                        <FormInput label="Occupation" value={form.father_occupation} onChange={update('father_occupation')} />
-                        <FormInput label="Company" value={form.father_company} onChange={update('father_company')} />
-                        <FormInput label="Annual Income" type="number" value={form.father_income} onChange={update('father_income')} />
+                        <FormInput label="Occupation" error={validationErrors.father_occupation} value={form.father_occupation} onChange={update('father_occupation')} />
+                        <FormInput label="Company" error={validationErrors.father_company} value={form.father_company} onChange={update('father_company')} />
+                        <FormInput label="Annual Income" error={validationErrors.father_income} type="number" value={form.father_income} onChange={update('father_income')} />
                         <FormInput label="Phone" required error={validationErrors.father_phone}
-                          placeholder="Father's phone" value={form.father_phone || form.parent_phone} onChange={update('father_phone')} />
-                        <FormInput label="Email" type="email" value={form.father_email} onChange={update('father_email')} />
+                          placeholder="Father's phone" value={form.father_phone} onChange={update('father_phone')} />
+                        <FormInput label="Email" type="email" error={validationErrors.father_email} value={form.father_email} onChange={update('father_email')} />
                       </div>
 
                       <hr className="border-gray-100" />
@@ -449,18 +470,18 @@ export default function Admissions() {
                       <div className="grid sm:grid-cols-2 gap-4">
                         <FormInput label="Mother Name" required error={validationErrors.mother_name}
                           placeholder="Mother's full name" value={form.mother_name} onChange={update('mother_name')} className="sm:col-span-2" />
-                        <FormInput label="Occupation" value={form.mother_occupation} onChange={update('mother_occupation')} />
-                        <FormInput label="Company" value={form.mother_company} onChange={update('mother_company')} />
-                        <FormInput label="Phone" value={form.mother_phone} onChange={update('mother_phone')} />
-                        <FormInput label="Email" type="email" value={form.mother_email} onChange={update('mother_email')} />
+                        <FormInput label="Occupation" error={validationErrors.mother_occupation} value={form.mother_occupation} onChange={update('mother_occupation')} />
+                        <FormInput label="Company" error={validationErrors.mother_company} value={form.mother_company} onChange={update('mother_company')} />
+                        <FormInput label="Phone" error={validationErrors.mother_phone} value={form.mother_phone} onChange={update('mother_phone')} />
+                        <FormInput label="Email" type="email" error={validationErrors.mother_email} value={form.mother_email} onChange={update('mother_email')} />
                       </div>
 
                       <hr className="border-gray-100" />
                       <h3 className="font-subheading font-bold text-primary text-sm">Guardian (if applicable)</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormInput label="Guardian Name" value={form.guardian_name} onChange={update('guardian_name')} />
-                        <FormInput label="Relationship" placeholder="e.g. Uncle, Aunt" value={form.guardian_relationship} onChange={update('guardian_relationship')} />
-                        <FormInput label="Phone" value={form.guardian_phone} onChange={update('guardian_phone')} />
+                        <FormInput label="Guardian Name" error={validationErrors.guardian_name} value={form.guardian_name} onChange={update('guardian_name')} />
+                        <FormInput label="Relationship" error={validationErrors.guardian_relationship} placeholder="e.g. Uncle, Aunt" value={form.guardian_relationship} onChange={update('guardian_relationship')} />
+                        <FormInput label="Phone" error={validationErrors.guardian_phone} value={form.guardian_phone} onChange={update('guardian_phone')} />
                         <FormTextarea label="Address" rows={2} value={form.guardian_address} onChange={update('guardian_address')} />
                       </div>
                     </div>
@@ -486,19 +507,17 @@ export default function Admissions() {
                     <div className="space-y-4">
                       <h3 className="font-subheading font-bold text-primary text-sm">Address Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormTextarea label="Permanent Address" required error={validationErrors.address}
-                          rows={2} value={form.permanent_address || form.address} onChange={update('permanent_address')} className="sm:col-span-2" />
-                        <FormTextarea label="Communication Address" rows={2} value={form.communication_address} onChange={update('communication_address')} className="sm:col-span-2" />
-                        <FormInput label="Pin Code" value={form.pin_code} onChange={update('pin_code')} />
-                        <FormInput label="State" value={form.state} onChange={update('state')} />
-                        <FormInput label="District" value={form.district} onChange={update('district')} />
-                        <input type="hidden" value={form.address} onChange={update('address')} />
-                      </div >
+                        <FormTextarea label="Address" required error={validationErrors.address}
+                          rows={2} value={form.address} onChange={update('address')} className="sm:col-span-2" />
+                        <FormInput label="Pin Code" error={validationErrors.pincode} value={form.pincode} onChange={update('pincode')} />
+                        <FormInput label="State" error={validationErrors.state} value={form.state} onChange={update('state')} />
+                        <FormInput label="City/District" error={validationErrors.city} value={form.city} onChange={update('city')} />
+                      </div>
 
                       <hr className="border-gray-100" />
                       <h3 className="font-subheading font-bold text-primary text-sm">Academic Details</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormInput label="Previous School" value={form.prev_school_name} onChange={update('prev_school_name')} className="sm:col-span-2" />
+                        <FormInput label="Previous School" error={validationErrors.prev_school_name} value={form.prev_school_name} onChange={update('prev_school_name')} className="sm:col-span-2" />
                         <FormSelect label="Board" value={form.board} onChange={update('board')}>
                           <option value="">Select board</option>
                           {BOARDS.map((b) => (<option key={b} value={b}>{b}</option>))}
@@ -508,8 +527,8 @@ export default function Admissions() {
                           {CLASSES.map((c) => (<option key={c} value={c}>{c}</option>))}
                         </FormSelect>
                         <FormInput label="Percentage / Grade" type="number" min="0" max="100"
-                          value={form.percentage} onChange={update('percentage')} />
-                        <FormInput label="Reason for Leaving" value={form.reason_for_leaving} onChange={update('reason_for_leaving')} />
+                          error={validationErrors.percentage} value={form.percentage} onChange={update('percentage')} />
+                        <FormInput label="Reason for Leaving" error={validationErrors.reason_for_leaving} value={form.reason_for_leaving} onChange={update('reason_for_leaving')} />
                       </div>
 
                       <hr className="border-gray-100" />
@@ -522,9 +541,9 @@ export default function Admissions() {
                       <hr className="border-gray-100" />
                       <h3 className="font-subheading font-bold text-primary text-sm">Emergency Contact</h3>
                       <div className="grid sm:grid-cols-2 gap-4">
-                        <FormInput label="Contact Name" value={form.emergency_contact_name} onChange={update('emergency_contact_name')} />
-                        <FormInput label="Contact Phone" value={form.emergency_contact_phone} onChange={update('emergency_contact_phone')} />
-                        <FormInput label="Relationship" value={form.emergency_contact_relation} onChange={update('emergency_contact_relation')} />
+                        <FormInput label="Contact Name" error={validationErrors.emergency_contact_name} value={form.emergency_contact_name} onChange={update('emergency_contact_name')} />
+                        <FormInput label="Contact Phone" error={validationErrors.emergency_contact_phone} value={form.emergency_contact_phone} onChange={update('emergency_contact_phone')} />
+                        <FormInput label="Relationship" error={validationErrors.emergency_contact_relation} value={form.emergency_contact_relation} onChange={update('emergency_contact_relation')} />
                       </div>
 
                       <hr className="border-gray-100" />
@@ -539,26 +558,25 @@ export default function Admissions() {
                           <option value="Social_Media">Social Media</option>
                           <option value="Advertisement">Advertisement</option>
                         </FormSelect>
-                        <FormInput label="Preferred Branch" value={form.preferred_branch} onChange={update('preferred_branch')} />
+                        <FormInput label="Preferred Branch" error={validationErrors.preferred_branch} value={form.preferred_branch} onChange={update('preferred_branch')} />
                       </div>
 
                       <label className="flex items-center gap-3 text-sm text-text-primary bg-bg-light rounded-xl p-4 border border-gray-100 cursor-pointer">
                         <input type="checkbox" checked={form.scholarship_applied} onChange={update('scholarship_applied')} className="w-4 h-4" />
                         I would like to apply for a scholarship
                       </label>
-                    </div >
+                    </div>
 
-    <div className="flex justify-between pt-4 border-t border-slate-100">
-      <button onClick={() => setStep(3)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
-        <ChevronLeft size={16} /> Back
-      </button>
-      <button onClick={() => { if (validateStep(4)) setStep(5) }} className="btn-primary flex items-center gap-2">
-        Upload Documents <ChevronRight size={16} />
-      </button>
-    </div>
-                  </div >
-                )
-}
+                    <div className="flex justify-between pt-4 border-t border-slate-100">
+                      <button onClick={() => setStep(3)} className="border border-slate-200 rounded-xl px-5 py-2.5 text-sm font-semibold hover:bg-slate-50 flex items-center gap-1">
+                        <ChevronLeft size={16} /> Back
+                      </button>
+                      <button onClick={() => { if (validateStep(4)) setStep(5) }} className="btn-primary flex items-center gap-2">
+                        Upload Documents <ChevronRight size={16} />
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* STEP 5: DOCUMENT UPLOAD */}
                 {step === 5 && (
@@ -674,45 +692,45 @@ export default function Admissions() {
             </FadeIn>
           </div>
 
-  {/* Right Sidebar */ }
-  < FadeIn delay = { 100} >
-    <aside className="space-y-6">
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-          <Phone size={24} className="text-primary" />
+          {/* Right Sidebar */}
+          <FadeIn delay={100}>
+            <aside className="space-y-6">
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
+                  <Phone size={24} className="text-primary" />
+                </div>
+                <h3 className="font-heading text-xl font-bold text-primary mb-3">Admissions Helpdesk</h3>
+                <p className="font-body text-sm text-text-secondary leading-relaxed mb-4">
+                  Need help? Contact our admissions team for guidance.
+                </p>
+                <Link to="/contact" className="font-subheading font-bold text-accent">Contact Admissions →</Link>
+              </div>
+              <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
+                <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
+                  <GraduationCap size={24} className="text-accent" />
+                </div>
+                <h3 className="font-heading text-xl font-bold text-primary mb-4">Required Documents</h3>
+                <div className="space-y-3">
+                  {REQUIRED_DOCS.map((doc) => (
+                    <div key={doc} className="flex items-start gap-3">
+                      <CheckCircle2 size={18} className="text-secondary shrink-0 mt-0.5" />
+                      <p className="font-body text-sm text-text-secondary">{doc}</p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+              <div className="bg-primary rounded-3xl p-6 text-white shadow-xl">
+                <h3 className="font-heading text-xl font-bold mb-3">Track After Submission</h3>
+                <p className="font-body text-sm text-blue-100 leading-relaxed">
+                  Save your registration number to track your application status.
+                </p>
+              </div>
+            </aside>
+          </FadeIn>
         </div>
-        <h3 className="font-heading text-xl font-bold text-primary mb-3">Admissions Helpdesk</h3>
-        <p className="font-body text-sm text-text-secondary leading-relaxed mb-4">
-          Need help? Contact our admissions team for guidance.
-        </p>
-        <Link to="/contact" className="font-subheading font-bold text-accent">Contact Admissions →</Link>
-      </div>
-      <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100">
-        <div className="w-12 h-12 rounded-2xl bg-accent/10 flex items-center justify-center mb-4">
-          <GraduationCap size={24} className="text-accent" />
-        </div>
-        <h3 className="font-heading text-xl font-bold text-primary mb-4">Required Documents</h3>
-        <div className="space-y-3">
-          {REQUIRED_DOCS.map((doc) => (
-            <div key={doc} className="flex items-start gap-3">
-              <CheckCircle2 size={18} className="text-secondary shrink-0 mt-0.5" />
-              <p className="font-body text-sm text-text-secondary">{doc}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-      <div className="bg-primary rounded-3xl p-6 text-white shadow-xl">
-        <h3 className="font-heading text-xl font-bold mb-3">Track After Submission</h3>
-        <p className="font-body text-sm text-blue-100 leading-relaxed">
-          Save your registration number to track your application status.
-        </p>
-      </div>
-    </aside>
-          </FadeIn >
-        </div >
-      </section >
+      </section>
       <AdmissionProcessSteps />
       <ScholarshipsBanner />
-    </main >
+    </main>
   )
 }

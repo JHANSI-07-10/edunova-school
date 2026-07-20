@@ -105,13 +105,14 @@ class AdmissionEnquiryAdminView(AdmissionWorkflowMixin, APIView):
             qs = qs.filter(
                 Q(applicant_name__icontains=search) |
                 Q(father_name__icontains=search) |
+                Q(mother_name__icontains=search) |
                 Q(registration_number__icontains=search) |
                 Q(father_email__icontains=search)
             )
         
         data = list(qs.values(
             "registration_number", "applicant_name", "date_of_birth", "gender",
-            "target_class", "father_name", "father_phone", "father_email",
+            "target_class", "father_name", "mother_name", "father_phone", "father_email",
             "address", "source_of_enquiry", "preferred_branch", "curriculum",
             "scholarship_applied", "status", "counselling_status",
             "is_eligible", "interview_required", "interview_result",
@@ -231,9 +232,9 @@ class AdmissionApplicationDetailView(AdmissionWorkflowMixin, APIView):
             "date_of_birth": str(enquiry.date_of_birth),
             "gender": enquiry.gender,
             "target_class": enquiry.target_class,
-            "parent_name": enquiry.parent_name,
-            "parent_phone": enquiry.parent_phone,
-            "parent_email": enquiry.parent_email,
+            "father_name": enquiry.father_name,
+            "father_phone": enquiry.father_phone,
+            "father_email": enquiry.father_email,
             "address": enquiry.address,
             "source_of_enquiry": enquiry.source_of_enquiry,
             "preferred_branch": enquiry.preferred_branch,
@@ -332,13 +333,14 @@ class AdmissionApplicationDetailView(AdmissionWorkflowMixin, APIView):
                         allergies, medical_conditions,
                         emergency_contact_name, emergency_contact_phone, emergency_contact_relation
                     ) VALUES (
-                        %s,%s,%s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s,%s,
-                        %s,%s,%s,%s,%s
+                        %s, %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s,
+                        %s, %s, %s, %s, %s, %s,
+                        %s, %s,
+                        %s, %s, %s
                     ) ON CONFLICT (enquiry_id) DO UPDATE SET
                         blood_group=EXCLUDED.blood_group, aadhaar_number=EXCLUDED.aadhaar_number,
                         nationality=EXCLUDED.nationality, religion=EXCLUDED.religion,

@@ -3,7 +3,7 @@ from .models import (
     SchoolSettings, Campus, AcademicProgram, Department, LeadershipMember,
     SchoolStat, WhyChooseItem, TechnologyPartner, CMSPage, NewsPost, Event,
     GalleryAlbum, GalleryImage, Achievement, Testimonial, FAQ, Document,
-    JobPosting, JobApplication, InterviewSchedule, ContactSubmission, ScholarshipInfo,
+    JobPosting, ContactSubmission, ScholarshipInfo, JobApplication, InterviewSchedule,
 )
 
 
@@ -136,10 +136,7 @@ class DocumentSerializer(serializers.ModelSerializer):
         fields = "__all__"
 
 
-class JobPostingSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = JobPosting
-        fields = "__all__"
+
 
 
 class ContactSubmissionSerializer(serializers.ModelSerializer):
