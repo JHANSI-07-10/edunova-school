@@ -177,6 +177,9 @@ SUPABASE_BUCKET_CERTS = "officialdocuments"
 SUPABASE_BUCKET_AVATARS = "studentavatars"
 SUPABASE_BUCKET_BACKUPS = "database-backups"
 
+# Use Supabase Storage as the default storage backend
+DEFAULT_FILE_STORAGE = "config.storage.SupabaseStorage"
+
 # Symmetric key (Fernet, 32 url-safe base64 bytes) used to encrypt the local
 # JSON backup file before it's written to disk / uploaded to Supabase
 # Storage. Generate one with:
