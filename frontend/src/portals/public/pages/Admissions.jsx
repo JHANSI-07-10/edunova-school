@@ -175,6 +175,7 @@ export default function Admissions() {
   const [eligibilityReason, setEligibilityReason] = useState('')
 
   const update = (field) => (e) => {
+    if (field === 'date_of_birth' && eligibilityChecked && isEligible) return
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
     
     let updates = { [field]: value }
@@ -308,21 +309,17 @@ export default function Admissions() {
     } catch (err) {
       setStatus('error')
       const apiErrors = err?.response?.data
-      let message = 'Something went wrong. Please try again.'
-      if (apiErrors) {
-        if (typeof apiErrors === 'string') {
-          if (apiErrors.trim().startsWith('<')) {
-            message = 'Server error (500). Please contact administration or check server logs.'
-          } else {
-            message = apiErrors
-          }
-        } else if (typeof apiErrors === 'object') {
-          message = Object.entries(apiErrors)
-            .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
-            .join(' / ')
-        }
+      if (typeof apiErrors === 'string') {
+        setErrorMsg(apiErrors.includes('<html') || apiErrors.trim().startsWith('<') ? 'Server Error (500): Please try again later or check server logs.' : apiErrors)
+      } else {
+        setErrorMsg(
+          apiErrors
+            ? Object.entries(apiErrors)
+                .map(([key, value]) => `${key}: ${Array.isArray(value) ? value.join(', ') : value}`)
+                .join(' / ')
+            : 'Something went wrong. Please try again.'
+        )
       }
-      setErrorMsg(message)
     }
   }
 
