@@ -85,11 +85,11 @@ const CATEGORIES = ['General', 'OBC', 'SC', 'ST', 'EWS']
 const REQUIRED_DOCS = [
   'Birth Certificate',
   'Aadhaar Card',
-  'Passport Size Photo',
-  'Parent/Guardian ID Proof',
-  'Address Proof',
-  'Previous Marks Memo',
-  'Transfer Certificate',
+  'Passport Size Photo (Optional)',
+  'Parent/Guardian ID Proof (Optional)',
+  'Address Proof (Optional)',
+  'Previous Marks Memo (Optional)',
+  'Transfer Certificate (Optional)',
 ]
 
 const STEPS = [
@@ -274,10 +274,7 @@ export default function Admissions() {
       if (form.preferred_branch && !isTextOnly(form.preferred_branch)) errs.preferred_branch = 'Valid text required'
     }
     if (s === 5) {
-      let requiredDocs = ['birth_certificate', 'aadhaar_card', 'passport_photo', 'parent_id', 'address_proof']
-      if (isNonEmptyString(form.prev_school_name)) {
-        requiredDocs.push('previous_marks', 'transfer_certificate')
-      }
+      let requiredDocs = ['birth_certificate', 'aadhaar_card']
       requiredDocs.forEach(doc => {
         if (!selectedFiles[doc]) {
           errs[`doc_${doc}`] = 'Required'
@@ -617,11 +614,11 @@ export default function Admissions() {
                       {[
                         { id: 'birth_certificate', label: 'Birth Certificate', required: true },
                         { id: 'aadhaar_card', label: 'Aadhaar Card', required: true },
-                        { id: 'passport_photo', label: 'Passport Photo', required: true },
-                        { id: 'parent_id', label: 'Parent ID Proof', required: true },
-                        { id: 'address_proof', label: 'Address Proof', required: true },
-                        { id: 'previous_marks', label: 'Previous Marks Memo', required: !!form.prev_school_name },
-                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: !!form.prev_school_name }
+                        { id: 'passport_photo', label: 'Passport Photo', required: false },
+                        { id: 'parent_id', label: 'Parent ID Proof', required: false },
+                        { id: 'address_proof', label: 'Address Proof', required: false },
+                        { id: 'previous_marks', label: 'Previous Marks Memo', required: false },
+                        { id: 'transfer_certificate', label: 'Transfer Certificate', required: false }
                       ].map((doc) => (
                         <div key={doc.id} className="flex items-center gap-3 p-3 bg-slate-50 border border-slate-200 rounded-xl">
                           <FileText size={18} className="text-academic-blue shrink-0" />
