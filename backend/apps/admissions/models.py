@@ -77,6 +77,11 @@ class AdmissionEnquiry(models.Model):
     gender = models.CharField(max_length=20, blank=True)
     target_class = models.CharField(max_length=50, help_text="Class applied for, e.g. 'Grade 6'")
     
+    # Restored Parent details for compatibility
+    parent_name = models.CharField(max_length=150, blank=True, null=True)
+    parent_phone = models.CharField(max_length=20, blank=True, null=True)
+    parent_email = models.EmailField(blank=True, null=True)
+
     # Phase 1: Father details
     father_name = models.CharField(max_length=150, blank=True)
     father_occupation = models.CharField(max_length=150, blank=True)
@@ -176,6 +181,15 @@ class AdmissionEnquiry(models.Model):
     # Timestamps
     submitted_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        if not self.parent_name:
+            self.parent_name = self.father_name or self.mother_name or self.guardian_name or ""
+        if not self.parent_phone:
+            self.parent_phone = self.father_phone or self.mother_phone or self.guardian_phone or ""
+        if not self.parent_email:
+            self.parent_email = self.father_email or self.mother_email or ""
+        super().save(*args, **kwargs)
 
     class Meta:
         ordering = ["-submitted_at"]

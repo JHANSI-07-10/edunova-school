@@ -176,7 +176,25 @@ export default function Admissions() {
 
   const update = (field) => (e) => {
     const value = e.target.type === 'checkbox' ? e.target.checked : e.target.value
-    setForm({ ...form, [field]: value })
+    
+    let updates = { [field]: value }
+    
+    if (field === 'address') updates.permanent_address = value
+    if (field === 'permanent_address') updates.address = value
+    if (field === 'pincode') updates.pin_code = value
+    if (field === 'pin_code') updates.pincode = value
+
+    if (['father_name', 'mother_name', 'guardian_name'].includes(field)) {
+      updates.parent_name = value || form.father_name || form.mother_name || form.guardian_name || ''
+    }
+    if (['father_phone', 'mother_phone', 'guardian_phone'].includes(field)) {
+      updates.parent_phone = value || form.father_phone || form.mother_phone || form.guardian_phone || ''
+    }
+    if (['father_email', 'mother_email'].includes(field)) {
+      updates.parent_email = value || form.father_email || form.mother_email || ''
+    }
+
+    setForm(prev => ({ ...prev, ...updates }))
     if (field === 'date_of_birth' || field === 'target_class') {
       setEligibilityChecked(false)
       setIsEligible(false)
@@ -364,17 +382,17 @@ export default function Admissions() {
                       <div className="grid sm:grid-cols-2 gap-4">
                         <div className="space-y-1">
                           <label className="text-xs font-medium text-ink-secondary">Select target class <span className="text-red-400">*</span></label>
-                          <select value={form.target_class} onChange={update('target_class')}
-                            className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm outline-none">
+                          <select value={form.target_class} onChange={update('target_class')} disabled={eligibilityChecked && isEligible}
+                            className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2.5 text-sm outline-none disabled:opacity-60 disabled:bg-gray-100">
                             <option value="">Select target class</option>
                             {CLASSES.map((item) => (<option key={item} value={item}>{item}</option>))}
                           </select>
                         </div>
                         <div className="space-y-1">
                           <label className="text-xs font-medium text-ink-secondary">Applicant date of birth <span className="text-red-400">*</span></label>
-                          <input type="date" max={new Date().toISOString().split('T')[0]} value={form.date_of_birth}
+                          <input type="date" max={new Date().toISOString().split('T')[0]} value={form.date_of_birth} disabled={eligibilityChecked && isEligible}
                             onChange={update('date_of_birth')}
-                            className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2 text-sm outline-none" />
+                            className="w-full border border-gray-200 bg-white rounded-xl px-4 py-2 text-sm outline-none disabled:opacity-60 disabled:bg-gray-100" />
                         </div>
                       </div>
                       <button onClick={checkEligibility}
@@ -415,7 +433,7 @@ export default function Admissions() {
                         <option value="Female">Female</option>
                         <option value="Other">Other</option>
                       </FormSelect>
-                      <FormInput label="Date of Birth" required type="date" max={new Date().toISOString().split('T')[0]}
+                      <FormInput label="Date of Birth" required type="date" max={new Date().toISOString().split('T')[0]} disabled
                         value={form.date_of_birth} onChange={update('date_of_birth')} />
                       <FormSelect label="Blood Group" value={form.blood_group} onChange={update('blood_group')}>
                         <option value="">Select blood group</option>
